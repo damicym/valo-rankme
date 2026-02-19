@@ -1,16 +1,14 @@
 const HENRIKDEV_ACCESS_TOKEN = process.env.HENRIKDEV_ACCESS_TOKEN
 const MAX_MATCHES_PER_CALL = 10
 
-// esto funciona porque en la v4.6.0 de HenrikDev API el modo Skirmish: 2v2 no se detecta, pero
-// se puede conseguir buscando mode: custom -> mode_type: Skirmish -> party_rr_penaltys.lenght > 0 
-// conseguir todas las partidas custom skirmish del acto:
-
-// 1. fetchear por partidas custom
-// 2. seguir fetcheando hasta que no haya más en el acto
-// 3. agregar a la lista solo si es skirmish y del acto correcto
-// 4. si te quedas sin tokens, parar y logear
-
 async function getPublicSkirmishMatches(playerName, tag, region, platform){
+    // 1. fetchear por partidas custom
+    // 2. seguir fetcheando hasta que no haya más en el acto
+    // 3. agregar a la lista solo si es skirmish y del acto correcto
+    // 4. si te quedas sin tokens, parar y logear
+    
+    // esto funciona porque en la v4.6.0 de HenrikDev API el modo Skirmish: 2v2 no se detecta, pero
+    // se puede conseguir buscando mode: custom -> mode_type: Skirmish -> party_rr_penaltys.lenght > 0 
     let allMatches = []
     let willNextSetBeValid = true // set of matches
     let targetAct
@@ -58,11 +56,20 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
     return allMatches
 }
 
-async function calcRR(){
+function calcMatchRR(acs, kills, deaths, assists){
+    let rr = 0
+
+    return rr
+}
+
+async function calcTotalRR(){
+    player = 'domix'
     const matches = await getPublicSkirmishMatches('domix', '640', 'latam', 'pc')
     matches.reverse()
     let rr = 50
-    
+    matches.forEach(m => {
+        calcMatchRR(m.players[0].stats.score / rounds, m.players[0].stats.kills, m.players[0].stats.deaths, m.players[0].stats.assists)
+    })
 }
 
-calcRR()
+calcTotalRR()
