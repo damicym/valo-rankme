@@ -1,11 +1,20 @@
 const player1 = 'domix#640'
 const player2 = 'apel#ado'
 
+const min_rr = 7
+const max_rr = 33
+const min_acs = 80.0
+const max_acs = 260.0
+
 main()
 async function main() {
     const matches = await getMatches()
     const player1rr = getRRFromPlayer(matches, player1)
     const player2rr = getRRFromPlayer(matches, player2)
+    console.log(`Player 1 RR: ${player1rr}`)
+    console.log(`Player 2 RR: ${player2rr}`)
+    console.log(`fin`)
+
 }
 
 async function getMatches() {
@@ -15,9 +24,17 @@ async function getMatches() {
 }
 
 async function getRRFromPlayer(matches, player) {
-    var rr = 50
-    const matchesRR = [...matches].reverse().map(match => calcMatchRR(match, player))
-    matchesRR.forEach(value => rr+= value)
+    let result = 50
+    const matches_rr = [...matches].reverse().map(match => calcMatchRR(match, player))
+
+    // en vez de sumar, hacer el calculo real para conseguir el rr final.
+    matches_rr.forEach(value => result += value)
+
+    return result
+}
+
+function normalize(acs) {
+    return Math.max(0, Math.min(1, (acs - min_acs) / (max_acs - min_acs)))
 }
 
 function calcMatchRR(match, player){
@@ -28,14 +45,25 @@ function calcMatchRR(match, player){
 
     const won = teamInfo.won
     const roundsDiff = teamInfo.rounds.won - teamInfo.rounds.lost
-    const acs = inMatchPlayer.stats.score / teamInfo.rounds.won + teamInfo.rounds.lost
-    const kills = inMatchPlayer.stats.kills
-    const deaths = inMatchPlayer.stats.deaths
-    const assists = inMatchPlayer.stats.assists
+    const acs = inMatchPlayer.stats.score / (teamInfo.rounds.won + teamInfo.rounds.lost)
+    // const kills = inMatchPlayer.stats.kills
+    // const deaths = inMatchPlayer.stats.deaths
+    // const assists = inMatchPlayer.stats.assists
 
-    let rr = 0
+    let result = 0
+    const acs_normalized = normalize(acs)
+    const roundsDiff_normalized = roundsDiff / 10
 
-    return rr
+    const performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
+
+    if (won) {
+        result = min_rr + (max_rr - min_rr) * performance
+    }
+    else {
+        result = min_rr + (max_rr - min_rr) * (1 - performance)
+        result = -result
+    }
+    return Math.round(result)
 }
 
 /**
@@ -98,6 +126,8 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
             break
         }
     }
+
+    // filtrar y solo dejar las partidas q este tambien el player 2
 
     return allMatches
 }
