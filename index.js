@@ -1,3 +1,5 @@
+const IMMORTAL_ELO = 2100
+
 const player1 = 'domix#640'
 const player2 = 'apel#ado'
 
@@ -9,8 +11,8 @@ const max_acs = 260.0
 main()
 async function main() {
     const matches = await getMatches()
-    const player1rr = getRRFromPlayer(matches, player1)
-    const player2rr = getRRFromPlayer(matches, player2)
+    const player1rr = getPlayerRR(matches, player1)
+    const player2rr = getPlayerRR(matches, player2)
     console.log(`Player 1 RR: ${player1rr}`)
     console.log(`Player 2 RR: ${player2rr}`)
     console.log(`fin`)
@@ -23,21 +25,36 @@ async function getMatches() {
     return matches
 }
 
-async function getRRFromPlayer(matches, player) {
-    let result = 50
-    const matches_rr = [...matches].reverse().map(match => calcMatchRR(match, player))
+async function isImmortal(rr) {
+    return rr >= IMMORTAL_ELO
+}
 
-    // en vez de sumar, hacer el calculo real para conseguir el rr final.
-    matches_rr.forEach(value => result += value)
+async function getPlayerRR(matches, player) {
+    let rr_actual = 50
+    const matches_rr = [...matches].reverse().map(match => getMatchRR(match, player))
 
-    return result
+    matches_rr.forEach(match_rr => {
+        // al bajar de 0, el rr se queda en 0
+        if (rr_actual - match_rr < 0) {
+            rr_actual = 0
+        }
+        // al pasar un múltiplo de 100 por menos de 10 rr antes de immortal, se le suma lo necesario para pasarlo por 10 rr
+        else if (!isImmortal(rr_actual) && match_rr > 0 && rr_actual % 100 < (rr_actual + match_rr) % 100 && (rr_actual + match_rr) % 100 < 10) {
+            rr_actual += match_rr + (10 - (rr_actual + match_rr) % 100)
+        }
+        else {
+            rr_actual += match_rr
+        }
+    })
+
+    return rr_actual
 }
 
 function normalize(acs) {
     return Math.max(0, Math.min(1, (acs - min_acs) / (max_acs - min_acs)))
 }
 
-function calcMatchRR(match, player){
+function getMatchRR(match, player){
     const [playerName, playerTag] = player.split('#')
     const inMatchPlayer = match.metadata.players.find(p => p.name === playerName && p.tag === playerTag)
     const teamColor = inMatchPlayer.team_id
