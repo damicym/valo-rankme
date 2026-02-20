@@ -16,7 +16,6 @@ async function main() {
     console.log(`Player 1 RR: ${player1rr}`)
     console.log(`Player 2 RR: ${player2rr}`)
     console.log(`fin`)
-
 }
 
 async function getMatches() {
@@ -56,7 +55,7 @@ function normalize(acs) {
 
 function getMatchRR(match, player){
     const [playerName, playerTag] = player.split('#')
-    const inMatchPlayer = match.metadata.players.find(p => p.name === playerName && p.tag === playerTag)
+    const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
 
@@ -69,7 +68,7 @@ function getMatchRR(match, player){
 
     let result = 0
     const acs_normalized = normalize(acs)
-    const roundsDiff_normalized = roundsDiff / 10
+    const roundsDiff_normalized = Math.abs(roundsDiff) / 10
 
     const performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
 
@@ -128,7 +127,7 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
             if (matches.some(m => m.metadata.season.short !== targetAct)) willNextSetBeValid = false
             
             const usefulMatches = matches.filter(m => (
-                m.metadata.party_rr_penalties.length > 0 && // no es custom
+                m.metadata.party_rr_penaltys.length > 0 && // no es custom
                 m.metadata.queue.mode_type == 'Skirmish' && // es skirmish
                 m.metadata.season.short == targetAct // es del acto correcto
             ))
@@ -142,6 +141,7 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
             console.log(err)
             break
         }
+        willNextSetBeValid = false
     }
 
     // filtrar y solo dejar las partidas q este tambien el player 2
