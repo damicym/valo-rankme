@@ -24,25 +24,37 @@ async function getMatches() {
     return matches
 }
 
-async function isImmortal(rr) {
+function isImmortal(rr) {
     return rr >= IMMORTAL_ELO
 }
 
-async function getPlayerRR(matches, player) {
+function getPlayerRR(matches, player) {
     let rr_actual = 50
     const matches_rr = [...matches].reverse().map(match => getMatchRR(match, player))
 
     matches_rr.forEach(match_rr => {
         // al bajar de 0, el rr se queda en 0
-        if (rr_actual - match_rr < 0) {
+        const new_raw_rr = rr_actual + match_rr
+        const rank = Math.floor(rr_actual / 100)
+        const nextRank = Math.floor(new_raw_rr / 100)
+        const won = match_rr > 0
+
+        if (new_raw_rr < 0) {
             rr_actual = 0
         }
         // al pasar un múltiplo de 100 por menos de 10 rr antes de immortal, se le suma lo necesario para pasarlo por 10 rr
-        else if (!isImmortal(rr_actual) && match_rr > 0 && rr_actual % 100 < (rr_actual + match_rr) % 100 && (rr_actual + match_rr) % 100 < 10) {
-            rr_actual += match_rr + (10 - (rr_actual + match_rr) % 100)
+        else if (!isImmortal(rr_actual) && won && rank < nextRank) {
+            // rr_actual += match_rr + (10 - new_raw_rr % 100)
+            // rr_actual = nextRank * 100 + 10
+            rr_actual = Math.max(new_raw_rr, nextRank * 100 + 10)
         }
+        // al pasar un múltiplo de 100 por menos de 10 rr, se le suma lo necesario para pasarlo por 10 rr
+        // no se aplica en immortal (100 rr, 200 rr, etc.)
+        else if (rr_actual < IMMORTAL_ELO + 100 && !won && rank > nextRank && rr_actual > rank * 100) {
+            rr_actual = rank * 100
+        } 
         else {
-            rr_actual += match_rr
+            rr_actual = new_raw_rr
         }
     })
 
@@ -53,9 +65,15 @@ function normalize(acs) {
     return Math.max(0, Math.min(1, (acs - min_acs) / (max_acs - min_acs)))
 }
 
+// transformación no lineal para balancear los performances medios
+function curve(x, p = 2) {
+    return 0.5 + Math.sign(x - 0.5) * Math.pow(Math.abs(x - 0.5) * 2, p) / 2
+}
+
 function getMatchRR(match, player){
     const [playerName, playerTag] = player.split('#')
     const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
+    if (!inMatchPlayer) return 0 // no debería pasar si filtrapos por partidas donde estén ambos jugador
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
 
@@ -141,7 +159,7 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
             console.log(err)
             break
         }
-        willNextSetBeValid = false
+        willNextSetBeValid = false // sacar esto!!!
     }
 
     // filtrar y solo dejar las partidas q este tambien el player 2

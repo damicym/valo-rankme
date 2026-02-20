@@ -4,9 +4,9 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Dev (watch + env)",
-      "runtimeArgs": ["--env-file=.env", "--watch"],
-      "program": "${workspaceFolder}/index.js",
+      "name": "Dev (npm run dev)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     }
