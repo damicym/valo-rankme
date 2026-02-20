@@ -61,9 +61,9 @@ function getPlayerRR(matches, player) {
         }
         // al pasar un múltiplo de 100 por menos de 10 rr antes de immortal, se le suma lo necesario para pasarlo por 10 rr
         else if (!isImmortal(current_rr) && won && rank < nextRank) {
-            // current_rr += match_rr + (10 - new_raw_rr % 100)
-            // current_rr = nextRank * 100 + 10
             current_rr = Math.max(new_raw_rr, nextRank * 100 + 10)
+            // si sube al primer rengo de la división, se le da 2 escudos. Pero si está en hierro 1 no
+            if (current_rr % 300 < 100 && current_rr > 100) shieldLevel = 2
         }
         // al pasar un múltiplo de 100 por menos de 10 rr, se le suma lo necesario para pasarlo por 10 rr
         // no se aplica en immortal (100 rr, 200 rr, etc.)
