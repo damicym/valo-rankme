@@ -122,6 +122,39 @@ function getMatchRR(match, player){
     return Math.round(result)
 }
 
+function extactMatchHistoryInfo(match, player){
+    const [playerName, playerTag] = player.split('#')
+    const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
+    const teamInfo = match.teams.find(t => t.team_id === teamColor)
+
+    const matchClutches = match.rounds.filter(r => r.ceremony === 'CeremonyClutch')
+    const clutches1v2 = matchClutches.filter(c => {
+        const inClutchPlayer = c.stats.find(playerStat => playerStat.player.name === playerName && playerStat.player.tag === playerTag)
+        if (inClutchPlayer.stats.kills === 2) return true
+    })
+    
+    return {
+        map: match.metadata.map.name,
+        date: match.metadata.started_at,
+        agent: inMatchPlayer.agent.name,
+
+        won: teamInfo.won,
+        roundsWon: teamInfo.rounds.won,
+        roundsLost: teamInfo.rounds.lost,
+        
+        kills: inMatchPlayer.stats.kills,
+        deaths: inMatchPlayer.stats.deaths,
+        assists: inMatchPlayer.stats.assists,
+
+        kd: this.kills / this.deaths,
+        acs: Math.round(inMatchPlayer.stats.score / (this.roundsWon + this.roundsLost)),
+        clutches1v2: clutches1v2.length
+        // La API de valorant no guarda la siguiente informacion para Skirmish:
+        // hsPerc: this.kills / inMatchPlayer.stats.headshots,
+        // damageDelta: inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received
+    }
+}
+
 /**
  * 1. fetchear por partidas custom
  * 2. seguir fetcheando hasta que no haya más en el acto
@@ -169,7 +202,8 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
             const usefulMatches = matches.filter(m => (
                 m.metadata.party_rr_penaltys.length > 0 && // no es custom
                 m.metadata.queue.mode_type == 'Skirmish' && // es skirmish
-                m.metadata.season.short == targetAct // es del acto correcto
+                m.metadata.season.short == targetAct && // es del acto correcto
+                m.metadata.is_completed // la partida ya terminó
             ))
             allMatches.push(...usefulMatches)
 
@@ -183,8 +217,5 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
         }
         // willNextSetBeValid = false
     }
-
-    // filtrar y solo dejar las partidas q este tambien el player 2
-
     return allMatches
 }
