@@ -11,13 +11,13 @@ const max_acs = 260.0
 main()
 async function main() {
     const player1Matches = await getMatches(player1)
-    const player2Matches = await getMatches(player2)
+    // const player2Matches = await getMatches(player2)
     const player1Solo_rr = getPlayerRR(player1Matches, player1)
-    const player2Solo_rr = getPlayerRR(player2Matches, player2)
+    // const player2Solo_rr = getPlayerRR(player2Matches, player2)
     const [player1Duo_rr, player2Duo_rr] = getDuoRR(player1Matches, player1, player2)
 
     console.log(`Player 1 individual RR: ${player1Solo_rr}`)
-    console.log(`Player 2 individual RR: ${player2Solo_rr}`)
+    // console.log(`Player 2 individual RR: ${player2Solo_rr}`)
     console.log('-----')
     console.log(`Player 1 duo RR: ${player1Duo_rr}`)
     console.log(`Player 2 duo RR: ${player2Duo_rr}`)
@@ -107,9 +107,10 @@ function getMatchRR(match, player){
 
     let result = 0
     const acs_normalized = normalize(acs)
-    const roundsDiff_normalized = Math.abs(roundsDiff) / 10
+    const roundsDiff_normalized = (won ? Math.abs(roundsDiff) : 10 - Math.abs(roundsDiff)) / 10
 
-    const performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
+    let performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
+    performance = curve(performance)
 
     if (won) {
         result = min_rr + (max_rr - min_rr) * performance
@@ -118,7 +119,7 @@ function getMatchRR(match, player){
         result = min_rr + (max_rr - min_rr) * (1 - performance)
         result = -result
     }
-    return Math.round(curve(result))
+    return Math.round(result)
 }
 
 /**
@@ -180,7 +181,7 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
             console.log(err)
             break
         }
-        willNextSetBeValid = false // sacar esto!!!
+        // willNextSetBeValid = false
     }
 
     // filtrar y solo dejar las partidas q este tambien el player 2
