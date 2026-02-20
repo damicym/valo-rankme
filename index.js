@@ -9,33 +9,46 @@ async function main() {
 }
 
 async function getMatches() {
-    const [playerName, tag] = player1.split('#')
-    const matches = await getPublicSkirmishMatches(playerName, tag, 'latam', 'pc')
+    const [playerName, playerTag] = player1.split('#')
+    const matches = await getPublicSkirmishMatches(playerName, playerTag, 'latam', 'pc')
     return matches
 }
 
 async function getRRFromPlayer(matches, player) {
     var rr = 50
-    const matchesrr = [...matches].reverse().map(match => calcMatchRR(match, player))
-    // TODO: aplicar la fórmula de RR a cada match y sumar el resultado al RR total
+    const matchesRR = [...matches].reverse().map(match => calcMatchRR(match, player))
+    matchesRR.forEach(value => rr+= value)
 }
 
 function calcMatchRR(match, player){
+    const [playerName, playerTag] = player.split('#')
+    const inMatchPlayer = match.metadata.players.find(p => p.name === playerName && p.tag === playerTag)
+    const teamColor = inMatchPlayer.team_id
+    const teamInfo = match.teams.find(t => t.team_id === teamColor)
+
+    const won = teamInfo.won
+    const roundsDiff = teamInfo.rounds.won - teamInfo.rounds.lost
+    const acs = inMatchPlayer.stats.score / teamInfo.rounds.won + teamInfo.rounds.lost
+    const kills = inMatchPlayer.stats.kills
+    const deaths = inMatchPlayer.stats.deaths
+    const assists = inMatchPlayer.stats.assists
+
     let rr = 0
 
     return rr
 }
 
+/**
+ * 1. fetchear por partidas custom
+ * 2. seguir fetcheando hasta que no haya más en el acto
+ * 3. agregar a la lista solo si es skirmish y del acto correcto
+ * 4. si te quedas sin tokens, parar y logear
+ * 
+ * esto funciona porque en la v4.6.0 de HenrikDev API el modo Skirmish: 2v2 no se detecta, pero
+ * se puede conseguir buscando mode: custom -> mode_type: Skirmish -> party_rr_penaltys.lenght > 0 
+ */ 
 async function getPublicSkirmishMatches(playerName, tag, region, platform){
     const MAX_MATCHES_PER_CALL = 10 // el máximo permitido por la API actualmente
-
-    // 1. fetchear por partidas custom
-    // 2. seguir fetcheando hasta que no haya más en el acto
-    // 3. agregar a la lista solo si es skirmish y del acto correcto
-    // 4. si te quedas sin tokens, parar y logear
-    
-    // esto funciona porque en la v4.6.0 de HenrikDev API el modo Skirmish: 2v2 no se detecta, pero
-    // se puede conseguir buscando mode: custom -> mode_type: Skirmish -> party_rr_penaltys.lenght > 0 
     let allMatches = []
     let willNextSetBeValid = true // set of matches
     let targetAct = ''
