@@ -10,19 +10,18 @@ const max_rr = 33
 const min_acs = 80.0
 const max_acs = 260.0
 
-
 export async function twoPlayers(player1, player2) {
     const matches = await getMatches(player1, player2)
 
     return {
         player1: {
-            tag: player1,
-            rr: getPlayerRR(matches, player1),
+            user: player1,
+            rankInfo: getPlayerRank(matches, player1),
             matches: getMatchHistory(matches, player1)
         },
         player2: {
-            tag: player2,
-            rr: getPlayerRR(matches, player2),
+            user: player2,
+            rankInfo: getPlayerRank(matches, player2),
             matches: getMatchHistory(matches, player2)
         },
     }
@@ -33,8 +32,8 @@ export async function onePlayer(player1) {
 
     return {
         player1: {
-            tag: player1,
-            rr: getPlayerRR(matches, player1),
+            user: player1,
+            rankInfo: getPlayerRank(matches, player1),
             matches: getMatchHistory(matches, player1)
         }
     }
@@ -57,7 +56,7 @@ async function getMatches(player1, player2) {
     
 }
 
-function getPlayerRR(matches, player) {
+function getPlayerRank(matches, player) {
     let current_rr = 50
     let shieldLevel = 0
     const matches_rr = [...matches].reverse().map(match => getMatchRR(match, player))
@@ -90,7 +89,7 @@ function getPlayerRR(matches, player) {
         }
     })
 
-    return current_rr
+    return { rr: current_rr, rank: Math.floor(current_rr / 100), shield: shieldLevel}
 }
 
 function getMatchHistory(matches, player) {

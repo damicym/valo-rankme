@@ -3,8 +3,9 @@ import './styles/App.css'
 import { getTwoPlayers } from './libs/api'
 
 function App() {
-    const [player1, setPlayer1] = useState(null)
-    const [player2, setPlayer2] = useState(null)
+    const [player1, setPlayer1] = useState({ state: 'loading' })
+    const [player2, setPlayer2] = useState({ state: 'loading' })
+    const [showPlayers, setShowPlayers] = useState(false)
 
     useEffect(() => {
         const getPlayerData = async() => {
@@ -18,18 +19,29 @@ function App() {
     return (
         <>
             <h1>skirmish ranks</h1>
-            {
-                JSON.stringify(player1)
-            }
-            <br />
-            <br />
-            <div>asdasdsadsadasdasdasdasdasd</div>
-            <br />
-
-            {
-                JSON.stringify(player2)
+            <button onClick={() => setShowPlayers(prev => !prev)}>{!showPlayers ? 'Mostrar jugadores' : 'Esconder Jugadores'}</button>
+            { showPlayers && 
+                <>
+                    <br />
+                    <br />
+                    <br />
+                    <div>jugador 1</div>
+                    <br />
+                    {
+                        JSON.stringify(player1)
+                    }
+                    <br />
+                    <br />
+                    <br />
+                    <div>jugador 2</div>
+                    <br />
+                    {
+                        JSON.stringify(player2)
+                    }
+                </>
             }
         </>
+        
     )
 }
 
