@@ -28,6 +28,18 @@ export async function twoPlayers(player1, player2) {
     }
 }
 
+export async function onePlayer(player1) {
+    const matches = await getMatches(player1)
+
+    return {
+        player1: {
+            tag: player1,
+            rr: getPlayerRR(matches, player1),
+            matches: getMatchHistory(matches, player1)
+        }
+    }
+}
+
 /**
  * Se obtienen las partidas del player1 del último acto
  * Si se pasa un player2, solo devuelve las partidas donde ambos jugadores jugaron en el mismo team
