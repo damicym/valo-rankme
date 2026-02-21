@@ -8,13 +8,15 @@ function App() {
     const [showPlayers, setShowPlayers] = useState(false)
 
     useEffect(() => {
-        const getPlayerData = async() => {
-            const data = await getTwoPlayers()
-            setPlayer1(data.player1)
-            setPlayer2(data.player2)
+        if (showPlayers){
+            const getPlayerData = async() => {
+                const data = await getTwoPlayers()
+                setPlayer1(data.player1)
+                setPlayer2(data.player2)
+            }
+            getPlayerData()
         }
-        getPlayerData()
-    }, [])
+    }, [showPlayers])
 
     return (
         <>
