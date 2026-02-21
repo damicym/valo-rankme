@@ -147,13 +147,17 @@ function getMatchInfo(match, player){
     const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
-
     const matchClutches = match.rounds.filter(r => r.ceremony === 'CeremonyClutch')
+
+    const roundsWon = teamInfo.rounds.won
+    const roundsLost = teamInfo.rounds.lost
+    const kills = inMatchPlayer.stats.kills
+    const deaths = inMatchPlayer.stats.deaths
     const clutches1v2 = matchClutches.filter(c => {
         const inClutchPlayer = c.stats.find(playerStat => playerStat.player.name === playerName && playerStat.player.tag === playerTag)
         if (inClutchPlayer.stats.kills === 2) return true
     })
-    
+
     return {
         rr: getMatchRR(match, player),
         
@@ -162,15 +166,17 @@ function getMatchInfo(match, player){
         agent: inMatchPlayer.agent.name,
 
         won: teamInfo.won,
-        roundsWon: teamInfo.rounds.won,
-        roundsLost: teamInfo.rounds.lost,
+        roundsWon: roundsWon,
+        roundsLost: roundsLost,
         
-        kills: inMatchPlayer.stats.kills,
-        deaths: inMatchPlayer.stats.deaths,
+        kills: kills,
+        deaths: deaths,
         assists: inMatchPlayer.stats.assists,
 
-        kd: inMatchPlayer.stats.kills / inMatchPlayer.stats.deaths,
-        acs: Math.round(inMatchPlayer.stats.score / (teamInfo.rounds.won + teamInfo.rounds.lost)),
+        kd: deaths === 0
+            ? kills
+            : Math.round((kills / deaths) * 100) / 100,
+        acs: Math.round(inMatchPlayer.stats.score / (roundsWon + roundsLost)),
         clutches1v2: clutches1v2.length
         // La API de valorant no guarda la siguiente informacion para Skirmish:
         // hsPerc: this.kills / inMatchPlayer.stats.headshots,
