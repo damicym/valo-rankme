@@ -1,52 +1,53 @@
+import { config } from '../config.js'
+
 const IMMORTAL_ELO = 2100
 
-const player1 = 'domix#640'
-const player2 = 'apel#ado'
+// const player1 = 'domix#640'
+// const player2 = 'apel#ado'
 
 const min_rr = 7
 const max_rr = 33
 const min_acs = 80.0
 const max_acs = 260.0
 
-main()
-async function main() {
-    const player1Matches = await getMatches(player1)
-    // const player2Matches = await getMatches(player2)
-    const player1Solo_rr = getPlayerRR(player1Matches, player1)
-    // const player2Solo_rr = getPlayerRR(player2Matches, player2)
-    const [player1Duo_rr, player2Duo_rr] = getDuoRR(player1Matches, player1, player2)
 
-    console.log(`Player 1 individual RR: ${player1Solo_rr}`)
-    // console.log(`Player 2 individual RR: ${player2Solo_rr}`)
-    console.log('-----')
-    console.log(`Player 1 duo RR: ${player1Duo_rr}`)
-    console.log(`Player 2 duo RR: ${player2Duo_rr}`)
+export async function twoPlayers(player1, player2) {
+    const matches = await getMatches(player1, player2)
+
+    return {
+        player1: {
+            tag: player1,
+            rr: getPlayerRR(matches, player1),
+            matches: getMatchHistory(matches, player1)
+        },
+        player2: {
+            tag: player2,
+            rr: getPlayerRR(matches, player2),
+            matches: getMatchHistory(matches, player2)
+        },
+    }
 }
 
-async function getMatches(player) {
-    const [playerName, playerTag] = player.split('#')
-    const matches = await getPublicSkirmishMatches(playerName, playerTag, 'latam', 'pc')
-    return matches
-}
-
-function isImmortal(rr) {
-    return rr >= IMMORTAL_ELO
-}
-
-function getDuoRR(p1Matches, player1, player2){
+/**
+ * Se obtienen las partidas del player1 del último acto
+ * Si se pasa un player2, solo devuelve las partidas donde ambos jugadores jugaron en el mismo team
+ */
+async function getMatches(player1, player2) {
     const [player1Name, player1Tag] = player1.split('#')
-    const [player2Name, player2Tag] = player2.split('#')
+    const matches = await getPublicSkirmishMatches(player1Name, player1Tag, 'latam', 'pc')
+    if (!player2) return matches
 
-    const duoMatches = p1Matches.filter(m => {
+    const [player2Name, player2Tag] = player2.split('#')
+    return matches.filter(m => {
         const targetTeamColor = m.players.find(p => p.name === player1Name && p.tag === player1Tag).team_id
         return m.players.some(p => p.name === player2Name && p.tag === player2Tag && p.team_id === targetTeamColor)
     })
-    return [getPlayerRR(duoMatches, player1), getPlayerRR(duoMatches, player2)]
+    
 }
 
 function getPlayerRR(matches, player) {
     let current_rr = 50
-    let shieldLevel = 2
+    let shieldLevel = 0
     const matches_rr = [...matches].reverse().map(match => getMatchRR(match, player))
 
     matches_rr.forEach(match_rr => {
@@ -60,7 +61,7 @@ function getPlayerRR(matches, player) {
             current_rr = 0
         }
         // al pasar un múltiplo de 100 por menos de 10 rr antes de immortal, se le suma lo necesario para pasarlo por 10 rr
-        else if (!isImmortal(current_rr) && won && rank < nextRank) {
+        else if (!(current_rr >= IMMORTAL_ELO) && won && rank < nextRank) {
             current_rr = Math.max(new_raw_rr, nextRank * 100 + 10)
             // si sube al primer rengo de la división, se le da 2 escudos. Pero si está en hierro 1 no
             if (current_rr % 300 < 100 && current_rr > 100) shieldLevel = 2
@@ -80,11 +81,18 @@ function getPlayerRR(matches, player) {
     return current_rr
 }
 
+function getMatchHistory(matches, player) {
+    return matches.map(m => getMatchInfo(m, player))
+}
+
+// #region ==================== AUXILIARES ====================
+
 function normalize(acs) {
     return Math.max(0, Math.min(1, (acs - min_acs) / (max_acs - min_acs)))
 }
+
 // transformación no lineal para balancear los performances medios
-function curve(x, p = 2) {
+function curve(x, p = 1.5) {
     return 0.5 + Math.sign(x - 0.5) * Math.pow(Math.abs(x - 0.5) * 2, p) / 2
 }
 
@@ -122,9 +130,11 @@ function getMatchRR(match, player){
     return Math.round(result)
 }
 
-function extactMatchHistoryInfo(match, player){
+
+function getMatchInfo(match, player){
     const [playerName, playerTag] = player.split('#')
     const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
+    const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
 
     const matchClutches = match.rounds.filter(r => r.ceremony === 'CeremonyClutch')
@@ -134,6 +144,8 @@ function extactMatchHistoryInfo(match, player){
     })
     
     return {
+        rr: getMatchRR(match, player),
+        
         map: match.metadata.map.name,
         date: match.metadata.started_at,
         agent: inMatchPlayer.agent.name,
@@ -146,8 +158,8 @@ function extactMatchHistoryInfo(match, player){
         deaths: inMatchPlayer.stats.deaths,
         assists: inMatchPlayer.stats.assists,
 
-        kd: this.kills / this.deaths,
-        acs: Math.round(inMatchPlayer.stats.score / (this.roundsWon + this.roundsLost)),
+        kd: inMatchPlayer.stats.kills / inMatchPlayer.stats.deaths,
+        acs: Math.round(inMatchPlayer.stats.score / (teamInfo.rounds.won + teamInfo.rounds.lost)),
         clutches1v2: clutches1v2.length
         // La API de valorant no guarda la siguiente informacion para Skirmish:
         // hsPerc: this.kills / inMatchPlayer.stats.headshots,
@@ -162,8 +174,8 @@ function extactMatchHistoryInfo(match, player){
  * 4. si te quedas sin tokens, parar y logear
  * 
  * esto funciona porque en la v4.6.0 de HenrikDev API el modo Skirmish: 2v2 no se detecta, pero
- * se puede conseguir buscando mode: custom -> mode_type: Skirmish -> party_rr_penaltys.lenght > 0 
- */ 
+ * se puede conseguir buscando mode: custom -> mode_type: Skirmish -> party_rr_penaltys.length > 0 
+ */
 async function getPublicSkirmishMatches(playerName, tag, region, platform){
     const MAX_MATCHES_PER_CALL = 10 // el máximo permitido por la API actualmente
     let allMatches = []
@@ -177,20 +189,21 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
                 `https://api.henrikdev.xyz/valorant/v4/matches/${region}/${platform}/${playerName}/${tag}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': process.env.HENRIKDEV_ACCESS_TOKEN
+                    'Authorization': config.HENRIKDEV_ACCESS_TOKEN
                 }
             })
             
+            const data = await response.json()
+
             if (!response.ok) {
-                if (response.errors.length > 0) {
-                    throw new Error(`HTTP error ${response.status}, ${JSON.stringify(response.errors)}`)
+                if (data.errors && data.errors.length > 0) {
+                    throw new Error(`HTTP error ${response.status}, ${JSON.stringify(data.errors)}`)
                 }
                 else {
                     throw new Error(`HTTP error ${response.status}`)
                 }
             }
-            
-            const data = await response.json()
+
             const matches = data.data
 
             if (matches.length === 0) break
@@ -219,3 +232,5 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
     }
     return allMatches
 }
+
+// #endregion
