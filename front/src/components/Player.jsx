@@ -13,9 +13,10 @@ function Player({ data }) {
                 <p>{data?.rankInfo?.rr}</p>
             </div>
             <section className="matchContainer">
-            {
-                data?.matches?.map((m, index) => <Match key={index} data={m}></Match>)
-            }
+                {/* fecha */}
+                {
+                    data?.matches?.map((m, index) => <Match key={index} data={m}></Match>)
+                }
             </section>
         </div>
     )
