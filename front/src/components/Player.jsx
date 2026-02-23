@@ -15,7 +15,7 @@ function Player({ data }) {
             <section className="matchContainer">
                 {/* fecha */}
                 {
-                    data?.matches?.map((m, index) => <Match key={index} data={m}></Match>)
+                    data?.matches?.map((m) => <Match key={m.date} data={m}></Match>)
                 }
             </section>
         </div>

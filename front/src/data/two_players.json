@@ -2,11 +2,26 @@
     "player1": {
         "user": "apel#ado",
         "rankInfo": {
-            "rr": 0,
+            "rr": 26,
             "rank": 0,
             "shield": 0
         },
         "matches": [
+            {
+                "rr": 26,
+                "map": "Skirmish B",
+                "date": "2026-02-20T17:05:40.54Z",
+                "agent": "Skye",
+                "won": true,
+                "roundsWon": 10,
+                "roundsLost": 4,
+                "kills": 14,
+                "deaths": 6,
+                "assists": 2,
+                "kd": 2.33,
+                "acs": 246,
+                "clutches1v2": 1
+            },
             {
                 "rr": -20,
                 "map": "Skirmish C",
@@ -18,7 +33,7 @@
                 "kills": 10,
                 "deaths": 11,
                 "assists": 0,
-                "kd": 0.9,
+                "kd": 0.91,
                 "acs": 140,
                 "clutches1v2": 0
             },
@@ -78,7 +93,7 @@
                 "kills": 10,
                 "deaths": 13,
                 "assists": 1,
-                "kd": 0.76,
+                "kd": 0.77,
                 "acs": 153,
                 "clutches1v2": 0
             },
@@ -117,11 +132,26 @@
     "player2": {
         "user": "domix#640",
         "rankInfo": {
-            "rr": 0,
+            "rr": 19,
             "rank": 0,
             "shield": 0
         },
         "matches": [
+            {
+                "rr": 19,
+                "map": "Skirmish B",
+                "date": "2026-02-20T17:05:40.54Z",
+                "agent": "Viper",
+                "won": true,
+                "roundsWon": 10,
+                "roundsLost": 4,
+                "kills": 8,
+                "deaths": 8,
+                "assists": 0,
+                "kd": 1,
+                "acs": 142,
+                "clutches1v2": 1
+            },
             {
                 "rr": -21,
                 "map": "Skirmish C",
@@ -133,7 +163,7 @@
                 "kills": 8,
                 "deaths": 12,
                 "assists": 1,
-                "kd": 0.66,
+                "kd": 0.67,
                 "acs": 133,
                 "clutches1v2": 0
             },
