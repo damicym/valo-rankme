@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import './styles/App.css'
 import { getTwoPlayers } from './libs/api'
 import twoPlayersLocal from './data/two_players.json'
+import Player from './components/Player'
 
 function App() {
-    const [player1, setPlayer1] = useState({ state: 'loading' })
-    const [player2, setPlayer2] = useState({ state: 'loading' })
+    const [player1Data, setPlayer1Data] = useState({ state: 'loading' })
+    const [player2Data, setPlayer2Data] = useState({ state: 'loading' })
     const [showPlayers, setShowPlayers] = useState(false)
     const [enableAPI, setEnableAPI] = useState(false)
 
@@ -13,8 +13,8 @@ function App() {
         if (showPlayers){
             const getPlayerData = async() => {
                 const data = enableAPI ? await getTwoPlayers() : twoPlayersLocal
-                setPlayer1(data.player1)
-                setPlayer2(data.player2)
+                setPlayer1Data(data.player1)
+                setPlayer2Data(data.player2)
             }
             getPlayerData()
         }
@@ -26,24 +26,10 @@ function App() {
             <button onClick={() => setEnableAPI(prev => !prev)}>{enableAPI ? 'Usando API 🌐' : 'Usando datos locales 📜'}</button>
             <button onClick={() => setShowPlayers(prev => !prev)}>{!showPlayers ? 'Mostrar jugadores' : 'Esconder Jugadores'}</button>
             { showPlayers && 
-                <>
-                    <br />
-                    <br />
-                    <br />
-                    <div>jugador 1</div>
-                    <br />
-                    {
-                        JSON.stringify(player1)
-                    }
-                    <br />
-                    <br />
-                    <br />
-                    <div>jugador 2</div>
-                    <br />
-                    {
-                        JSON.stringify(player2)
-                    }
-                </>
+                <div className='playerContainer'>
+                    <Player data={player1Data} />
+                    <Player data={player2Data} />
+                </div>
             }
         </>
         

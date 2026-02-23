@@ -1,73 +1,59 @@
-:root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
+@import url('https://fonts.googleapis.com/css2?family=Cause:wght@100..900&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+*, *::after, *::before{
+    box-sizing: border-box;
+}
+#root{
+    width: 100%;
 }
 
-a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
+body, html{
+    margin: 0;
+    padding: 0;
+    width: 100%;
 }
 
-a:hover {
-    color: #535bf2;
+html{ /* https://coolors.co/palette/3a015c-32004f-220135-190028-11001c /// https://coolors.co/palette/23003a-270040-340452-3d0c5c-451365-4c1c62-41005b-38004f-2f0042-230030 */
+    --bgSecondary: #220135;
+    --bg: #190028;
+    --text: #E7E5E8;
+    --green: #27a300; /* 005c00, 2d661b, 2a850e -> https://coolors.co/palette/5c0000-751717-ba0c0c-ff0000-ffebeb-ecffeb-27a300-2a850e-2d661b-005c00 */
+    --red: #941b0c;
+    --yellow: #f6aa1c;
 }
 
 body {
-    margin: 0;
     display: flex;
-    /* place-items: center; */
-    min-width: 320px;
-    min-height: 100vh;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: "Cause", cursive;
+    font-optical-sizing: auto;
+    font-style: normal;
 }
 
-h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
+.matchContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* width: 100%; */
+    background-color: var(--bgSecondary);
+    gap: 20px;
+    padding: 20px;
+    border-radius: 28px;
+    border: 1px solid #32004F;
 }
 
-button {
+.match{
+    width: 100%;
+    display: flex;
+    gap: 90px;
+    border: 1px solid #32004F;
     border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    background-color: #1a1a1a;
-    cursor: pointer;
-    transition: border-color 0.25s;
+    padding: 10px;
 }
 
-button:hover {
-    border-color: #646cff;
-}
-
-button:focus,
-button:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-    :root {
-        color: #213547;
-        background-color: #ffffff;
-    }
-
-    a:hover {
-        color: #747bff;
-    }
-
-    button {
-        background-color: #f9f9f9;
-    }
+.player{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
