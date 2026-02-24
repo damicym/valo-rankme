@@ -3,21 +3,29 @@ import agents from '../data/agents.json'
 import ranks from '../data/ranks.json'
 
 function Match({ data }) {
+
+    // function getOrdinalSuffixe(n){
+    //     return n === 1 ? 
+    //     'st' : n === 2 ? 
+    //     'nd' : n === 3 ? 
+    //     'rd' : n > 3 ? 
+    //     'th' : ''
+    // }
+
     return (
         <div 
             className="match"
-            style={data?.won ? { borderColor: 'var(--green)', backgroundColor: 'rgba(39, 163, 0, 0.25)' } : { borderColor: 'auto', backgroundColor: 'auto' }}
+            style={data?.won ? { borderColor: 'var(--green)', backgroundColor: 'var(--greenT)' } : { borderColor: 'var(--border)', backgroundColor: 'var(--borderT)' }}
         >
             <div 
                 className="matchColorDetail"
                 style={data?.won ? { backgroundColor: 'var(--green)', filter: 'drop-shadow(0px 0px 10px var(--green))' } : { backgroundColor: 'var(--red)' }}
             ></div>
             <div className="leftSide">
-                <img className='agentIcon' src={agents.find(a => a.name === data.agent).icon} alt={`${data.agent}-icon`}/>
+                <img className='agentIcon' src={agents.find(a => a.name === data?.agent)?.icon} alt={`${data?.agent}-icon`}/>
                 <p>{data?.map}</p>
-                {/* <p className="pill place">{data?.place}</p> */}
                 <div className="matchField rankField">
-                    <img className='rankIcon' src={ranks.find(r => r.tier == 23).icon} alt={/* poner bien */`23-icon`}/>
+                    <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon} alt={`${data?.rank}-icon`}/>
                     <p
                         style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}
                     >{data?.won && '+'}{data?.rr}</p>
@@ -49,6 +57,7 @@ function Match({ data }) {
             <div className="rightSide">
                 <section className="pillContainer">
                     {/* más pills? -> clutches1v1, rondas seguidas sin morir */}
+                    {/* <p className="pill placePill">{data?.place}{getOrdinalSuffixe(data?.place)}</p> */}
                     { data?.clutches1v2 > 0 &&
                     <span 
                         className="pill" 
@@ -62,14 +71,13 @@ function Match({ data }) {
                     }
                 </section>
                 <div className="matchField statField">
-                    <span>{data?.kills}K//{data?.deaths}D//{data?.assists}A</span>
+                    <span>{data?.kills}/{data?.deaths}/{data?.assists}</span>
                     <p>{data?.kd} K/D</p>
                 </div>
                 <div className="matchField statField">
                     <span>ACS</span>
                     <p>{data?.acs}</p>
                 </div>
-                {/* <button> svg abrir partida en tracker (talvez afuera del match, como el de replay)</button> */}
                 </div>
         </div>
     )

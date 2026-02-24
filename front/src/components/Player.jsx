@@ -12,6 +12,7 @@ function Player({ data }) {
                 <p>{data?.rankInfo?.shield}</p>
                 <p>{data?.rankInfo?.rr}</p>
             </div>
+            {/* promedios */}
             <section className="matchContainer">
                 {/* fecha */}
                 {

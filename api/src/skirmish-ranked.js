@@ -93,7 +93,12 @@ function getPlayerRank(matches, player) {
 }
 
 function getMatchHistory(matches, player) {
-    return matches.map(m => getMatchInfo(m, player))
+    const chronological = [...matches].reverse()
+    const chronologicalMatches = chronological.map((m, index) => {
+        const previousMatches = chronological.slice(0, index)
+        return getMatchInfo(m, player, previousMatches)
+    })
+    return [...chronologicalMatches].reverse()
 }
 
 // #region ==================== AUXILIARES ====================
@@ -142,7 +147,7 @@ function getMatchRR(match, player){
 }
 
 
-function getMatchInfo(match, player){
+function getMatchInfo(match, player, previousMatches){
     const [playerName, playerTag] = player.split('#')
     const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
     const teamColor = inMatchPlayer.team_id
@@ -157,9 +162,16 @@ function getMatchInfo(match, player){
         const inClutchPlayer = c.stats.find(playerStat => playerStat.player.name === playerName && playerStat.player.tag === playerTag)
         if (inClutchPlayer.stats.kills === 2) return true
     })
+    const scores = match.players
+        .map(p => ({
+            player: `${p.name}${'#'}${p.tag}`,
+            score: p.stats.score
+        }))
+        .sort((a, b) => b.score - a.score)
 
     return {
         rr: getMatchRR(match, player),
+        rank: getPlayerRank(previousMatches, player).rank,
         
         map: match.metadata.map.name,
         date: match.metadata.started_at,
@@ -169,6 +181,7 @@ function getMatchInfo(match, player){
         roundsWon: roundsWon,
         roundsLost: roundsLost,
         
+        place: scores.findIndex(p => p.player === player) + 1,
         kills: kills,
         deaths: deaths,
         assists: inMatchPlayer.stats.assists,
