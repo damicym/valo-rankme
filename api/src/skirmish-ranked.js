@@ -146,7 +146,6 @@ function getMatchRR(match, player){
     return Math.round(result)
 }
 
-
 function getMatchInfo(match, player, previousMatches){
     const [playerName, playerTag] = player.split('#')
     const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
@@ -165,10 +164,13 @@ function getMatchInfo(match, player, previousMatches){
     const scores = match.players
         .map(p => ({
             player: `${p.name}${'#'}${p.tag}`,
+            team: p.team_id,
             score: p.stats.score
         }))
         .sort((a, b) => b.score - a.score)
-
+    const place = scores.findIndex(p => p.player === player) + 1
+    const allyPlace = scores.findIndex(p => p.team === teamColor && p.player !== player) + 1
+    
     return {
         rr: getMatchRR(match, player),
         rank: getPlayerRank(previousMatches, player).rank,
@@ -181,7 +183,10 @@ function getMatchInfo(match, player, previousMatches){
         roundsWon: roundsWon,
         roundsLost: roundsLost,
         
-        place: scores.findIndex(p => p.player === player) + 1,
+        place: place,
+        isTeamMVP: place < allyPlace,
+        clutches1v2: clutches1v2.length,
+
         kills: kills,
         deaths: deaths,
         assists: inMatchPlayer.stats.assists,
@@ -190,7 +195,6 @@ function getMatchInfo(match, player, previousMatches){
             ? kills
             : Math.round((kills / deaths) * 100) / 100,
         acs: Math.round(inMatchPlayer.stats.score / (roundsWon + roundsLost)),
-        clutches1v2: clutches1v2.length
         // La API de valorant no guarda la siguiente informacion para Skirmish:
         // hsPerc: this.kills / inMatchPlayer.stats.headshots,
         // damageDelta: inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received

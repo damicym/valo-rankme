@@ -4,13 +4,13 @@ import ranks from '../data/ranks.json'
 
 function Match({ data }) {
 
-    // function getOrdinalSuffixe(n){
-    //     return n === 1 ? 
-    //     'st' : n === 2 ? 
-    //     'nd' : n === 3 ? 
-    //     'rd' : n > 3 ? 
-    //     'th' : ''
-    // }
+    function getOrdinalSuffixe(n){
+        return n === 1 ? 
+        'st' : n === 2 ? 
+        'nd' : n === 3 ? 
+        'rd' : n > 3 ? 
+        'th' : ''
+    }
 
     return (
         <div 
@@ -57,10 +57,18 @@ function Match({ data }) {
             <div className="rightSide">
                 <section className="pillContainer">
                     {/* más pills? -> clutches1v1, rondas seguidas sin morir */}
-                    {/* <p className="pill placePill">{data?.place}{getOrdinalSuffixe(data?.place)}</p> */}
+                    <p 
+                        className="pill"
+                        style={data?.place === 1 ? { borderColor: 'var(--yellow)', color: 'var(--yellow)' } : { borderColor: 'var(--text)', color: 'var(--text)' }}
+                    >
+                        {data?.place === 1 ? 'MVP' : `${data?.place}${getOrdinalSuffixe(data?.place)}`}
+                    </p>
+                    { data?.isTeamMVP && data?.place !== 1 &&
+                        <p className="pill">Team MVP</p>
+                    }
                     { data?.clutches1v2 > 0 &&
                     <span 
-                        className="pill" 
+                        className="pill multpliablePill" 
                         style={{paddingRight: data?.clutches1v2 === 1 ? '8px' : '0'}}
                     >
                         1v2 Clutch
