@@ -5,7 +5,6 @@ function Match({ data }) {
         <div 
             className="match"
             style={data?.won ? { borderColor: 'var(--green)', backgroundColor: 'rgba(39, 163, 0, 0.25)' } : { borderColor: 'auto', backgroundColor: 'auto' }}
-            // fondo
         >
             <div 
                 className="matchColorDetail"
@@ -32,13 +31,11 @@ function Match({ data }) {
 
                 <p>
                     <span
-                        // style={{color: data?.won ? 'var(--green)' : 'auto'}}
-                        style={data?.won ? { color: 'var(--green)', fontSize: '1.45rem' } : { color: 'auto', fontSize: 'auto' }}
+                        style={{color: data?.won ? 'var(--green)' : 'auto'}}
                     >
                         {data?.roundsWon}
                     </span> : <span
-                        // style={{color: data?.won ? 'auto' : 'var(--red)'}}
-                        style={!data?.won ? { color: 'var(--red)', fontSize: '1.45rem' } : { color: 'auto', fontSize: 'auto' }}
+                        style={{color: data?.won ? 'auto' : 'var(--red)'}}
                     >
                         {data?.roundsLost}
                     </span>
@@ -49,25 +46,26 @@ function Match({ data }) {
                 <section className="pillContainer">
                     {/* más pills? -> clutches1v1, rondas seguidas sin morir */}
                     { data?.clutches1v2 > 0 &&
-                        <div className="pill">
-                            <p>
-                                1v2 Clutch
-                            { data?.clutches1v2 > 1 &&
-                                <p className="pillMultiplier">x{data?.clutches1v2}</p>
-                            }
-                            </p>
-                        </div>
+                    <span 
+                        className="pill" 
+                        style={{paddingRight: data?.clutches1v2 === 1 ? '8px' : '0'}}
+                    >
+                        1v2 Clutch
+                    { data?.clutches1v2 > 1 &&
+                        <span className="pillMultiplier">x{data?.clutches1v2}</span>
+                    }
+                    </span>
                     }
                 </section>
                 <div className="matchField statField">
-                    <span>{data?.kills} K // {data?.deaths} D // {data?.assists} A</span>
+                    <span>{data?.kills}K//{data?.deaths}D//{data?.assists}A</span>
                     <p>{data?.kd} K/D</p>
                 </div>
                 <div className="matchField statField">
                     <span>ACS</span>
                     <p>{data?.acs}</p>
                 </div>
-                {/* <button> svg abrir partida en tracker </button> */}
+                {/* <button> svg abrir partida en tracker (talvez afuera del match, como el de replay)</button> */}
                 </div>
         </div>
     )
