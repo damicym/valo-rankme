@@ -1,4 +1,6 @@
 // import { useEffect, useState } from 'react'
+import agents from '../data/agents.json'
+import ranks from '../data/ranks.json'
 
 function Match({ data }) {
     return (
@@ -11,11 +13,11 @@ function Match({ data }) {
                 style={data?.won ? { backgroundColor: 'var(--green)', filter: 'drop-shadow(0px 0px 10px var(--green))' } : { backgroundColor: 'var(--red)' }}
             ></div>
             <div className="leftSide">
-                {/* svg agent */}
+                <img className='agentIcon' src={agents.find(a => a.name === data.agent).icon} alt={`${data.agent}-icon`}/>
                 <p>{data?.map}</p>
                 {/* <p className="pill place">{data?.place}</p> */}
                 <div className="matchField rankField">
-                    {/* svg rango que tenia antes de jugar esa partida*/}
+                    <img className='rankIcon' src={ranks.find(r => r.tier == 23).icon} alt={/* poner bien */`23-icon`}/>
                     <p
                         style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}
                     >{data?.won && '+'}{data?.rr}</p>
@@ -29,12 +31,14 @@ function Match({ data }) {
                     {data?.won ? 'VICTORIA' : 'DERROTA'}
                 </span>
 
-                <p>
+                <p className="resultRounds">
                     <span
                         style={{color: data?.won ? 'var(--green)' : 'auto'}}
                     >
                         {data?.roundsWon}
-                    </span> : <span
+                    </span>
+                    <span>&nbsp;:&nbsp;</span>
+                    <span
                         style={{color: data?.won ? 'auto' : 'var(--red)'}}
                     >
                         {data?.roundsLost}
