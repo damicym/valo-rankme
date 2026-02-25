@@ -2,7 +2,7 @@
 import agents from '../data/agents.json'
 import ranks from '../data/ranks.json'
 
-function Match({ data }) {
+function Match({ index, data }) {
 
     function getOrdinalSuffixe(n){
         return n === 1 ? 
@@ -15,7 +15,7 @@ function Match({ data }) {
     return (
         <div 
             className="match"
-            style={data?.won ? { borderColor: 'var(--green)', backgroundColor: 'var(--greenT)' } : { borderColor: 'var(--border)', backgroundColor: 'var(--borderT)' }}
+            style={data?.won ? { borderColor: 'var(--green)', backgroundColor: index % 2 === 0 ? 'var(--greenT)' : 'var(--greenT2)' } : { borderColor: 'var(--border)', backgroundColor: index % 2 === 0 ? 'var(--borderT)' : 'var(--borderT2)' }}
         >
             <div 
                 className="matchColorDetail"
@@ -45,7 +45,7 @@ function Match({ data }) {
                     >
                         {data?.roundsWon}
                     </span>
-                    <span>&nbsp;:&nbsp;</span>
+                    <span style={{textAlign: 'center', width: '18px'}}>:</span>
                     <span
                         style={{color: data?.won ? 'auto' : 'var(--red)'}}
                     >
@@ -79,12 +79,12 @@ function Match({ data }) {
                     }
                 </section>
                 <div className="matchField statField">
-                    <span>{data?.kills}/{data?.deaths}/{data?.assists}</span>
-                    <p>{data?.kd} K/D</p>
+                    <span className='kda'>{data?.kills} <span style={{opacity: 0.6}}>/</span> {data?.deaths} <span style={{opacity: 0.6}}>/</span> {data?.assists}</span>
+                    <p style={{color: data?.kd < 1 ? 'var(--red)' : data?.kd < 1.8 ? 'var(--text)' : 'var(--yellow)'}}>{data?.kd} K/D</p>
                 </div>
                 <div className="matchField statField">
                     <span>ACS</span>
-                    <p>{data?.acs}</p>
+                    <p style={{color: data?.acs < 120 ? 'var(--red)' : data?.acs < 240 ? 'var(--text)' : 'var(--yellow)'}}>{data?.acs}</p>
                 </div>
                 </div>
         </div>
