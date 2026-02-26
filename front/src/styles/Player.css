@@ -1,24 +1,32 @@
-.player, .playerInfo{
+.site, .playerRank{
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.player{
+.site{
     gap: 65px;
 }
 
-.playerInfo{
-    gap: 25px;
+.playerContainer{
+    display: flex;
+    gap: 50px;
+    height: 300px;
+    align-items: flex-end;
 }
 
-.playerInfo .rankIcon{
-    width: 150px;
+.playerRank{
+    gap: 25px;
+    transform-origin: bottom center;
+}
+
+.playerRank .rankIcon{
+    width: 120px;
 }
 
 .user{
     color: var(--text);
-    font-size: 1.35rem;
+    font-size: 1.3rem;
     margin-bottom: 10px;
     display: flex;
     align-items: end;
@@ -26,7 +34,7 @@
 }
 
 .user span{
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     opacity: 0.7;
     margin-bottom: 1px;
 }
@@ -35,7 +43,7 @@
     font-family: "Ubuntu", sans-serif;
     font-weight: 550;
     letter-spacing: 1.7px;
-    font-size: 1.8rem;
+    font-size: 1.9rem;
     margin: 0;
 }
 
@@ -65,7 +73,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .rr{
@@ -80,11 +88,10 @@
 }
 
 .progressBar{
-    background-color: var(--text);
-    opacity: 0.8;
+    background-color: var(--textT);
     height: 10px;
-    width: 320px; 
-    border-radius: 3px;
+    width: 380px; 
+    border-radius: 4px;
     position: relative;
     display: flex;
     align-items: center;

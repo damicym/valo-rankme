@@ -3,11 +3,10 @@ import Match from "./Match"
 import ranks from '../data/ranks.json'
 import shields from '../data/shields.json'
 
-function Player({ data }) {
+function PlayerRank({ data, /* isMain */ }) { 
 
     return (
-        <div className="player" key={data?.user}>
-            <div className="playerInfo">
+            <div className="playerRank" /* style={{transform: !isMain ? 'scale(0.85)' : 'scale(1)', marginBottom: !isMain ? '5px' : '0'}} */>
                 <p className="user">{data?.user?.split('#')[0]}<span>#{data?.user?.split('#')[1]}</span></p>
                 <img className='rankIcon' src={ranks.find(r => r.tier == data?.rankInfo?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rankInfo?.rank}_rank_icon`}/>
                 <p className="rankTitle" style={{color: ranks.find(r => r.tier == data?.rankInfo?.rank)?.color}}>{ranks.find(r => r.tier == data?.rankInfo?.rank)?.es_name}</p>
@@ -20,8 +19,8 @@ function Player({ data }) {
                             <div 
                                 className="progressBarInner" 
                                 style={ data?.rankInfo?.rank < 21 
-                                    ? {borderRadius: '3px 0 0 3px', width: `${data?.rankInfo?.rr / 100 * 312}px`}
-                                    : {borderRadius: '3px 3px 3px 3px', width: '312px'}
+                                    ? {borderRadius: '4px 0 0 4px', width: `${data?.rankInfo?.rr / 100 * 312}px`}
+                                    : {borderRadius: '4px 4px 4px 4px', width: '312px'}
                                 }
                             ></div>
                         </div>
@@ -36,15 +35,7 @@ function Player({ data }) {
                     </div>
                 </div>
             </div>
-            {/* promedios */}
-            <section className="matchContainer">
-                {/* fecha */}
-                {
-                    data?.matches?.map((m, index) => <Match key={m.date} index={index} data={m}></Match>)
-                }
-            </section>
-        </div>
     )
 }
 
-export default Player
+export default PlayerRank

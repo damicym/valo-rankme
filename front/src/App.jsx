@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getTwoPlayers } from './libs/api'
 import twoPlayersLocal from './data/two_players.json'
-import Player from './components/Player'
+import PlayerRank from './components/Player'
+import Match from './components/Match'
 
 function App() {
     const [player1Data, setPlayer1Data] = useState({ state: 'loading' })
@@ -29,9 +30,18 @@ function App() {
             <button onClick={() => setEnableAPI(prev => !prev)}>{enableAPI ? 'Usando API 🌐' : 'Usando datos locales 📜'}</button>
             <button onClick={() => setShowPlayers(prev => !prev)}>{!showPlayers ? 'Mostrar jugadores' : 'Esconder Jugadores'}</button>
             { showPlayers && 
-                <div className='playerContainer'>
-                    <Player data={player1Data} />
-                    <Player data={player2Data} />
+                <div className="site">
+                    <div className='playerContainer'>
+                        <PlayerRank data={player1Data} isMain={true} />
+                        <PlayerRank data={player2Data} isMain={false} />
+                    </div>
+                    {/* promedios */}
+                    <section className="matchContainer">
+                        {/* fecha */}
+                        {
+                            player1Data?.matches?.map((m, index) => <Match key={m.date} index={index} data={m}></Match>)
+                        }
+                    </section>
                 </div>
             }
         </>
