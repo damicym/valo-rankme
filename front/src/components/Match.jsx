@@ -22,10 +22,10 @@ function Match({ index, data }) {
                 style={data?.won ? { backgroundColor: 'var(--green)', filter: 'drop-shadow(0px 0px 10px var(--green))' } : { backgroundColor: 'var(--red)' }}
             ></div>
             <div className="leftSide">
-                <img className='agentIcon' src={agents.find(a => a.name === data?.agent)?.icon} alt={`${data?.agent}-icon`}/>
+                <img className='agentIcon' src={agents.find(a => a.name === data?.agent)?.icon} alt={`${data?.agent}_agent_icon`}/>
                 <p>{data?.map}</p>
                 <div className="matchField rankField">
-                    <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rank}-icon`}/>
+                    <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rank}_rank_icon`}/>
                     <p
                         style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}
                     >{data?.won && '+'}{data?.rr}</p>

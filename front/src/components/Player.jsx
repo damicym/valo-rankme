@@ -1,6 +1,7 @@
 // import { useEffect, useState } from 'react'
 import Match from "./Match"
 import ranks from '../data/ranks.json'
+import shields from '../data/shields.json'
 
 function Player({ data }) {
 
@@ -8,12 +9,22 @@ function Player({ data }) {
         <div className="player" key={data?.user}>
             <div className="playerInfo">
                 <p className="user">{data?.user?.split('#')[0]}<span>#{data?.user?.split('#')[1]}</span></p>
-                <img className='rankIcon' src={ranks.find(r => r.tier == data?.rankInfo?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rankInfo?.rank}-icon`}/>
-                <p className="rankTitle">{ranks.find(r => r.tier == data?.rankInfo?.rank)?.name}</p>
+                <img className='rankIcon' src={ranks.find(r => r.tier == data?.rankInfo?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rankInfo?.rank}_rank_icon`}/>
+                <p className="rankTitle" style={{color: ranks.find(r => r.tier == data?.rankInfo?.rank)?.color}}>{ranks.find(r => r.tier == data?.rankInfo?.rank)?.es_name}</p>
                 <div className="rankProgress">
                     <div className="progressBarContainer">
-                        <p className="shield">{data?.rankInfo?.shield}</p>
-                        <div style={{backgroundColor: 'var(--green)', height: '8px', width: '320px', borderRadius: '3px'}}></div>
+                        { data?.rankInfo?.shield > 0 &&
+                            <img className="shield" src={shields.find(s => s.level == data?.rankInfo?.shield)?.icon} alt={`${data?.rankInfo?.shield}_shield_icon`}/>
+                        }
+                        <div className="progressBar">
+                            <div 
+                                className="progressBarInner" 
+                                style={ data?.rankInfo?.rank < 21 
+                                    ? {borderRadius: '3px 0 0 3px', width: `${data?.rankInfo?.rr / 100 * 312}px`}
+                                    : {borderRadius: '3px 3px 3px 3px', width: '312px'}
+                                }
+                            ></div>
+                        </div>
                     </div>
                     <div className="rrContainer">
                         <span>RANK RATING</span>

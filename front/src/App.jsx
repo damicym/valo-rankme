@@ -20,6 +20,9 @@ function App() {
         }
     }, [showPlayers, enableAPI])
 
+    // useEffect(() => {
+    // }, [])
+
     return (
         <>
             <h1>skirmish ranks</h1>
