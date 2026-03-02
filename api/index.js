@@ -6,20 +6,20 @@ app.listen(app.get('port'), () => {
     console.log(`   - Server is running on port ${app.get('port')}`)
 })
 
-app.use('/api/two-players/:player1_puuid/:player2_puuid', async (req, res) => {
+app.use('/api/two-players/:player1/:player2', async (req, res) => {
     try {
-        const { player1_puuid, player2_puuid } = req.params
-        const result = await twoPlayers(player1_puuid, player2_puuid)
+        const { player1, player2 } = req.params
+        const result = await twoPlayers(player1, player2)
         res.status(200).json(result)
     } catch (error) {
         res.status(500).json({ message: 'An error occurred', error: error.message })
     }
 })
 
-app.use('/api/one-player/:player1_puuid', async (req, res) => {
+app.use('/api/one-player/:player1', async (req, res) => {
     try {
-        const player1_puuid = req.params.player1_puuid
-        const result = await onePlayer(player1_puuid)
+        const player1 = req.params.player1
+        const result = await onePlayer(player1)
         res.status(200).json(result)
     } catch (error) {
         res.status(500).json({ message: 'An error occurred', error: error.message })

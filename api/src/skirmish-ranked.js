@@ -7,24 +7,32 @@ const max_rr = 33
 const min_acs = 80.0
 const max_acs = 260.0
 
-export async function twoPlayers(player1_puuid, player2_puuid) {
-    const matches = await getMatches(player1_puuid, player2_puuid)
+export async function twoPlayers(player1, player2) {
+    const [player1Name, player1Tag] = player1.split('#')
+    const lastMatch = await getLastMatch(player1Name, player1Tag, 'latam', 'pc')
+    const player1_puuid = lastMatch.players.find(p => p.name === player1Name && p.tag === player1Tag).puuid
+
+    const { matches, player2_puuid } = await getMatches(player1_puuid, player2)
+    if (!matches || matches.length === 0) return
 
     const player1Data = {
-        // user: player1,
         rankInfo: getPlayerRank(matches, player1_puuid),
         matches: getMatchHistory(matches, player1_puuid)
     }
     const player2Data = {
-        // user: player2,
         rankInfo: getPlayerRank(matches, player2_puuid),
         matches: getMatchHistory(matches, player2_puuid)
     }
     return { player1: player1Data, player2: player2Data }   
 }
 
-export async function onePlayer(player1_puuid) {
+export async function onePlayer(player1) {
+    const [player1Name, player1Tag] = player1.split('#')
+    const lastMatch = await getLastMatch(player1Name, player1Tag, 'latam', 'pc')
+    const player1_puuid = lastMatch.players.find(p => p.name === player1Name && p.tag === player1Tag).puuid
+
     const matches = await getMatches(player1_puuid)
+    if (!matches || matches.length === 0) return
 
     const player1Data = {
         // user: player1,
@@ -43,7 +51,8 @@ export async function getPlayer_puuid(player) {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+                // 'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+                'Authorization': 'HDEV-1c26e37d-9512-40ef-a85e-003d2b7bf6af'
             }
         })
         const data = await response.json()
@@ -68,20 +77,66 @@ export async function getPlayer_puuid(player) {
 }
 
 /**
+ * Esta función tambien se usa para eliminar el cache interno de HenrikDevAPIv4.6.0 que usa en partidas custom
+ */
+async function getLastMatch(name, tag, region, platform){
+    let lastMatch
+    try{
+        const url = `https://api.henrikdev.xyz/valorant/v4/matches/${region}/${platform}/${name}/${tag}?size=1`
+        // console.log(`fetch clear-cache: matches/${region}/${platform}/${name}/${tag}?size=1`)
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                // 'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+                'Authorization': 'HDEV-1c26e37d-9512-40ef-a85e-003d2b7bf6af'
+            }
+        })
+        
+        const data = await response.json()
+
+        if (!response.ok) {
+            if (data.errors && data.errors.length > 0) {
+                throw new Error(`HTTP error ${response.status}, ${JSON.stringify(data.errors)}`)
+            }
+            else {
+                throw new Error(`HTTP error ${response.status}`)
+            }
+        }
+
+        lastMatch = data.data[0]
+    } catch(err){
+        console.log('Error at clearMatchlistCache():' + err)
+    }
+    return lastMatch
+}
+
+/**
  * Se obtienen las partidas del player1 del último acto
  * Si se pasa un player2, solo devuelve las partidas donde ambos jugadores jugaron en el mismo team
  */
-async function getMatches(player1_puuid, player2_puuid) {
+async function getMatches(player1_puuid, player2) {
     const matches = await getPublicSkirmishMatches(player1_puuid, 'latam', 'pc')
     // console.log("almost returning at getMatches() / NOT player2_puuid")
-    if (!player2_puuid) return matches
+    if (!player2) return matches
+    
+    const [player2Name, player2Tag] = player2.split('#')
+    let inMatchPlayer2
+    for (const match of matches) {
+        inMatchPlayer2 = match.players.find(
+            p => p.name === player2Name && p.tag === player2Tag
+        )
+        if (inMatchPlayer2) break
+    }
+
+    const player2_puuid = inMatchPlayer2?.puuid
+    if (!player2_puuid) return
     
     const duoMatches = matches.filter(m => {
         const targetTeamColor = m.players.find(p => p.puuid === player1_puuid).team_id
         return m.players.some(p => p.puuid === player2_puuid && p.team_id === targetTeamColor)
     })
     // console.log("almost returning at getMatches() / player2_puuid")
-    return duoMatches
+    return { matches: duoMatches, player2_puuid }
 }
 
 function getPlayerRank(matches, puuid) {
@@ -267,9 +322,8 @@ async function getPublicSkirmishMatches(puuid, region, platform){
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': config.HENRIKDEV_ACCESS_TOKEN,
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
+                    // 'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+                    'Authorization': 'HDEV-1c26e37d-9512-40ef-a85e-003d2b7bf6af'
                 }
             })
             

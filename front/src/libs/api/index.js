@@ -1,7 +1,7 @@
 
-export async function getTwoPlayers(player1_puuid /* = 'b44826bc-ba3f-5988-b4fc-186535663b80' */, player2_puuid /* = '9c10981a-3fc4-5eb4-9a3f-8e3008aeaa20' */) {
+export async function getTwoPlayers(player1, player2) {
     try {
-        const url = `${import.meta.env.VITE_API_URL}/api/two-players/${encodeURIComponent(player1_puuid)}/${encodeURIComponent(player2_puuid)}`
+        const url = `${import.meta.env.VITE_API_URL}/api/two-players/${encodeURIComponent(player1)}/${encodeURIComponent(player2)}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -19,9 +19,9 @@ export async function getTwoPlayers(player1_puuid /* = 'b44826bc-ba3f-5988-b4fc-
     }
 }
 
-export async function getOnePlayer(player1_puuid /* = '9c10981a-3fc4-5eb4-9a3f-8e3008aeaa20' */) {
+export async function getOnePlayer(player1) {
     try {
-        const url = `${import.meta.env.VITE_API_URL}/api/one-player/${encodeURIComponent(player1_puuid)}`
+        const url = `${import.meta.env.VITE_API_URL}/api/one-player/${encodeURIComponent(player1)}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -39,7 +39,7 @@ export async function getOnePlayer(player1_puuid /* = '9c10981a-3fc4-5eb4-9a3f-8
     }
 }
 
-export async function getPlayer_puuid(player1 /* = 'domix#640' */) {
+export async function getPlayer_puuid(player1) {
     try {
         const url = `${import.meta.env.VITE_API_URL}/api/puuid/${encodeURIComponent(player1)}`
         const response = await fetch(url, {
