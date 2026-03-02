@@ -1,21 +1,29 @@
 import { useEffect, useState } from 'react'
-import { getTwoPlayers } from './libs/api'
+import { getTwoPlayers, /* getOnePlayer, */ getPlayer_puuid } from './libs/api'
 import twoPlayersLocal from './data/two_players.json'
 import PlayerRank from './components/Player'
 import Match from './components/Match'
 
 function App() {
-    const [player1Data, setPlayer1Data] = useState({ state: 'loading' })
-    const [player2Data, setPlayer2Data] = useState({ state: 'loading' })
+    const [player1Data, setPlayer1Data] = useState({})
+    const [player2Data, setPlayer2Data] = useState({})
     const [showPlayers, setShowPlayers] = useState(false)
     const [enableAPI, setEnableAPI] = useState(false)
 
     useEffect(() => {
         if (showPlayers){
             const getPlayerData = async() => {
-                const data = enableAPI ? await getTwoPlayers() : twoPlayersLocal
-                setPlayer1Data(data.player1)
-                setPlayer2Data(data.player2)
+                if(enableAPI){
+                    const player1_puuid = await getPlayer_puuid('domix#640')
+                    const player2_puuid = await getPlayer_puuid('apel#ado')
+                    const data = await getTwoPlayers(player1_puuid, player2_puuid)
+                    setPlayer1Data(data.player1)
+                    setPlayer2Data(data.player2)
+                } else {
+                    const data = twoPlayersLocal
+                    setPlayer1Data(data.player1)
+                    setPlayer2Data(data.player2)
+                }
             }
             getPlayerData()
         }

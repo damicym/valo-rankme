@@ -2,40 +2,68 @@ import { config } from '../config.js'
 
 const IMMORTAL_ELO = 2100
 
-// const player1 = 'domix#640'
-// const player2 = 'apel#ado'
-
 const min_rr = 7
 const max_rr = 33
 const min_acs = 80.0
 const max_acs = 260.0
 
-export async function twoPlayers(player1, player2) {
-    const matches = await getMatches(player1, player2)
+export async function twoPlayers(player1_puuid, player2_puuid) {
+    const matches = await getMatches(player1_puuid, player2_puuid)
 
-    return {
-        player1: {
-            user: player1,
-            rankInfo: getPlayerRank(matches, player1),
-            matches: getMatchHistory(matches, player1)
-        },
-        player2: {
-            user: player2,
-            rankInfo: getPlayerRank(matches, player2),
-            matches: getMatchHistory(matches, player2)
-        },
+    const player1Data = {
+        // user: player1,
+        rankInfo: getPlayerRank(matches, player1_puuid),
+        matches: getMatchHistory(matches, player1_puuid)
     }
+    const player2Data = {
+        // user: player2,
+        rankInfo: getPlayerRank(matches, player2_puuid),
+        matches: getMatchHistory(matches, player2_puuid)
+    }
+    return { player1: player1Data, player2: player2Data }   
 }
 
-export async function onePlayer(player1) {
-    const matches = await getMatches(player1)
+export async function onePlayer(player1_puuid) {
+    const matches = await getMatches(player1_puuid)
 
-    return {
-        player1: {
-            user: player1,
-            rankInfo: getPlayerRank(matches, player1),
-            matches: getMatchHistory(matches, player1)
+    const player1Data = {
+        // user: player1,
+        rankInfo: getPlayerRank(matches, player1_puuid),
+        matches: getMatchHistory(matches, player1_puuid)
+    }
+    // console.log("almost returning at onePlayer()")
+    return { player1: player1Data }
+}
+
+export async function getPlayer_puuid(player) {
+    const [name, tag] = player.split('#')
+    try{
+        const url = `https://api.henrikdev.xyz/valorant/v2/account/${name}/${tag}`
+        // console.log(`fetch: account/${name}/${tag}`)
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+            }
+        })
+        const data = await response.json()
+
+        if (!response.ok) {
+            if (data.errors && data.errors.length > 0) {
+                throw new Error(`HTTP error ${response.status}, ${JSON.stringify(data.errors)}`)
+            }
+            else {
+                throw new Error(`HTTP error ${response.status}`)
+            }
         }
+
+        const playerData = data.data
+        if (!playerData) return null
+        return playerData.puuid
+
+    } catch(err){
+        console.log(err)
+        return null
     }
 }
 
@@ -43,23 +71,23 @@ export async function onePlayer(player1) {
  * Se obtienen las partidas del player1 del último acto
  * Si se pasa un player2, solo devuelve las partidas donde ambos jugadores jugaron en el mismo team
  */
-async function getMatches(player1, player2) {
-    const [player1Name, player1Tag] = player1.split('#')
-    const matches = await getPublicSkirmishMatches(player1Name, player1Tag, 'latam', 'pc')
-    if (!player2) return matches
-
-    const [player2Name, player2Tag] = player2.split('#')
-    return matches.filter(m => {
-        const targetTeamColor = m.players.find(p => p.name === player1Name && p.tag === player1Tag).team_id
-        return m.players.some(p => p.name === player2Name && p.tag === player2Tag && p.team_id === targetTeamColor)
-    })
+async function getMatches(player1_puuid, player2_puuid) {
+    const matches = await getPublicSkirmishMatches(player1_puuid, 'latam', 'pc')
+    // console.log("almost returning at getMatches() / NOT player2_puuid")
+    if (!player2_puuid) return matches
     
+    const duoMatches = matches.filter(m => {
+        const targetTeamColor = m.players.find(p => p.puuid === player1_puuid).team_id
+        return m.players.some(p => p.puuid === player2_puuid && p.team_id === targetTeamColor)
+    })
+    // console.log("almost returning at getMatches() / player2_puuid")
+    return duoMatches
 }
 
-function getPlayerRank(matches, player) {
+function getPlayerRank(matches, puuid) {
     let current_rr = 50
     let shieldLevel = 0
-    const matches_rr = [...matches].reverse().map(match => getMatchRR(match, player))
+    const matches_rr = [...matches].reverse().map(match => getMatchRR(match, puuid))
 
     matches_rr.forEach(match_rr => {
         // al bajar de 0, el rr se queda en 0
@@ -88,16 +116,17 @@ function getPlayerRank(matches, player) {
             current_rr = new_raw_rr
         }
     })
-
+    // console.log("almost returning at getPlayerRank()")
     return { rr: current_rr, rank: Math.floor(current_rr / 100), shield: shieldLevel}
 }
 
-function getMatchHistory(matches, player) {
+function getMatchHistory(matches, puuid) {
     const chronological = [...matches].reverse()
     const chronologicalMatches = chronological.map((m, index) => {
         const previousMatches = chronological.slice(0, index)
-        return getMatchInfo(m, player, previousMatches)
+        return getMatchInfo(m, puuid, previousMatches)
     })
+    // console.log("almost returning at getMatchHistory()")
     return [...chronologicalMatches].reverse()
 }
 
@@ -112,12 +141,11 @@ function curve(x, p = 1.5) {
     return 0.5 + Math.sign(x - 0.5) * Math.pow(Math.abs(x - 0.5) * 2, p) / 2
 }
 
-function getMatchRR(match, player){
-    const [playerName, playerTag] = player.split('#')
-    const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
+function getMatchRR(match, puuid){
+    const inMatchPlayer = match.players.find(p => p.puuid === puuid)
     if (!inMatchPlayer) {
-        console.log("!inMatchPlayer")
-        return 0 // no debería pasar si filtrapos por partidas donde estén ambos jugador
+        console.log("!inMatchPlayer at getMatchRR")
+        return 0
     }
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
@@ -125,9 +153,6 @@ function getMatchRR(match, player){
     const won = teamInfo.won
     const roundsDiff = teamInfo.rounds.won - teamInfo.rounds.lost
     const acs = inMatchPlayer.stats.score / (teamInfo.rounds.won + teamInfo.rounds.lost)
-    // const kills = inMatchPlayer.stats.kills
-    // const deaths = inMatchPlayer.stats.deaths
-    // const assists = inMatchPlayer.stats.assists
 
     let result = 0
     const acs_normalized = normalize(acs)
@@ -143,12 +168,17 @@ function getMatchRR(match, player){
         result = min_rr + (max_rr - min_rr) * (1 - performance)
         result = -result
     }
+
+    // console.log("almost returning at getMatchRR()")
     return Math.round(result)
 }
 
-function getMatchInfo(match, player, previousMatches){
-    const [playerName, playerTag] = player.split('#')
-    const inMatchPlayer = match.players.find(p => p.name === playerName && p.tag === playerTag)
+function getMatchInfo(match, puuid, previousMatches){
+    const inMatchPlayer = match.players.find(p => p.puuid === puuid)
+    if (!inMatchPlayer) {
+        console.log("!inMatchPlayer at getMatchInfo")
+        return 0
+    }
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
     const matchClutches = match.rounds.filter(r => r.ceremony === 'CeremonyClutch')
@@ -158,22 +188,23 @@ function getMatchInfo(match, player, previousMatches){
     const kills = inMatchPlayer.stats.kills
     const deaths = inMatchPlayer.stats.deaths
     const clutches1v2 = matchClutches.filter(c => {
-        const inClutchPlayer = c.stats.find(playerStat => playerStat.player.name === playerName && playerStat.player.tag === playerTag)
+        const inClutchPlayer = c.stats.find(playerStat => playerStat.player.puuid === puuid)
         if (inClutchPlayer.stats.kills === 2) return true
     })
     const scores = match.players
         .map(p => ({
-            player: `${p.name}${'#'}${p.tag}`,
+            puuid: p.puuid,
             team: p.team_id,
             score: p.stats.score
         }))
         .sort((a, b) => b.score - a.score)
-    const place = scores.findIndex(p => p.player === player) + 1
-    const allyPlace = scores.findIndex(p => p.team === teamColor && p.player !== player) + 1
-    
+    const place = scores.findIndex(p => p.puuid === puuid) + 1
+    const allyPlace = scores.findIndex(p => p.team === teamColor && p.puuid !== puuid) + 1
+
+    // console.log("almost returning at getMatchInfo()")
     return {
-        rr: getMatchRR(match, player),
-        rank: getPlayerRank(previousMatches, player).rank,
+        rr: getMatchRR(match, puuid),
+        rank: getPlayerRank(previousMatches, puuid).rank,
         
         map: match.metadata.map.name,
         date: match.metadata.started_at,
@@ -204,26 +235,41 @@ function getMatchInfo(match, player, previousMatches){
 /**
  * 1. fetchear por partidas custom
  * 2. seguir fetcheando hasta que no haya más en el acto
- * 3. agregar a la lista solo si es skirmish y del acto correcto
+ * 3. agregar a la lista solo si es del acto correcto y no es custom
  * 4. si te quedas sin tokens, parar y logear
  * 
  * esto funciona porque en la v4.6.0 de HenrikDev API el modo Skirmish: 2v2 no se detecta, pero
- * se puede conseguir buscando mode: custom -> mode_type: Skirmish -> party_rr_penaltys.length > 0 
+ * se puede conseguir fetcheando por custom --- y filtrando por mode_type === Skirmish && party_rr_penaltys.length > 0 (para q no sea custom)
+ * 
+ * la v4.6.0 de HenrikDev API usa un cache interno para custom que hace que tarden en cargarse las últimas partidas 
  */
-async function getPublicSkirmishMatches(playerName, tag, region, platform){
+async function getPublicSkirmishMatches(puuid, region, platform){
     const MAX_MATCHES_PER_CALL = 10 // el máximo permitido por la API actualmente
     let allMatches = []
     let willNextSetBeValid = true // set of matches
     let targetAct = ''
     let fetchIndex = 0
+    const seenMatchesIds = new Set()
 
     while (willNextSetBeValid) {
         try{
-            const response = await fetch(
-                `https://api.henrikdev.xyz/valorant/v4/matches/${region}/${platform}/${playerName}/${tag}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}`, {
+            /* const baseUrl = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}`
+            const params = new URLSearchParams({
+                size: MAX_MATCHES_PER_CALL,
+                start: MAX_MATCHES_PER_CALL * fetchIndex
+            })
+            const maps = ['Skirmish A']
+            maps.forEach(m => params.append('map[]', m))
+            const urlByMaps = `${baseUrl}?${params}` */
+
+            const url = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}&_=${Date.now()}`
+            // console.log(`fetch ${fetchIndex}: by-puuid/matches/${region}/${platform}/${puuid}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}&_=${Date.now()}`)
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+                    'Authorization': config.HENRIKDEV_ACCESS_TOKEN,
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
                 }
             })
             
@@ -252,7 +298,14 @@ async function getPublicSkirmishMatches(playerName, tag, region, platform){
                 m.metadata.season.short == targetAct && // es del acto correcto
                 m.metadata.is_completed // la partida ya terminó
             ))
-            allMatches.push(...usefulMatches)
+
+            // evitar pushear partidas que ya fueron pusheadas (pq talvez se agrega una partida a la Henrik API mientras estoy paginando)
+            for (const match of usefulMatches) {
+                if (!seenMatchesIds.has(match.metadata.match_id)) {
+                    seenMatchesIds.add(match.metadata.match_id)
+                    allMatches.push(match)
+                }
+            }
 
             if (matches.length < MAX_MATCHES_PER_CALL) {
                 willNextSetBeValid = false

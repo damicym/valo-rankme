@@ -7,7 +7,8 @@ function PlayerRank({ data, /* isMain */ }) {
 
     return (
             <div className="playerRank" /* style={{transform: !isMain ? 'scale(0.85)' : 'scale(1)', marginBottom: !isMain ? '5px' : '0'}} */>
-                <p className="user">{data?.user?.split('#')[0]}<span>#{data?.user?.split('#')[1]}</span></p>
+                {/* <p className="user">{data?.user?.split('#')[0]}<span>#{data?.user?.split('#')[1]}</span></p> */}
+                <p className="user">name<span>#tag</span></p>
                 <img className='rankIcon' src={ranks.find(r => r.tier == data?.rankInfo?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rankInfo?.rank}_rank_icon`}/>
                 <p className="rankTitle" style={{color: ranks.find(r => r.tier == data?.rankInfo?.rank)?.color}}>{ranks.find(r => r.tier == data?.rankInfo?.rank)?.es_name}</p>
                 <div className="rankProgress">
@@ -19,8 +20,8 @@ function PlayerRank({ data, /* isMain */ }) {
                             <div 
                                 className="progressBarInner" 
                                 style={ data?.rankInfo?.rank < 21 
-                                    ? {borderRadius: '4px 0 0 4px', width: `${data?.rankInfo?.rr / 100 * 312}px`}
-                                    : {borderRadius: '4px 4px 4px 4px', width: '312px'}
+                                    ? {borderRadius: '4px 0 0 4px', width: `${data?.rankInfo?.rr / 100 * 372}px`}
+                                    : {borderRadius: '4px 4px 4px 4px', width: '372px'}
                                 }
                             ></div>
                         </div>
