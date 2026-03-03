@@ -10,14 +10,15 @@
 
 .playerContainer{
     display: flex;
-    gap: 50px;
+    gap: 20px;
     height: 300px;
-    align-items: flex-end;
 }
 
 .playerRank{
     gap: 25px;
     transform-origin: bottom center;
+    width: 385px;
+    justify-content: flex-start;
 }
 
 .playerRank .rankIcon{
@@ -28,6 +29,7 @@
     color: var(--text);
     font-size: 1.3rem;
     margin-bottom: 10px;
+    margin-top: 0;
     display: flex;
     align-items: end;
 }
@@ -35,7 +37,6 @@
 .user span{
     font-size: 1.05rem;
     opacity: 0.7;
-    margin-bottom: 1px;
 }
 
 .rankTitle{
@@ -50,7 +51,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: center;
+    align-items: flex-end;
 }
 
 .progressBarContainer{
@@ -103,4 +104,150 @@
     filter: drop-shadow(0 0 2px var(--green));
     height: 4px;
     left: 4px;
+}
+
+.playerInput{
+    font-family: "Lexend", sans-serif;
+    width: 220px;
+    height: 32px;
+    font-size: 1.2rem;
+    border-radius: 6px;
+    outline: none;
+    padding: 5px;
+    border: 0;
+    color: var(--bg);
+    background-color: var(--text);
+}
+
+.playerInput::placeholder{
+    color: #969BA7;
+}
+
+.inputField{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.inputField label{
+    position: absolute;
+    left: 0;
+    top: -20px;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+.btn{
+    font-family: "Lexend", sans-serif;
+    border-radius: 12px;
+    border: 0;
+    outline: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.toggleBtn{
+    font-size: 1.2rem;
+    gap: 6px;
+    background-color: var(--text);
+    color: var(--border);
+    padding: 2px;
+    padding-left: 6px;
+}
+
+.toggleBtnInner{
+    padding: 6px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--text);
+    background-color: var(--border);
+    transition: 0.15s;
+}
+
+.toggleBtn:hover .toggleBtnInner{
+    background-color: var(--bg);
+}
+
+.toggleBtn .svgContainer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min-content;
+    height: min-content;
+    transition: 0.15s all ease-out;
+    color: var(--border);
+}
+
+.toggleBtn:hover .toggleBtnInner .svgContainer{
+    color: var(--bg);
+}
+
+.controlsContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.switchPlayersBtn{
+    font-family: "Lexend", sans-serif;
+    border-radius: 12px;
+    border: 0;
+    outline: 0;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+
+    height: 32px;
+    width: 32px;
+    color: var(--border);
+    background-color: var(--text);
+    display: flex;
+    cursor: pointer;
+}
+
+.submitBtn{
+    gap: 6px;
+    height: 40px;
+    transform: translateY(-4px);
+    color: var(--bg);
+    background-color: var(--green);
+    font-size: 1.4rem;
+    padding: 8px;
+    grid-column: 3;
+    /* dynamic: */
+    cursor: auto;
+    opacity: 0.55;
+    cursor: pointer;
+    opacity: 1;
+}
+
+.btn:hover{
+    filter: brightness(0.9);
+}
+
+.btn:active{
+    filter: brightness(1);
+}
+
+.allChildren{
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: flex-start;
+    height: min-content;
+
+}
+
+.centeredChildren{
+    display: flex;
+    gap: 20px;
+    height: 300px;
+    grid-column: 2;
+    align-items: flex-start;
+    height: min-content;
+    width: min-content;
 }

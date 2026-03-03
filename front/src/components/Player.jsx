@@ -3,14 +3,18 @@ import Match from "./Match"
 import ranks from '../data/ranks.json'
 import shields from '../data/shields.json'
 
-function PlayerRank({ data, /* isMain */ }) { 
+function PlayerRank({ data }) { 
 
     return (
-            <div className="playerRank" /* style={{transform: !isMain ? 'scale(0.85)' : 'scale(1)', marginBottom: !isMain ? '5px' : '0'}} */>
+            <div className="playerRank">
                 {/* <p className="user">{data?.user?.split('#')[0]}<span>#{data?.user?.split('#')[1]}</span></p> */}
-                <p className="user">name<span>#tag</span></p>
+                <p className="user">your name<span>#tag</span></p>
                 <img className='rankIcon' src={ranks.find(r => r.tier == data?.rankInfo?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rankInfo?.rank}_rank_icon`}/>
-                <p className="rankTitle" style={{color: ranks.find(r => r.tier == data?.rankInfo?.rank)?.color}}>{ranks.find(r => r.tier == data?.rankInfo?.rank)?.es_name}</p>
+                <p 
+                    className="rankTitle" style={{color: ranks.find(r => r.tier == data?.rankInfo?.rank)?.color}}
+                >
+                    {ranks.find(r => r.tier == data?.rankInfo?.rank)?.es_name || ranks.find(r => r.name == 'UNRANKED').es_name}
+                </p>
                 <div className="rankProgress">
                     <div className="progressBarContainer">
                         { data?.rankInfo?.shield > 0 &&

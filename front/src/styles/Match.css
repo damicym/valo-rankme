@@ -60,7 +60,7 @@
 .pillMultiplier{
     width: min-content;
     background-color: var(--yellow);
-    color: var(--bgSecondary);
+    color: var(--bg);
     height: 100%;
     padding-left: 6px;
     padding-right: 6px;
