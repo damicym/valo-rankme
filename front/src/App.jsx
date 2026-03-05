@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { /* useEffect, */ useState } from 'react'
 import { getTwoPlayers, getOnePlayer } from './libs/api'
 import twoPlayersLocal from './data/two_players.json'
 import onePlayerLocal from './data/one_player.json'
@@ -11,29 +11,42 @@ function App() {
     const [showPlayers, setShowPlayers] = useState(false)
     const [enableAPI, setEnableAPI] = useState(false)
     const [isSoloQ, setIsSoloQ] = useState(false)
-    const [showWelcome, setShowWelcome] = useState(true)
+    const [showWelcome, setShowWelcome] = useState(false)
+    // const [isEditing, setIsEditing] = useState(true)
+    const [p1Input, setP1Input] = useState("")
+    const [p2Input, setP2Input] = useState("")
 
-    useEffect(() => {
-        if (showPlayers){
-            const getPlayerData = async() => {
-                if(enableAPI){
-                    const data = await getTwoPlayers('domix#640', 'apel#ado')
-                    setPlayer1Data(data.player1)
-                    setPlayer2Data(data.player2)
-                } else {
-                    const data = twoPlayersLocal /* onePlayerLocal */
-                    setPlayer1Data(data.player1)
-                    setPlayer2Data(data.player2)
-                }
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        getPlayerData(p1Input, p2Input)
+        setShowPlayers(true)
+    }
+
+    const getPlayerData = async(p1, p2) => {
+        if(enableAPI){
+            if (isSoloQ) {
+                const data = await getOnePlayer(p1)
+                setPlayer1Data(data.player1)
+            } else {
+                const data = await getTwoPlayers(p1, p2)
+                setPlayer1Data(data.player1)
+                setPlayer2Data(data.player2)
             }
-            getPlayerData()
+        } else {
+            if (isSoloQ) {
+                const data = onePlayerLocal
+                setPlayer1Data(data.player1)
+            } else {
+                const data = twoPlayersLocal
+                setPlayer1Data(data.player1)
+                setPlayer2Data(data.player2)
+            }
         }
-    }, [showPlayers, enableAPI])
+    }
 
     return (
         <>
             <button onClick={() => setEnableAPI(prev => !prev)}>{enableAPI ? 'Usando API 🌐' : 'Usando datos locales 📜'}</button>
-            <button onClick={() => setShowPlayers(prev => !prev)}>{!showPlayers ? 'Mostrar jugadores' : 'Esconder Jugadores'}</button>
             <div className="site">
                 <section className='controlsContainer'>
                     <button className='toggleBtn btn' onClick={() => setIsSoloQ(prev => !prev)}>
@@ -61,42 +74,53 @@ function App() {
                     </section>
                 }
                 <section className='playerContainer'>
-                    { showPlayers ? 
-                    <>
-                        <PlayerRank data={player1Data} isPlayerShowing={showPlayers} />
-                        <button className='switchPlayersBtn btn'>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
-                        </button>
-                        <PlayerRank data={player2Data} isPlayerShowing={showPlayers} />
-                    </> : 
-                    <div className='allChildren'>
+                    <form 
+                        className='allChildren' 
+                        onSubmit={handleSubmit}
+                    >
                         <div className='centeredChildren'>
-                            <div className='playerRank'>
-                                <div className='inputField'>
-                                    <label>Mi usuario</label>
-                                    <input className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my name#tag' />
-                                </div>
-                            </div>
-                            { !isSoloQ &&
-                            <>
-                                <button className='switchPlayersBtn btn'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
-                                </button>
-                                <div className='playerRank'>
-                                    <div className='inputField'>
-                                        <label>Usuario de mi duo</label>
-                                        <input className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my duo#tag' />
+                            { showPlayers ? 
+                                <>
+                                    <PlayerRank data={player1Data} user={p1Input} />
+                                    { !isSoloQ &&
+                                        <>
+                                            <button className='switchPlayersBtn btn' tabIndex={-1}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
+                                            </button>
+                                            <PlayerRank data={player2Data} user={p2Input} />
+                                        </>
+                                    }
+                                </> : 
+                                <>
+                                    <div className='playerRank'>
+                                        <div className='inputField'>
+                                            <label>Mi usuario</label>
+                                            <input onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my name#tag' />
+                                        </div>
                                     </div>
-                                </div>
-                            </>
+                                    { !isSoloQ &&
+                                        <>
+                                            <button className='switchPlayersBtn btn' tabIndex={-1}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
+                                            </button>
+                                            <div className='playerRank'>
+                                                <div className='inputField'>
+                                                    <label>Usuario de mi duo</label>
+                                                    <input onChange={(e) => setP2Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my duo#tag' />
+                                                </div>
+                                            </div>
+                                        </>
+                                    }
+                                </>
                             }
                         </div>
-                        <button className='submitBtn btn'>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-send-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4.698 4.034l16.302 7.966l-16.302 7.966a.503 .503 0 0 1 -.546 -.124a.555 .555 0 0 1 -.12 -.568l2.468 -7.274l-2.468 -7.274a.555 .555 0 0 1 .12 -.568a.503 .503 0 0 1 .546 -.124" /><path d="M6.5 12h14.5" /></svg>
-                            Vamos!
-                        </button>
-                    </div>
-                    }
+                        { !showPlayers &&
+                            <button className='submitBtn btn'>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-send-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4.698 4.034l16.302 7.966l-16.302 7.966a.503 .503 0 0 1 -.546 -.124a.555 .555 0 0 1 -.12 -.568l2.468 -7.274l-2.468 -7.274a.555 .555 0 0 1 .12 -.568a.503 .503 0 0 1 .546 -.124" /><path d="M6.5 12h14.5" /></svg>
+                                Vamos!
+                            </button>
+                        }
+                    </form>
                 </section>
                 { showPlayers &&
                     // promedios

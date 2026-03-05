@@ -51,8 +51,7 @@ export async function getPlayer_puuid(player) {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                // 'Authorization': config.HENRIKDEV_ACCESS_TOKEN
-                'Authorization': 'HDEV-1c26e37d-9512-40ef-a85e-003d2b7bf6af'
+                'Authorization': config.HENRIKDEV_ACCESS_TOKEN
             }
         })
         const data = await response.json()
@@ -87,8 +86,7 @@ async function getLastMatch(name, tag, region, platform){
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                // 'Authorization': config.HENRIKDEV_ACCESS_TOKEN
-                'Authorization': 'HDEV-1c26e37d-9512-40ef-a85e-003d2b7bf6af'
+                'Authorization': config.HENRIKDEV_ACCESS_TOKEN
             }
         })
         
@@ -140,39 +138,43 @@ async function getMatches(player1_puuid, player2) {
 }
 
 function getPlayerRank(matches, puuid) {
-    let current_rr = 50
+    let currentElo = 50
     let shieldLevel = 0
     const matches_rr = [...matches].reverse().map(match => getMatchRR(match, puuid))
 
     matches_rr.forEach(match_rr => {
         // al bajar de 0, el rr se queda en 0
-        const new_raw_rr = current_rr + match_rr
-        const rank = Math.floor(current_rr / 100)
-        const nextRank = Math.floor(new_raw_rr / 100)
+        const newRawElo = currentElo + match_rr
+        const rank = Math.floor(currentElo / 100)
+        const nextRank = Math.floor(newRawElo / 100)
         const won = match_rr > 0
 
-        if (new_raw_rr < 0) {
-            current_rr = 0
+        if (newRawElo < 0) {
+            currentElo = 0
         }
         // al pasar un múltiplo de 100 por menos de 10 rr antes de immortal, se le suma lo necesario para pasarlo por 10 rr
-        else if (!(current_rr >= IMMORTAL_ELO) && won && rank < nextRank) {
-            current_rr = Math.max(new_raw_rr, nextRank * 100 + 10)
+        else if (!(currentElo >= IMMORTAL_ELO) && won && rank < nextRank) {
+            currentElo = Math.max(newRawElo, nextRank * 100 + 10)
             // si sube al primer rengo de la división, se le da 2 escudos. Pero si está en hierro 1 no
-            if (current_rr % 300 < 100 && current_rr > 100) shieldLevel = 2
+            if (currentElo % 300 < 100 && currentElo > 100) shieldLevel = 2
         }
         // al pasar un múltiplo de 100 por menos de 10 rr, se le suma lo necesario para pasarlo por 10 rr
         // no se aplica en immortal (100 rr, 200 rr, etc.)
-        else if (current_rr < IMMORTAL_ELO + 100 && !won && rank > nextRank && (current_rr > rank * 100 || shieldLevel > 0)) {
-            current_rr = rank * 100
+        else if (currentElo < IMMORTAL_ELO + 100 && !won && rank > nextRank && (currentElo > rank * 100 || shieldLevel > 0)) {
+            currentElo = rank * 100
             // sacarle escudo en vez de bajar
             if (shieldLevel > 0) shieldLevel -= 1
         } 
         else {
-            current_rr = new_raw_rr
+            currentElo = newRawElo
         }
     })
     // console.log("almost returning at getPlayerRank()")
-    return { rr: current_rr, rank: Math.floor(current_rr / 100), shield: shieldLevel}
+    return { elo: currentElo, rr: getRRByElo(currentElo), rank: Math.floor(currentElo / 100), shield: shieldLevel}
+}
+
+function getRRByElo(elo){
+    return elo < IMMORTAL_ELO ? elo % 100 : elo - IMMORTAL_ELO
 }
 
 function getMatchHistory(matches, puuid) {
@@ -308,22 +310,12 @@ async function getPublicSkirmishMatches(puuid, region, platform){
 
     while (willNextSetBeValid) {
         try{
-            /* const baseUrl = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}`
-            const params = new URLSearchParams({
-                size: MAX_MATCHES_PER_CALL,
-                start: MAX_MATCHES_PER_CALL * fetchIndex
-            })
-            const maps = ['Skirmish A']
-            maps.forEach(m => params.append('map[]', m))
-            const urlByMaps = `${baseUrl}?${params}` */
-
-            const url = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}&_=${Date.now()}`
-            // console.log(`fetch ${fetchIndex}: by-puuid/matches/${region}/${platform}/${puuid}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}&_=${Date.now()}`)
+            const url = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}`
+            console.log(`fetch main ${fetchIndex + 1}`)
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    // 'Authorization': config.HENRIKDEV_ACCESS_TOKEN
-                    'Authorization': 'HDEV-1c26e37d-9512-40ef-a85e-003d2b7bf6af'
+                    'Authorization': config.HENRIKDEV_ACCESS_TOKEN
                 }
             })
             
@@ -352,6 +344,7 @@ async function getPublicSkirmishMatches(puuid, region, platform){
                 m.metadata.season.short == targetAct && // es del acto correcto
                 m.metadata.is_completed // la partida ya terminó
             ))
+            if (!usefulMatches) continue
 
             // evitar pushear partidas que ya fueron pusheadas (pq talvez se agrega una partida a la Henrik API mientras estoy paginando)
             for (const match of usefulMatches) {
@@ -360,6 +353,7 @@ async function getPublicSkirmishMatches(puuid, region, platform){
                     allMatches.push(match)
                 }
             }
+            // ¿returnear los seenMatchesIds pero de todas las partidas, no solo las useful, para cuando haya que recargar?
 
             if (matches.length < MAX_MATCHES_PER_CALL) {
                 willNextSetBeValid = false

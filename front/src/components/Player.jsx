@@ -3,12 +3,12 @@ import Match from "./Match"
 import ranks from '../data/ranks.json'
 import shields from '../data/shields.json'
 
-function PlayerRank({ data }) { 
+function PlayerRank({ data, user }) { 
 
     return (
             <div className="playerRank">
                 {/* <p className="user">{data?.user?.split('#')[0]}<span>#{data?.user?.split('#')[1]}</span></p> */}
-                <p className="user">your name<span>#tag</span></p>
+                <p className="user">{user.split('#')[0]}<span>#{user.split('#')[1]}</span></p>
                 <img className='rankIcon' src={ranks.find(r => r.tier == data?.rankInfo?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rankInfo?.rank}_rank_icon`}/>
                 <p 
                     className="rankTitle" style={{color: ranks.find(r => r.tier == data?.rankInfo?.rank)?.color}}

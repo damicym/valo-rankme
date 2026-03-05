@@ -1,6 +1,7 @@
 {
     "player1": {
         "rankInfo": {
+            "elo": 0,
             "rr": 0,
             "rank": 0,
             "shield": 0
@@ -244,6 +245,7 @@
     },
     "player2": {
         "rankInfo": {
+            "elo": 2,
             "rr": 2,
             "rank": 0,
             "shield": 0
