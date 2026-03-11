@@ -1,4 +1,5 @@
 import { config } from '../config.js'
+// HenrikDevAPIv4.6.0: usa un cache interno para custom que hace que solo se obtengan las partidas que fueron anteriormente solicitadas sin el parametro custom 
 
 const IMMORTAL_ELO = 2100
 
@@ -76,13 +77,14 @@ export async function getPlayer_puuid(player) {
 }
 
 /**
- * Esta función tambien se usa para eliminar el cache interno de HenrikDevAPIv4.6.0 que usa en partidas custom
+ * Esta función tambien se usa para agregar la ultima partida al cache interno de custom
  */
 async function getLastMatch(name, tag, region, platform){
     let lastMatch
+    console.log("config.HENRIKDEV_ACCESS_TOKEN: " + config.HENRIKDEV_ACCESS_TOKEN)
     try{
         const url = `https://api.henrikdev.xyz/valorant/v4/matches/${region}/${platform}/${name}/${tag}?size=1`
-        // console.log(`fetch clear-cache: matches/${region}/${platform}/${name}/${tag}?size=1`)
+        // console.log(`fetch getLastMatch`)
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -103,7 +105,7 @@ async function getLastMatch(name, tag, region, platform){
 
         lastMatch = data.data[0]
     } catch(err){
-        console.log('Error at clearMatchlistCache():' + err)
+        console.log('Error at getLastMatch():' + err)
     }
     return lastMatch
 }
@@ -298,7 +300,7 @@ function getMatchInfo(match, puuid, previousMatches){
  * esto funciona porque en la v4.6.0 de HenrikDev API el modo Skirmish: 2v2 no se detecta, pero
  * se puede conseguir fetcheando por custom --- y filtrando por mode_type === Skirmish && party_rr_penaltys.length > 0 (para q no sea custom)
  * 
- * la v4.6.0 de HenrikDev API usa un cache interno para custom que hace que tarden en cargarse las últimas partidas 
+ * la v4.6.0 de HenrikDev API usa un cache interno para custom que hace que solo se obtengan las partidas que fueron anteriormente solicitadas sin el parametro custom 
  */
 async function getPublicSkirmishMatches(puuid, region, platform){
     const MAX_MATCHES_PER_CALL = 10 // el máximo permitido por la API actualmente
@@ -307,7 +309,6 @@ async function getPublicSkirmishMatches(puuid, region, platform){
     let targetAct = ''
     let fetchIndex = 0
     const seenMatchesIds = new Set()
-
     while (willNextSetBeValid) {
         try{
             const url = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}?mode=custom&size=${MAX_MATCHES_PER_CALL}&start=${10 * fetchIndex}`

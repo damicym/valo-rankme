@@ -5,6 +5,8 @@
       "type": "node",
       "request": "launch",
       "name": "Dev (npm run dev)",
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "console": "integratedTerminal",
@@ -15,10 +17,23 @@
       "type": "node",
       "request": "launch",
       "name": "Debug Server",
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}",
       "runtimeExecutable": "nodemon",
       "runtimeArgs": ["--inspect", "index.js"],
       "console": "integratedTerminal",
       "restart": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+    ,
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Dev (node + dotenv)",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/index.js",
+      "runtimeArgs": ["-r", "dotenv/config"],
+      "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     }
   ]

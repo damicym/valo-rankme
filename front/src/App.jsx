@@ -96,6 +96,7 @@ function App() {
                                         <div className='inputField'>
                                             <label>Mi usuario</label>
                                             <input onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my name#tag' />
+                                            <span>* Distingue mayúsculas/minúsculas</span>
                                         </div>
                                     </div>
                                     { !isSoloQ &&
@@ -107,6 +108,7 @@ function App() {
                                                 <div className='inputField'>
                                                     <label>Usuario de mi duo</label>
                                                     <input onChange={(e) => setP2Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my duo#tag' />
+                                                    <span>* Distingue mayúsculas/minúsculas</span>
                                                 </div>
                                             </div>
                                         </>

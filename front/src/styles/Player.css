@@ -99,9 +99,8 @@
 }
 
 .progressBarInner{
+    transform-origin: left;
     position: absolute;
-    background-color: var(--green);
-    filter: drop-shadow(0 0 2px var(--green));
     height: 4px;
     left: 4px;
 }
@@ -120,7 +119,8 @@
 }
 
 .playerInput::placeholder{
-    color: #969BA7;
+    color: var(--placeholder);
+    user-select: none;
 }
 
 .inputField{
@@ -136,6 +136,14 @@
     top: -20px;
     font-size: 0.8rem;
     color: var(--text);
+}
+
+.inputField span{
+    position: absolute;
+    left: 0;
+    bottom: -20px;
+    font-size: 0.7rem;
+    color: var(--placeholder);
 }
 
 .btn{
@@ -250,4 +258,12 @@
     align-items: flex-start;
     height: min-content;
     width: min-content;
+}
+
+@keyframes fakeLoadRRBar {
+  0%   { transform: scaleX(0); }
+  40%  { transform: scaleX(0.6); }
+  70%  { transform: scaleX(0.85); }
+  90%  { transform: scaleX(0.95); }
+  100% { transform: scaleX(0.98); }
 }
