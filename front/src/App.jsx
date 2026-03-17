@@ -1,5 +1,5 @@
 import { /* useEffect, */ useState } from 'react'
-import { getTwoPlayers, getOnePlayer } from './libs/api'
+import { getTwoPlayers, getOnePlayer } from './libs/db/queries.js'
 import twoPlayersLocal from './data/two_players.json'
 import onePlayerLocal from './data/one_player.json'
 import PlayerRank from './components/Player'
@@ -129,7 +129,7 @@ function App() {
                     <section className="matchContainer">
                         {/* fecha */}
                         {
-                            player1Data?.matches?.map((m, index) => <Match key={m.date} index={index} data={m}></Match>)
+                            player1Data?.matches?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
                         }
                     </section>
                 }

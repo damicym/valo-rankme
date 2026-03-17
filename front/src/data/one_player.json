@@ -8,10 +8,10 @@
         },
         "matches": [
             {
-                "rr": 20,
+                "rr_change": 20,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-26T23:39:13.563Z",
+                "started_at": "2026-02-26T23:39:13.563Z",
                 "agent": "Jett",
                 "won": true,
                 "roundsWon": 10,
@@ -26,10 +26,10 @@
                 "acs": 188
             },
             {
-                "rr": 28,
+                "rr_change": 28,
                 "rank": 0,
                 "map": "Skirmish A",
-                "date": "2026-02-26T23:33:46.803Z",
+                "started_at": "2026-02-26T23:33:46.803Z",
                 "agent": "Reyna",
                 "won": true,
                 "roundsWon": 10,
@@ -44,10 +44,10 @@
                 "acs": 241
             },
             {
-                "rr": 21,
+                "rr_change": 21,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-26T23:27:24.192Z",
+                "started_at": "2026-02-26T23:27:24.192Z",
                 "agent": "Veto",
                 "won": true,
                 "roundsWon": 10,
@@ -62,10 +62,10 @@
                 "acs": 196
             },
             {
-                "rr": -20,
+                "rr_change": -20,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-24T18:44:58.094Z",
+                "started_at": "2026-02-24T18:44:58.094Z",
                 "agent": "Breach",
                 "won": false,
                 "roundsWon": 6,
@@ -80,10 +80,10 @@
                 "acs": 162
             },
             {
-                "rr": 14,
+                "rr_change": 14,
                 "rank": 0,
                 "map": "Skirmish C",
-                "date": "2026-02-24T18:33:56.808Z",
+                "started_at": "2026-02-24T18:33:56.808Z",
                 "agent": "Iso",
                 "won": true,
                 "roundsWon": 10,
@@ -98,10 +98,10 @@
                 "acs": 117
             },
             {
-                "rr": -19,
+                "rr_change": -19,
                 "rank": 0,
                 "map": "Skirmish A",
-                "date": "2026-02-24T18:26:57.056Z",
+                "started_at": "2026-02-24T18:26:57.056Z",
                 "agent": "Brimstone",
                 "won": false,
                 "roundsWon": 6,
@@ -116,10 +116,10 @@
                 "acs": 188
             },
             {
-                "rr": -24,
+                "rr_change": -24,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-24T18:18:45.595Z",
+                "started_at": "2026-02-24T18:18:45.595Z",
                 "agent": "Brimstone",
                 "won": false,
                 "roundsWon": 6,
@@ -134,10 +134,10 @@
                 "acs": 93
             },
             {
-                "rr": 20,
+                "rr_change": 20,
                 "rank": 0,
                 "map": "Skirmish C",
-                "date": "2026-02-24T18:01:49.719Z",
+                "started_at": "2026-02-24T18:01:49.719Z",
                 "agent": "Gekko",
                 "won": true,
                 "roundsWon": 10,
@@ -152,10 +152,10 @@
                 "acs": 189
             },
             {
-                "rr": 19,
+                "rr_change": 19,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-20T17:05:40.54Z",
+                "started_at": "2026-02-20T17:05:40.54Z",
                 "agent": "Viper",
                 "won": true,
                 "roundsWon": 10,
@@ -170,10 +170,10 @@
                 "acs": 142
             },
             {
-                "rr": -20,
+                "rr_change": -20,
                 "rank": 0,
                 "map": "Skirmish A",
-                "date": "2026-02-19T16:00:43.187Z",
+                "started_at": "2026-02-19T16:00:43.187Z",
                 "agent": "Omen",
                 "won": false,
                 "roundsWon": 9,
@@ -188,10 +188,10 @@
                 "acs": 135
             },
             {
-                "rr": 16,
+                "rr_change": 16,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-19T15:51:33.577Z",
+                "started_at": "2026-02-19T15:51:33.577Z",
                 "agent": "Vyse",
                 "won": true,
                 "roundsWon": 10,
@@ -206,10 +206,10 @@
                 "acs": 131
             },
             {
-                "rr": -21,
+                "rr_change": -21,
                 "rank": 0,
                 "map": "Skirmish C",
-                "date": "2026-02-19T00:24:00.656Z",
+                "started_at": "2026-02-19T00:24:00.656Z",
                 "agent": "Yoru",
                 "won": false,
                 "roundsWon": 7,
@@ -224,10 +224,10 @@
                 "acs": 133
             },
             {
-                "rr": -20,
+                "rr_change": -20,
                 "rank": 0,
                 "map": "Skirmish A",
-                "date": "2026-02-19T00:15:24.685Z",
+                "started_at": "2026-02-19T00:15:24.685Z",
                 "agent": "Breach",
                 "won": false,
                 "roundsWon": 9,
@@ -242,10 +242,10 @@
                 "acs": 119
             },
             {
-                "rr": -25,
+                "rr_change": -25,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-19T00:07:52.272Z",
+                "started_at": "2026-02-19T00:07:52.272Z",
                 "agent": "Iso",
                 "won": false,
                 "roundsWon": 5,
@@ -260,10 +260,10 @@
                 "acs": 93
             },
             {
-                "rr": -31,
+                "rr_change": -31,
                 "rank": 0,
                 "map": "Skirmish B",
-                "date": "2026-02-18T23:55:36.204Z",
+                "started_at": "2026-02-18T23:55:36.204Z",
                 "agent": "Deadlock",
                 "won": false,
                 "roundsWon": 1,
@@ -278,10 +278,10 @@
                 "acs": 88
             },
             {
-                "rr": -19,
+                "rr_change": -19,
                 "rank": 0,
                 "map": "Skirmish A",
-                "date": "2026-02-18T23:47:56.818Z",
+                "started_at": "2026-02-18T23:47:56.818Z",
                 "agent": "Vyse",
                 "won": false,
                 "roundsWon": 9,
@@ -296,10 +296,10 @@
                 "acs": 148
             },
             {
-                "rr": -24,
+                "rr_change": -24,
                 "rank": 0,
                 "map": "Skirmish C",
-                "date": "2026-02-18T23:41:04.4Z",
+                "started_at": "2026-02-18T23:41:04.4Z",
                 "agent": "Jett",
                 "won": false,
                 "roundsWon": 6,
@@ -314,10 +314,10 @@
                 "acs": 100
             },
             {
-                "rr": -28,
+                "rr_change": -28,
                 "rank": 0,
                 "map": "Skirmish C",
-                "date": "2026-02-18T23:34:55.211Z",
+                "started_at": "2026-02-18T23:34:55.211Z",
                 "agent": "Skye",
                 "won": false,
                 "roundsWon": 4,

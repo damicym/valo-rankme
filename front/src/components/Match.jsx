@@ -28,7 +28,7 @@ function Match({ index, data }) {
                     <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rank}_rank_icon`}/>
                     <p
                         style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}
-                    >{data?.won && '+'}{data?.rr}</p>
+                    >{data?.won && '+'}{data?.rr_change}</p>
                 </div>
             </div>
             <div className="matchField resultField">
