@@ -1,3 +1,4 @@
+import { getPlayerRank } from '../helpers/player_helpers'
 import supabase from './supabase'
 
 export async function getTwoPlayers(player1, player2) {
@@ -23,29 +24,18 @@ export async function getTwoPlayers(player1, player2) {
         player1: {
             puuid: player1Data.puuid,
             matches: player1Matches,
-            rankInfo: {
-                elo: player1Data.elo,
-                rr: player1Data.rr,
-                rank: player1Data.rank,
-                shield: player1Data.shield
-            }
+            rankInfo: getPlayerRank(player1Matches)
         },
         player2: {
             puuid: player2Data.puuid,
             matches: player2Matches,
-            rankInfo: {
-                elo: player2Data.elo,
-                rr: player2Data.rr,
-                rank: player2Data.rank,
-                shield: player2Data.shield
-            }
+            rankInfo: getPlayerRank(player2Matches)
         }
     }
 }
 
 export async function getOnePlayer(player) {
     const playerData = await getPlayerData(player)
-
     if (!playerData) {
         return
     }
@@ -58,16 +48,12 @@ export async function getOnePlayer(player) {
         console.log("Error fetching player matches from database: " + error.message)
         return
     }
+
     return {
         player1: {
             puuid: playerData.puuid,
             matches: data,
-            rankInfo: {
-                elo: playerData.elo,
-                rr: playerData.rr,
-                rank: playerData.rank,
-                shield: playerData.shield
-            }
+            rankInfo: getPlayerRank(data)
         }
     }
 }
