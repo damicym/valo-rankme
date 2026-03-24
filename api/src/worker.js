@@ -12,7 +12,7 @@ import {
     insertNewAct
 } from './libs/db/queries.js'
 import { getUserFromRawMatch } from './libs/match_parser.js'
-import { getHenrikAPIMatches, getActByDate } from './libs/api_requests.js'
+import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
 
 const POLLING_INTERVAL = 3 * 60 * 1000
 const PLAYER_SYNC_INTERVAL = 3 * 60 * 1000
@@ -50,7 +50,7 @@ async function pollPlayer(player, targetAct) {
     let currentLastStoredMatchId = player.last_match_id
 
     const poll = async () => {
-        const initialMatches = await getHenrikAPIMatches(player.puuid, 2, 0)
+        const initialMatches = await getHDEVMatches(player.puuid, 2, 0)
         const lastMatch = initialMatches[0]
         if (!initialMatches || initialMatches.length === 0) {
             console.log(`[${getShortId(player.puuid)}] No initial matches found`)
@@ -102,15 +102,7 @@ async function pollPlayer(player, targetAct) {
         setTimeout(poll, POLLING_INTERVAL) 
     }
     
-    if (currentLastStoredMatchId) {
-        await poll()
-    } else {
-        console.log(`[${getShortId(player.puuid)}] No last stored match id. Registering player...`)
-        // [a checkear] cuando se registra agregarle las q encuentra mas las q ya estan en la db
-        // registerPlayer(player.puuid)
-        // await poll()
-    }
-        
+    await poll()
 }
 
 async function processNewMatches(puuid, lastStoredMatchId, initialMatches, targetAct) {
@@ -120,22 +112,12 @@ async function processNewMatches(puuid, lastStoredMatchId, initialMatches, targe
     let areMoreMatches = false
     let matches = [...initialMatches]
     let fetchesCount = 0
-
-    /* if (!lastStoredMatchId) { // si no hay ningna, fetcheo las ultimas 10 para tener un historial inicial (puede que de esas 10 ninguna sea de skirmish)
-        const apiMatches = await getHenrikAPIMatches(puuid, 10, startIndex)
-        if (!Array.isArray(apiMatches) || apiMatches.length === 0) return null
-        console.log("[DX] !apiMatches at processNewMatches for player " + getShortId(puuid))
-        matches.push(...apiMatches)
-        console.log(`[${getShortId(puuid)}] Fetched initial matches`)
-    } else {
-        areMoreMatches = !matches.some(m => getMatchId(m) === lastStoredMatchId || m.metadata.season.id !== targetAct.id)
-    } */
     
     while (lastStoredMatchId && areMoreMatches) {
         fetchesCount++
         console.log(`[${getShortId(puuid)}] Fetching matches... (#${fetchesCount}, from ${startIndex} to ${startIndex + matchesToFetch - 1})`)
         
-        const apiMatches = await getHenrikAPIMatches(puuid, matchesToFetch, startIndex)
+        const apiMatches = await getHDEVMatches(puuid, matchesToFetch, startIndex)
         if (!Array.isArray(apiMatches) || apiMatches.length === 0) {
             console.log(`[${getShortId(puuid)}] !apiMatches at processNewMatches`)
             break

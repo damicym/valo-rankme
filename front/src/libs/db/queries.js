@@ -1,18 +1,22 @@
 import { getPlayerRank } from '../helpers/player_helpers'
 import supabase from './supabase'
+import registerPlayer from '../api/index.js'
 
 export async function getTwoPlayers(player1, player2) {
-    const player1Data = await getPlayerData(player1)
-    const player2Data = await getPlayerData(player2)
+    const player1Data = await getPlayerData(player1, false)
+    const player2Data = await getPlayerData(player2, false)
 
-    if (!player1Data || !player2Data) {
-        return
+    if (!player1Data) {
+        await registerPlayer(player1)
+    }
+    if (!player2Data) {
+        await registerPlayer(player2)
     }
 
     const { data, error } = await supabase
         .from("player_matches")
         .select("*")
-        .or(`player_puuid.eq.${player1Data.puuid}, player_puuid.eq.${player2Data.puuid}`)
+        .eq("player_puuid", player1Data.puuid)
     if (error) {
         console.log("Error fetching player matches from database: " + error.message)
         return
@@ -36,8 +40,9 @@ export async function getTwoPlayers(player1, player2) {
 
 export async function getOnePlayer(player) {
     const playerData = await getPlayerData(player)
+
     if (!playerData) {
-        return
+        await registerPlayer(player)
     }
 
     const { data, error } = await supabase
@@ -53,21 +58,28 @@ export async function getOnePlayer(player) {
         player1: {
             puuid: playerData.puuid,
             matches: data,
-            rankInfo: getPlayerRank(data)
+            rankInfo: {
+                elo: playerData.elo,
+                rr: playerData.rr,
+                rank: playerData.rank,
+                shield: playerData.shield
+            }
         }
     }
 }
 
-async function getPlayerData(player) {
+async function getPlayerData(player, includeRank = true) {
     const [name, tag] = player.split("#")
+
     const { data, error } = await supabase
         .from("players")
-        .select("puuid, elo, rr, rank, shield")
+        .select(`puuid${includeRank ? ", elo, rr, rank, shield" : ""}`)
         .eq("name", name)
         .eq("tag", tag)
     if (error) {
         console.log("Error fetching player rank from database: " + error.message)
         return
     }
+
     return data[0]
 }

@@ -48,3 +48,13 @@ export function getMatchMode(match) {
     if (match?.mode) return match.mode
     return match.metadata.queue.mode_type !== match.metadata.queue.name ? match.metadata.queue.mode_type : match.metadata.queue.name 
 }
+
+export function getUniqueMatchesById(matches = []) {
+    const uniqueById = new Map()
+    for (const match of matches) {
+        const matchId = getMatchId(match)
+        if (!matchId) continue
+        uniqueById.set(matchId, match)
+    }
+    return [...uniqueById.values()]
+}

@@ -1,15 +1,15 @@
 import { config } from '../../config.js'
 
-export async function getHenrikAPIMatches(puuid, size, startIndex, gameMode, region = 'latam', platform = 'pc'){
+export async function getHDEVPlayerPuuid(player) {
+    const [name, tag] = player.split('#')
     try{
-        const url = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}?size=${size}&start=${startIndex}${gameMode ? `&mode=${gameMode}` : ''}`
+        const url = `https://api.henrikdev.xyz/valorant/v2/account/${name}/${tag}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Authorization': config.HENRIKDEV_ACCESS_TOKEN
             }
         })
-        
         const data = await response.json()
 
         if (!response.ok) {
@@ -20,11 +20,48 @@ export async function getHenrikAPIMatches(puuid, size, startIndex, gameMode, reg
                 throw new Error(`HTTP error ${response.status}`)
             }
         }
-        
-        return data.data
+
+        const playerData = data.data
+        if (!playerData) return null
+        return playerData.puuid
+
     } catch(err){
-        console.log('Error fetching matches from HenrikDev: ' + err)
+        console.log(err)
         return null
+    }
+}
+
+export async function getHDEVMatches(puuid, matchesToFetch, startIndex, gameMode, region = 'latam', platform = 'pc'){
+    const maxMatchesForSet = 10
+    let matchesLeft = matchesToFetch
+    while (matchesLeft) {
+        try{
+            const size = matchesLeft > maxMatchesForSet ? maxMatchesForSet : matchesLeft
+            matchesLeft -= size
+            const url = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}?size=${size}&start=${startIndex}${gameMode ? `&mode=${gameMode}` : ''}`
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+                }
+            })
+            
+            const data = await response.json()
+    
+            if (!response.ok) {
+                if (data.errors && data.errors.length > 0) {
+                    throw new Error(`HTTP error ${response.status}, ${JSON.stringify(data.errors)}`)
+                }
+                else {
+                    throw new Error(`HTTP error ${response.status}`)
+                }
+            }
+            
+            return data.data
+        } catch(err){
+            console.log('Error fetching matches from HenrikDev: ' + err)
+            return null
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 import supabase from './supabase.js'
-import { getMatchId, getStartedAt, getShortId, getMatchMode } from '../helpers.js'
+import { getMatchId, getStartedAt, getShortId, getMatchMode, getUniqueMatchesById } from '../helpers.js'
 import { getPlayerMatchInfo, getPlayerRank } from '../match_parser.js'
+import { getHDEVPlayerPuuid } from '../api_requests.js'
 
 export async function resetRanks() {
     const { data, error } = await supabase
@@ -14,7 +15,8 @@ export async function resetRanks() {
 }
 
 export async function updatePlayerRank(puuid, newMatches, storedPlayerMatches) {
-    const allMatches = [...(storedPlayerMatches || []), ...newMatches].sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
+    const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...newMatches])
+        .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
     const { elo, rr, rank, shield } = getPlayerRank(allMatches, puuid)
     const { data, error } = await supabase
         .from("players")
@@ -26,7 +28,8 @@ export async function updatePlayerRank(puuid, newMatches, storedPlayerMatches) {
 }
 
 export async function savePlayerMatchesToDB(puuid, rawMatches, storedPlayerMatches) {
-    const allMatches = [...(storedPlayerMatches || []), ...rawMatches].sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
+    const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...rawMatches])
+        .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
     const { data, error } = await supabase
         .from("player_matches")
         .insert(await Promise.all(rawMatches.map(async m => {
@@ -104,7 +107,8 @@ export async function saveMatchesToDB(matches) {
                 started_at: getStartedAt(m),
                 act_id: m.metadata.season.id,
                 map: m.metadata.map.name,
-                mode: getMatchMode(m)
+                mode: getMatchMode(m),
+                players: m.players.map(p => p.puuid)
             })),
             {
                 onConflict: "match_id",
@@ -126,4 +130,35 @@ export async function getPlayers() {
         console.log("Error fetching players from database: " + error.message)
     }
     return players
+}
+
+export async function insertNewPlayer(player) {
+    const puuid = await getHDEVPlayerPuuid(player)
+    if (!puuid) {
+        console.log(`Error fetching player puuid for ${player}`)
+        return null
+    }
+
+    const [name, tag] = player.split("#")
+    const { data, error } = await supabase
+        .from("players")
+        .insert({ puuid, name, tag })
+    if (error) {
+        console.log("Error registering player in database: " + error.message)
+        return null
+    }
+    
+    return data[0]
+}
+
+export async function getMatchesByPlayers(players) { // players as array of puuids
+    const { data, error } = await supabase
+    .from("matches")
+    .select("*")
+    .contains("players", players)
+    if (error) {
+        console.log("Error fetching matches from database: " + error.message)
+        return null
+    }
+    return data
 }
