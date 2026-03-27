@@ -12,8 +12,9 @@ pollAllPlayers()
 app.post('/api/register-player/', async (req, res) => {
     const { player } = req.body
     try {
-        const registeredPlayer = await registerPlayer(player)
-        res.status(200).json(registeredPlayer)
+        const registerResponse = await registerPlayer(player)
+        if (registerResponse.error || !registerResponse.data) res.status(400).json({ message: registerResponse.error })
+            else res.status(200).json(registerResponse.data)
     } catch (error) {
         console.log(`Error registering player ${player}: ${error.message}`)
         res.status(500).json({ message: `Error registering player ${player}: ${error.message}` })

@@ -27,7 +27,7 @@ export async function updatePlayerRank(puuid, newMatches, storedPlayerMatches) {
     }
 }
 
-// null value in column "mode" of relation "player_matches" violates not-null constraint
+
 export async function savePlayerMatchesToDB(puuid, rawMatches, storedPlayerMatches) {
     const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...(rawMatches || [])])
         .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
@@ -143,7 +143,7 @@ export async function insertNewPlayer(player) {
     const puuid = await getHDEVPlayerPuuid(player)
     if (!puuid) {
         console.log(`Error fetching player puuid for ${player}`)
-        return null
+        return { data: null, error: new Error(`Player ${player} not found`) }
     }
 
     const [name, tag] = player.split("#")
@@ -152,11 +152,11 @@ export async function insertNewPlayer(player) {
         .insert({ puuid, name, tag })
     if (error) {
         console.log("Error registering player in database: " + error.message)
-        return null
+        return { data: null, error: new Error("Error registering player in database") }
     }
     
     const newPlayer = await getPlayerByPuuid(puuid)
-    return newPlayer
+    return { data: newPlayer, error: null }
 }
 
 export async function getPlayerByPuuid(puuid){

@@ -15,22 +15,27 @@ const initialMatchesToFetch = 1
 
 export async function registerPlayer(player) {
     // Agregar player a la DB
-    const insertedPlayer = await insertNewPlayer(player)
+    const insertResponse = await insertNewPlayer(player)
+    if (insertResponse.error || !insertResponse.data) return insertResponse
+    const puuid = insertResponse.data.puuid
 
     // Guardar PlayerMatches en base a Matches ya gurdadas en la DB
-    const storedDBMatches = await getMatchesByPlayers([insertedPlayer.puuid])
+    const storedDBMatches = await getMatchesByPlayers([puuid])
     const rawStoredDBMatches = storedDBMatches.map(m => m.raw_json).sort((a, b) => getStartedAt(b) - getStartedAt(a))
-    // UPDATE PLAYER RANK ACA?
+    
     if (rawStoredDBMatches && rawStoredDBMatches.length) {
-        await savePlayerMatchesToDB(insertedPlayer.puuid, rawStoredDBMatches)
-        await updateLastMatchId(insertedPlayer.puuid, getMatchId(rawStoredDBMatches[0]))
+        await savePlayerMatchesToDB(puuid, rawStoredDBMatches)
+        await updateLastMatchId(puuid, getMatchId(rawStoredDBMatches[0]))
+        await updatePlayerRank(puuid, rawStoredDBMatches)
     } else {
-        console.log(`[${getShortId(insertedPlayer.puuid)}] No stored matches found in DB for player, skipping PlayerMatches saving step`)
+        console.log(`[${getShortId(puuid)}] No stored matches found in DB for player, skipping PlayerMatches saving step`)
     }        
     
     // Guardar en la DB Matches y PlayerMatches en base a las ultimas 20 partidas (excluyendo repetidas)
-    const lastMatches = await getHDEVMatches(insertedPlayer.puuid, initialMatchesToFetch, 0)
-    await processNewMatches(insertedPlayer.puuid, lastMatches)
-    
-    return insertedPlayer
+    const lastMatches = await getHDEVMatches(puuid, initialMatchesToFetch, 0)
+    if (lastMatches && lastMatches.length) {
+        await processNewMatches(puuid, lastMatches)
+    }
+
+    return insertResponse
 }
