@@ -1,12 +1,12 @@
 import { EVAL_PARAMS, IMMORTAL_ELO } from '../valorant_config.js'
 
-export function isUsefulMatch(match, lastStoredMatchId, targetAct) {
+export function isUsefulMatch(match, lastStoredMatchId) {
     return ( match &&
         match.metadata.is_completed && // no está en partida
         match.metadata.party_rr_penaltys.length > 0 && // no es custom
-        match.metadata.season.id === targetAct.id && // es del act actual
-        getMatchId(match) !== lastStoredMatchId && // es nueva
-        getMatchMode(match) !== "Deathmatch" // no es deathmatch
+        // match.metadata.season.id === targetAct.id && // es del act actual
+        getMatchMode(match) !== "Deathmatch" && // no es deathmatch
+        (!lastStoredMatchId || getMatchId(match) !== lastStoredMatchId) // es nueva
     )
 }
 
@@ -43,10 +43,9 @@ export function curve(x, p = 1.5) {
     return 0.5 + Math.sign(x - 0.5) * Math.pow(Math.abs(x - 0.5) * 2, p) / 2
 }
 
-
 export function getMatchMode(match) {
     if (match?.mode) return match.mode
-    return match.metadata.queue.mode_type !== match.metadata.queue.name ? match.metadata.queue.mode_type : match.metadata.queue.name 
+    return match.metadata.queue.name || match.metadata.mode_type
 }
 
 export function getUniqueMatchesById(matches = []) {

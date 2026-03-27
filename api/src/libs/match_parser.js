@@ -4,7 +4,8 @@ import { getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode } 
 export function getPlayerRank(matches, puuid) {
     let currentElo = 50
     let shieldLevel = 0
-    const matches_rr = matches.map(match => getMatchRR(match, puuid))
+    const skirmishMatches = matches.filter(m => getMatchMode(m) === "Skirmish")
+    const matches_rr = skirmishMatches.map(match => getMatchRR(match, puuid))
 
     matches_rr.forEach(match_rr => {
         // al bajar de 0, el rr se queda en 0
@@ -38,6 +39,7 @@ export function getPlayerRank(matches, puuid) {
 
 export function getMatchRR(match, puuid){
     if (match.rr_change) return match.rr_change // para stored matches, sino calcula aca abajo
+    const roundsToWin = 10
 
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
     if (!inMatchPlayer) {
@@ -53,7 +55,7 @@ export function getMatchRR(match, puuid){
 
     let result = 0
     const acs_normalized = normalize(acs)
-    const roundsDiff_normalized = (won ? Math.abs(roundsDiff) : 10 - Math.abs(roundsDiff)) / 10
+    const roundsDiff_normalized = (won ? Math.abs(roundsDiff) : roundsToWin - Math.abs(roundsDiff)) / roundsToWin
 
     let performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
     performance = curve(performance)
@@ -77,16 +79,11 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
     }
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
-    const matchClutches = match.rounds.filter(r => r.ceremony === 'CeremonyClutch')
 
     const roundsWon = teamInfo.rounds.won
     const roundsLost = teamInfo.rounds.lost
     const kills = inMatchPlayer.stats.kills
     const deaths = inMatchPlayer.stats.deaths
-    const clutches1v2 = matchClutches.filter(c => {
-        const inClutchPlayer = c.stats.find(playerStat => playerStat.player.puuid === puuid)
-        if (inClutchPlayer.stats.kills === 2) return true
-    })
     const scores = match.players
         .map(p => ({
             puuid: p.puuid,
@@ -95,7 +92,20 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         }))
         .sort((a, b) => b.score - a.score)
     const place = scores.findIndex(p => p.puuid === puuid) + 1
-    const allyPlace = scores.findIndex(p => p.team === teamColor && p.puuid !== puuid) + 1
+    const teamMVP = scores.find(p => p.team === teamColor)?.puuid
+    const isHsDataMissing = inMatchPlayer.stats.headshots === 0 && inMatchPlayer.stats.bodyshots === 0 && inMatchPlayer.stats.legshots === 0 && kills > 0
+    const isDamageDataMissing = inMatchPlayer.stats.damage.dealt === 0 && inMatchPlayer.stats.damage.received === 0 && kills > 0 && deaths > 0
+    
+    const playersPerTeam = match.players.filter(p => p.team_id === teamColor).length
+    let killedThemAllRounds = 0
+    let clutchesNKillThemAllRounds = 0
+    match.rounds.forEach(r => {
+        const inRoundPlayer = r.stats.find(playerStat => playerStat.player.puuid === puuid)
+        if (inRoundPlayer?.stats.kills === playersPerTeam) {
+            killedThemAllRounds++
+            if (r.ceremony === 'CeremonyClutch') clutchesNKillThemAllRounds++
+        }
+    })
 
     return {
         match_id: getMatchId(match), // PK
@@ -108,8 +118,8 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         roundsWon: roundsWon,
         roundsLost: roundsLost,
         place: place,
-        isTeamMVP: place < allyPlace, // skirmish exclusive
-        clutches1v2: clutches1v2.length, // skirmish exclusive
+        isTeamMVP: teamMVP === puuid,
+        clutches1v2: playersPerTeam === 2 ? clutchesNKillThemAllRounds.length : null,
         kills: kills,
         deaths: deaths,
         assists: inMatchPlayer.stats.assists,
@@ -120,9 +130,10 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         map: match.metadata.map.name,
         started_at: getStartedAt(match),
         mode: getMatchMode(match),
-        hsPerc: kills / inMatchPlayer.stats.headshots, // not in skirmish
-        damageDelta: inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received, // not in skirmish
-        act_id: match.metadata.season.id // FK
+        hsPerc: isHsDataMissing ? null : kills === 0 ? 0 : Math.round((inMatchPlayer.stats.headshots / kills) * 100),
+        damageDelta: isDamageDataMissing ? null : inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received,
+        act_id: match.metadata.season.id, // FK
+        aces: playersPerTeam === 5 ? killedThemAllRounds.length : null
     }
 }
 

@@ -1,16 +1,16 @@
 import { getPlayerRank } from '../helpers/player_helpers'
 import supabase from './supabase'
-import registerPlayer from '../api/index.js'
+import { registerPlayer } from '../api/index.js'
 
 export async function getTwoPlayers(player1, player2) {
-    const player1Data = await getPlayerData(player1, false)
-    const player2Data = await getPlayerData(player2, false)
+    let player1Data = await getPlayerData(player1, false)
+    let player2Data = await getPlayerData(player2, false)
 
     if (!player1Data) {
-        await registerPlayer(player1)
+        player1Data = await registerPlayer(player1)
     }
     if (!player2Data) {
-        await registerPlayer(player2)
+        player2Data = await registerPlayer(player2)
     }
 
     const { data, error } = await supabase
@@ -39,10 +39,10 @@ export async function getTwoPlayers(player1, player2) {
 }
 
 export async function getOnePlayer(player) {
-    const playerData = await getPlayerData(player)
+    let playerData = await getPlayerData(player)
 
     if (!playerData) {
-        await registerPlayer(player)
+        playerData = await registerPlayer(player)
     }
 
     const { data, error } = await supabase

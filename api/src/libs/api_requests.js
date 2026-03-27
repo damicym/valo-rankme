@@ -34,20 +34,19 @@ export async function getHDEVPlayerPuuid(player) {
 export async function getHDEVMatches(puuid, matchesToFetch, startIndex, gameMode, region = 'latam', platform = 'pc'){
     const maxMatchesForSet = 10
     let matchesLeft = matchesToFetch
+    let result = []
     while (matchesLeft) {
         try{
             const size = matchesLeft > maxMatchesForSet ? maxMatchesForSet : matchesLeft
-            matchesLeft -= size
             const url = `https://api.henrikdev.xyz/valorant/v4/by-puuid/matches/${region}/${platform}/${puuid}?size=${size}&start=${startIndex}${gameMode ? `&mode=${gameMode}` : ''}`
+            
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Authorization': config.HENRIKDEV_ACCESS_TOKEN
                 }
             })
-            
             const data = await response.json()
-    
             if (!response.ok) {
                 if (data.errors && data.errors.length > 0) {
                     throw new Error(`HTTP error ${response.status}, ${JSON.stringify(data.errors)}`)
@@ -57,12 +56,15 @@ export async function getHDEVMatches(puuid, matchesToFetch, startIndex, gameMode
                 }
             }
             
-            return data.data
+            result = result.concat(data.data)
+            matchesLeft -= size
+            startIndex += size
         } catch(err){
             console.log('Error fetching matches from HenrikDev: ' + err)
             return null
         }
     }
+    return result
 }
 
 export async function getActByDate(date) {

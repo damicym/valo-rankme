@@ -27,9 +27,16 @@ export async function updatePlayerRank(puuid, newMatches, storedPlayerMatches) {
     }
 }
 
+// null value in column "mode" of relation "player_matches" violates not-null constraint
 export async function savePlayerMatchesToDB(puuid, rawMatches, storedPlayerMatches) {
-    const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...rawMatches])
+    const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...(rawMatches || [])])
         .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
+    
+    if (!allMatches || !allMatches.length) {
+        console.log("No matches to save at savePlayerMatchesToDB")
+        return
+    }
+
     const { data, error } = await supabase
         .from("player_matches")
         .insert(await Promise.all(rawMatches.map(async m => {
@@ -143,6 +150,20 @@ export async function insertNewPlayer(player) {
     const { data, error } = await supabase
         .from("players")
         .insert({ puuid, name, tag })
+    if (error) {
+        console.log("Error registering player in database: " + error.message)
+        return null
+    }
+    
+    const newPlayer = await getPlayerByPuuid(puuid)
+    return newPlayer
+}
+
+export async function getPlayerByPuuid(puuid){
+    const { data, error } = await supabase
+        .from("players")
+        .select("*")
+        .eq("puuid", puuid)
     if (error) {
         console.log("Error registering player in database: " + error.message)
         return null

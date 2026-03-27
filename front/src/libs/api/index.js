@@ -1,6 +1,6 @@
 export async function registerPlayer(player) {
     try {
-        const url = `${import.meta.env.VITE_API_URL}/api/register-player/${encodeURIComponent(player)}`
+        const url = `${import.meta.env.VITE_API_URL}/api/register-player`
         const response = await fetch(url, {
             method: 'POST',
             headers: {

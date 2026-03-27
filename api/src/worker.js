@@ -88,11 +88,13 @@ async function pollPlayer(player, targetAct) {
             }
             
             // Si la última partida jugada es nueva y útil, proceso las nuevas partidas
-            if (isUsefulMatch(lastMatch, currentLastStoredMatchId, targetAct)) {
-                const newestStoredMatchId = await processNewMatches(player.puuid, currentLastStoredMatchId, initialMatches, targetAct)
+            if (isUsefulMatch(lastMatch, currentLastStoredMatchId)) {
+                const newestStoredMatchId = await getNewMatches(player.puuid, currentLastStoredMatchId, initialMatches)
                 if (newestStoredMatchId) {
                     currentLastStoredMatchId = newestStoredMatchId
                 }
+            } else{
+                console.log(`[${getShortId(player.puuid)}] Last match is not useful or already stored. Last match id: ${getShortId(getMatchId(lastMatch))}, current last stored match id: ${getShortId(currentLastStoredMatchId)}`)
             }
         } else {
             console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
@@ -105,14 +107,15 @@ async function pollPlayer(player, targetAct) {
     await poll()
 }
 
-async function processNewMatches(puuid, lastStoredMatchId, initialMatches, targetAct) {
+async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
     const matchesToFetch = 10
-    const maxExtraFetches = 3
+    const maxExtraFetches = 0
     let startIndex = initialMatches.length
     let areMoreMatches = false
     let matches = [...initialMatches]
     let fetchesCount = 0
     
+    areMoreMatches = !matches.some(m => getMatchId(m) === lastStoredMatchId) && fetchesCount < maxExtraFetches
     while (lastStoredMatchId && areMoreMatches) {
         fetchesCount++
         console.log(`[${getShortId(puuid)}] Fetching matches... (#${fetchesCount}, from ${startIndex} to ${startIndex + matchesToFetch - 1})`)
@@ -124,7 +127,7 @@ async function processNewMatches(puuid, lastStoredMatchId, initialMatches, targe
         }
         matches.push(...apiMatches)
 
-        areMoreMatches = !matches.some(m => getMatchId(m) === lastStoredMatchId || m.metadata.season.id !== targetAct.id) && fetchesCount < maxExtraFetches
+        areMoreMatches = !matches.some(m => getMatchId(m) === lastStoredMatchId) && fetchesCount < maxExtraFetches
         if (!areMoreMatches) {
             matches = matches.slice(0, matches.findIndex(m => getMatchId(m) === lastStoredMatchId))
         } else {
@@ -132,13 +135,18 @@ async function processNewMatches(puuid, lastStoredMatchId, initialMatches, targe
         }
     }
 
+    const newestStoredMatchId = await processNewMatches(puuid, matches)
+    return newestStoredMatchId
+}
+
+export async function processNewMatches(puuid, matches) {
     const storedPlayerMatches = await getPlayerMatches(puuid)
     const seenMatchesIds = new Set(storedPlayerMatches?.map(m => getMatchId(m)) || [])
     let newMatches = []
     for (const match of matches) {
         if (!seenMatchesIds.has(getMatchId(match))) {
             seenMatchesIds.add(getMatchId(match))
-            if (isUsefulMatch(match, lastStoredMatchId, targetAct)) {
+            if (isUsefulMatch(match)) {
                 newMatches.push(match)
             }
         }
@@ -153,6 +161,6 @@ async function processNewMatches(puuid, lastStoredMatchId, initialMatches, targe
     await updateLastMatchId(puuid, newestStoredMatchId)
     await savePlayerMatchesToDB(puuid, newMatches, storedPlayerMatches)
     await updatePlayerRank(puuid, newMatches, storedPlayerMatches)
-
+    
     return newestStoredMatchId
 }

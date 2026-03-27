@@ -1,17 +1,35 @@
-import { insertNewPlayer, getMatchesByPlayers, savePlayerMatchesToDB, updateLastMatchId } from "./libs/db/queries.js"
 import { getHDEVMatches } from "./libs/api_requests.js"
+import { getMatchId, getShortId, getStartedAt } from "./libs/helpers.js"
+import { 
+    insertNewPlayer, 
+    getMatchesByPlayers, 
+    savePlayerMatchesToDB, 
+    updateLastMatchId, 
+    getPlayerMatches, 
+    saveMatchesToDB, 
+    updatePlayerRank 
+} from "./libs/db/queries.js"
+import { processNewMatches } from "./worker.js"
 
-// que devuelvan en medio un mensaje de si estan registrando o no
+const initialMatchesToFetch = 1
 
 export async function registerPlayer(player) {
+    // Agregar player a la DB
     const insertedPlayer = await insertNewPlayer(player)
-    console.log("registeredPlayer: ", insertedPlayer)
-    const lastMatches = await getHDEVMatches(insertedPlayer.puuid, 20, 0)
-    const storedMatches = await getMatchesByPlayers([insertedPlayer.puuid])
-    await savePlayerMatchesToDB(insertedPlayer.puuid, lastMatches, storedMatches)
-    await updateLastMatchId(insertedPlayer.puuid, getMatchId(lastMatches[0]))
+
+    // Guardar PlayerMatches en base a Matches ya gurdadas en la DB
+    const storedDBMatches = await getMatchesByPlayers([insertedPlayer.puuid])
+    const rawStoredDBMatches = storedDBMatches.map(m => m.raw_json).sort((a, b) => getStartedAt(b) - getStartedAt(a))
+    if (rawStoredDBMatches && rawStoredDBMatches.length) {
+        await savePlayerMatchesToDB(insertedPlayer.puuid, rawStoredDBMatches)
+        await updateLastMatchId(insertedPlayer.puuid, getMatchId(rawStoredDBMatches[0]))
+    } else {
+        console.log(`[${getShortId(insertedPlayer.puuid)}] No stored matches found in DB for player, skipping PlayerMatches saving step`)
+    }        
     
-    //rank
+    // Guardar en la DB Matches y PlayerMatches en base a las ultimas 20 partidas (excluyendo repetidas)
+    const lastMatches = await getHDEVMatches(insertedPlayer.puuid, initialMatchesToFetch, 0)
+    await processNewMatches(insertedPlayer.puuid, lastMatches)
     
-    // return insertedPlayer
+    return insertedPlayer
 }

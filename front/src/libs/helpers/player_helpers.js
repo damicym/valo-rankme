@@ -3,7 +3,8 @@ const IMMORTAL_ELO = 2100
 export function getPlayerRank(matches) {
     let currentElo = 50
     let shieldLevel = 0
-    const matches_rr = matches.map(m => m.rr_change)
+    const skirmishMatches = matches.filter(m => getMatchMode(m) === "Skirmish")
+    const matches_rr = skirmishMatches.map(m => m.rr_change)
 
     matches_rr.forEach(match_rr => {
         // al bajar de 0, el rr se queda en 0
@@ -37,4 +38,9 @@ export function getPlayerRank(matches) {
 
 function getRRByElo(elo){
     return elo < IMMORTAL_ELO ? elo % 100 : elo - IMMORTAL_ELO
+}
+
+function getMatchMode(match) {
+    if (match?.mode) return match.mode
+    return match.metadata.queue.id === 'custom' ? match.metadata.queue.mode_type : match.metadata.queue.name 
 }
