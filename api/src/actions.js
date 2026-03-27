@@ -20,6 +20,7 @@ export async function registerPlayer(player) {
     // Guardar PlayerMatches en base a Matches ya gurdadas en la DB
     const storedDBMatches = await getMatchesByPlayers([insertedPlayer.puuid])
     const rawStoredDBMatches = storedDBMatches.map(m => m.raw_json).sort((a, b) => getStartedAt(b) - getStartedAt(a))
+    // UPDATE PLAYER RANK ACA?
     if (rawStoredDBMatches && rawStoredDBMatches.length) {
         await savePlayerMatchesToDB(insertedPlayer.puuid, rawStoredDBMatches)
         await updateLastMatchId(insertedPlayer.puuid, getMatchId(rawStoredDBMatches[0]))
