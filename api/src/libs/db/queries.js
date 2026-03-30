@@ -1,6 +1,6 @@
 import supabase from './supabase.js'
-import { getMatchId, getStartedAt, getShortId, getMatchMode, getUniqueMatchesById } from '../helpers.js'
-import { getPlayerMatchInfo, getPlayerRank } from '../match_parser.js'
+import { getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, getUniqueMatchesById, getMatchTeam } from '../helpers.js'
+import { getPlayerMatchInfo, getMatchRR, getPlayerModeRank } from '../match_parser.js'
 import { getHDEVPlayerPuuid } from '../api_requests.js'
 
 export async function resetRanks() {
@@ -14,19 +14,55 @@ export async function resetRanks() {
     }
 }
 
-export async function updatePlayerRank(puuid, newMatches, storedPlayerMatches) {
-    const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...newMatches])
-        .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
-    const { elo, rr, rank, shield } = getPlayerRank(allMatches, puuid)
-    const { data, error } = await supabase
-        .from("players")
-        .update({ elo, rr, rank, shield })
-        .eq("puuid", puuid)
-    if (error) {
-        console.log(`Error updating player rank (${getShortId(puuid)}) in database: ${error.message}`)
+export async function updatePlayerRank(puuid, newRawMatches) {
+    if (!newRawMatches || !newRawMatches.length) {
+        console.log("No new matches to update player rank at updatePlayerRank")
+        return
     }
-}
+    const uniqueMatches = getUniqueMatchesById([...newRawMatches])
+    // guardo de cada partida su rr_change y equipo, en el array de su respectivo modo
+    const rrChangesByMode = {}
+    uniqueMatches.forEach(m => {
+        const modeId = getMatchModeId(m)
+        if (!rrChangesByMode[modeId]) {
+            rrChangesByMode[modeId] = []
+        }
+        rrChangesByMode[modeId].push(getMatchRR(m, puuid))
+    })
 
+    // consigo los rangos para el jugador gurdados en la db
+    const { data: ranks, error: ranksFetchError } = await supabase
+        .from("player_mode_ranks")
+        .select("*")
+        .eq("player_puuid", puuid)
+    if (ranksFetchError) {
+        console.log(`Error fetching player rank (${getShortId(puuid)}) from database: ${ranksFetchError.message}`)
+    }
+    
+    Object.entries(rrChangesByMode).forEach(([modeId, rrChanges]) => {
+        // por cada modo consigo el nuevo rango
+        const dbRank = ranks.find(r => r.mode_id === modeId) || null
+        const newModeRank = getPlayerModeRank(dbRank, rrChanges)
+        // si ya estaba el rango en la db, lo updateo
+        if (dbRank) {
+            const { data, error } = supabase
+                .from("player_mode_ranks")
+                .update(newModeRank)
+                .eq("player_puuid", puuid)
+                .eq("mode_id", modeId)
+            if (error) {
+                console.log(`Error updating player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
+            }
+        } else { // sino lo inserto
+            const { data, error } = supabase
+                .from("player_mode_ranks")
+                .insert({ player_puuid: puuid, mode_id: modeId, ...newModeRank })
+            if (error) {
+                console.log(`Error saving player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
+            }
+        }
+    })
+}
 
 export async function savePlayerMatchesToDB(puuid, rawMatches, storedPlayerMatches) {
     const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...(rawMatches || [])])
@@ -78,6 +114,8 @@ export async function updateLastMatchId(puuid, matchId) {
         .eq("puuid", puuid)
     if (error) {
         console.log("Error updating last match id in database: " + error.message)
+    } else {
+        console.log(`[${getShortId(puuid)}] Updated last match id to ${getShortId(matchId)} in database`)
     }
 }
 
@@ -88,7 +126,10 @@ export async function updatePlayerUser(puuid, name, tag) {
         .eq("puuid", puuid)
     if (error) {
         console.log("Error updating player user in database: " + error.message)
+    } else {
+        console.log(`[${getShortId(puuid)}] Updated player user in database`)
     }
+
 }
 
 export async function getPlayerMatches(puuid) {

@@ -1,26 +1,26 @@
 import { IMMORTAL_ELO, EVAL_PARAMS } from '../valorant_config.js'
-import { getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode } from './helpers.js'
+import { getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode, getMatchModeId } from './helpers.js'
 
-export function getPlayerRank(matches, puuid) {
-    let currentElo = 50
-    let shieldLevel = 0
-    const skirmishMatches = matches.filter(m => getMatchMode(m) === "Skirmish")
-    const matches_rr = skirmishMatches.map(match => getMatchRR(match, puuid))
 
-    matches_rr.forEach(match_rr => {
-        // al bajar de 0, el rr se queda en 0
+export function getPlayerModeRank(initialRank, rrChanges) {
+    let currentElo = initialRank?.elo || 50
+    let shieldLevel = initialRank?.shield || 0
+
+    rrChanges.forEach(match_rr => {
         const newRawElo = currentElo + match_rr
         const rank = Math.floor(currentElo / 100)
         const nextRank = Math.floor(newRawElo / 100)
+        const isImmo = currentElo >= IMMORTAL_ELO
         const won = match_rr > 0
 
+        // no puede bajar de 0 de elo
         if (newRawElo < 0) {
             currentElo = 0
         }
         // al pasar un múltiplo de 100 por menos de 10 rr antes de immortal, se le suma lo necesario para pasarlo por 10 rr
-        else if (!(currentElo >= IMMORTAL_ELO) && won && rank < nextRank) {
+        else if (!isImmo && won && rank < nextRank) {
             currentElo = Math.max(newRawElo, nextRank * 100 + 10)
-            // si sube al primer rengo de la división, se le da 2 escudos. Pero si está en hierro 1 no
+            // si sube al primer rango de la división, se le da 2 escudos. Pero si está en hierro 1 no
             if (currentElo % 300 < 100 && currentElo > 100) shieldLevel = 2
         }
         // al pasar un múltiplo de 100 por menos de 10 rr, se le suma lo necesario para pasarlo por 10 rr
@@ -34,7 +34,8 @@ export function getPlayerRank(matches, puuid) {
             currentElo = newRawElo
         }
     })
-    return { elo: currentElo, rr: getRRByElo(currentElo), rank: Math.floor(currentElo / 100), shield: shieldLevel}
+    
+    return { elo: currentElo, rr: getRRByElo(currentElo), rank: Math.floor(currentElo / 100), shield: shieldLevel }
 }
 
 export function getMatchRR(match, puuid){
@@ -112,7 +113,7 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         player_puuid: puuid, // FK
         team_id: teamColor, // FK
         rr_change: getMatchRR(match, puuid),
-        rank: getPlayerRank(previousMatches, puuid).rank,
+        rank: 1 /* getPlayerModeRank(previousMatches, puuid).rank */,
         agent: inMatchPlayer.agent.name,
         won: teamInfo.won,
         roundsWon: roundsWon,
@@ -133,15 +134,7 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         hsPerc: isHsDataMissing ? null : kills === 0 ? 0 : Math.round((inMatchPlayer.stats.headshots / kills) * 100),
         damageDelta: isDamageDataMissing ? null : inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received,
         act_id: match.metadata.season.id, // FK
-        aces: playersPerTeam === 5 ? killedThemAllRounds.length : null
+        aces: playersPerTeam === 5 ? killedThemAllRounds.length : null,
+        mode_id: getMatchModeId(match)
     }
-}
-
-export function getUserFromRawMatch(match, puuid) {
-    const inMatchPlayer = match.players.find(p => p.puuid === puuid)
-    if (!inMatchPlayer) {
-        console.log("[ERROR] !inMatchPlayer at getUserFromRawMatch")
-        return null
-    }
-    return { name: inMatchPlayer.name, tag: inMatchPlayer.tag }
 }

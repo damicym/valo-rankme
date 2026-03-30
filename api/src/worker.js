@@ -1,5 +1,5 @@
 import { config } from '../config.js'
-import { isUsefulMatch, getMatchId, getStartedAt, getShortId, compareActsByDate } from './libs/helpers.js'
+import { isUsefulMatch, getMatchId, getStartedAt, getShortId, compareActsByDate, getUserFromRawMatch } from './libs/helpers.js'
 import { 
     updatePlayerRank, 
     savePlayerMatchesToDB, 
@@ -11,7 +11,6 @@ import {
     resetRanks,
     insertNewAct
 } from './libs/db/queries.js'
-import { getUserFromRawMatch } from './libs/match_parser.js'
 import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
 
 const POLLING_INTERVAL = 3 * 60 * 1000
@@ -109,7 +108,7 @@ async function pollPlayer(player, targetAct) {
 
 async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
     const matchesToFetch = 10
-    const maxExtraFetches = 0
+    const maxExtraFetches = 2
     let startIndex = initialMatches.length
     let areMoreMatches = false
     let matches = [...initialMatches]
@@ -158,9 +157,9 @@ export async function processNewMatches(puuid, matches) {
 
     const newestStoredMatchId = getMatchId(newMatches[0])
     await saveMatchesToDB(newMatches)
-    await updateLastMatchId(puuid, newestStoredMatchId)
     await savePlayerMatchesToDB(puuid, newMatches, storedPlayerMatches)
-    await updatePlayerRank(puuid, newMatches, storedPlayerMatches)
+    await updatePlayerRank(puuid, newMatches)
+    await updateLastMatchId(puuid, newestStoredMatchId)
     
     return newestStoredMatchId
 }

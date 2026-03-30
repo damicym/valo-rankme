@@ -11,7 +11,7 @@ import {
 } from "./libs/db/queries.js"
 import { processNewMatches } from "./worker.js"
 
-const initialMatchesToFetch = 1
+const initialMatchesToFetch = 20
 
 export async function registerPlayer(player) {
     // Agregar player a la DB

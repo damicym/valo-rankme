@@ -2,7 +2,7 @@ import { getPlayerRank } from '../helpers/player_helpers'
 import supabase from './supabase'
 import { registerPlayer } from '../api/index.js'
 
-export async function getTwoPlayers(player1, player2) {
+export async function getTwoPlayers(player1, player2, modeIdFilter = null) {
     let player1Data = await getPlayerData(player1, false)
     let player2Data = await getPlayerData(player2, false)
 
@@ -73,17 +73,17 @@ export async function getTwoPlayers(player1, player2) {
         player1: {
             puuid: player1Data.puuid,
             matches: player1Matches,
-            rankInfo: getPlayerRank(player1Matches)
+            rankInfo: getPlayerRank(player1Matches, modeIdFilter)
         },
         player2: {
             puuid: player2Data.puuid,
             matches: player2Matches,
-            rankInfo: getPlayerRank(player2Matches)
+            rankInfo: getPlayerRank(player2Matches, modeIdFilter)
         }
     }
 }
 
-export async function getOnePlayer(player) {
+export async function getOnePlayer(player, /* modeIdFilter = null */) {
     let playerData = await getPlayerData(player)
 
     if (!playerData) {
