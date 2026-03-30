@@ -94,7 +94,8 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         .sort((a, b) => b.score - a.score)
     const place = scores.findIndex(p => p.puuid === puuid) + 1
     const teamMVP = scores.find(p => p.team === teamColor)?.puuid
-    const isHsDataMissing = inMatchPlayer.stats.headshots === 0 && inMatchPlayer.stats.bodyshots === 0 && inMatchPlayer.stats.legshots === 0 && kills > 0
+    const isShotDataMissing = inMatchPlayer.stats.headshots === 0 && inMatchPlayer.stats.bodyshots === 0 && inMatchPlayer.stats.legshots === 0 && kills > 0
+    const shotCount = isShotDataMissing ? null : inMatchPlayer.stats.headshots + inMatchPlayer.stats.bodyshots + inMatchPlayer.stats.legshots
     const isDamageDataMissing = inMatchPlayer.stats.damage.dealt === 0 && inMatchPlayer.stats.damage.received === 0 && kills > 0 && deaths > 0
     
     const playersPerTeam = match.players.filter(p => p.team_id === teamColor).length
@@ -131,8 +132,8 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         map: match.metadata.map.name,
         started_at: getStartedAt(match),
         mode: getMatchMode(match),
-        hsPerc: isHsDataMissing ? null : kills === 0 ? 0 : Math.round((inMatchPlayer.stats.headshots / kills) * 100),
-        damageDelta: isDamageDataMissing ? null : inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received,
+        hs_perc: isShotDataMissing ? null : kills === 0 ? 0 : Math.round((inMatchPlayer.stats.headshots / shotCount) * 100),
+        DDR: isDamageDataMissing ? null : (inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received) / (roundsWon + roundsLost),
         act_id: match.metadata.season.id, // FK
         aces: playersPerTeam === 5 ? killedThemAllRounds.length : null,
         mode_id: getMatchModeId(match)
