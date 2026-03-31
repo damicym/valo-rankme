@@ -65,12 +65,7 @@ async function pollPlayer(player, targetAct) {
             if (atcsCompare > 0) {
                 console.log(`[${getShortId(player.puuid)}] New act detected: ${matchAct.title} (${getShortId(matchAct.id)}), valid from ${matchAct.startTime.toLocaleDateString()} to ${matchAct.endTime.toLocaleDateString()}`)
                 await insertNewAct(matchAct)
-                // si cambió la season, reseteo el rank de todos los jugadores
-                if (matchAct.seasonId !== targetAct.seasonId) {
-                    await resetRanks()
-                }
                 targetAct = matchAct
-                
             }
 
             // Verificar si el nombre o tag del player cambió
