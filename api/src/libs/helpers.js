@@ -16,8 +16,9 @@ export function getRRByElo(elo){
     return elo < IMMORTAL_ELO ? elo % 100 : elo - IMMORTAL_ELO
 }
 
-export function normalize(acs) {
-    return Math.max(0, Math.min(1, (acs - EVAL_PARAMS.min_acs) / (EVAL_PARAMS.max_acs - EVAL_PARAMS.min_acs)))
+export function normalize(acs, modeId) {
+    const { min_acs, max_acs } = EVAL_PARAMS[modeId]
+    return Math.max(0, Math.min(1, (acs - min_acs) / (max_acs - min_acs)))
 }
 
 // transformación no lineal para balancear los performances medios
@@ -26,10 +27,11 @@ export function curve(x, p = 1.5) {
 }
 
 export function isUsefulMatch(match, lastStoredMatchId) {
+    const availableModes = Object.keys(EVAL_PARAMS)
     return ( match &&
         match.metadata.is_completed && // no está en partida
         match.metadata.party_rr_penaltys.length > 0 && // no es custom
-        getMatchModeId(match) !== "deathmatch" && // no es deathmatch
+        availableModes.includes(getMatchModeId(match)) && // es un modo válido
         (!lastStoredMatchId || getMatchId(match) !== lastStoredMatchId) // es nueva
     )
 }

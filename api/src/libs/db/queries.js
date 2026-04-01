@@ -99,11 +99,11 @@ export async function insertNewAct(targetAct) {
         .from("acts")
         .insert({
             id: targetAct.id,
-            startTime: targetAct.startTime,
-            endTime: targetAct.endTime,
-            seasonId: targetAct.seasonId,
+            start_time: targetAct.startTime,
+            end_time: targetAct.endTime,
+            season_id: targetAct.seasonId,
             title: targetAct.title,
-            actName: targetAct.actName,
+            act_name: targetAct.actName,
         })
     if (error) {
         console.log(`Error inserting new act into database: ${error.message}`)
@@ -115,8 +115,8 @@ export async function insertNewSeason(startTime, endTime, name, id) {
         .from("seasons")
         .insert({
             id,
-            startTime,
-            endTime,
+            start_time: startTime,
+            end_time: endTime,
             name
         })
     if (error) {
@@ -185,6 +185,7 @@ export async function saveMatchesToDB(matches) {
                 act_id: m.metadata.season.id,
                 map: m.metadata.map.name,
                 mode: getMatchMode(m),
+                mode_id: getMatchModeId(m),
                 players: m.players.map(p => p.puuid)
             })),
             {

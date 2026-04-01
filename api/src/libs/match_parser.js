@@ -40,13 +40,16 @@ export function getPlayerModeRank(initialRank, rrChanges) {
 
 export function getMatchRR(match, puuid){
     if (match.rr_change) return match.rr_change // para stored matches, sino calcula aca abajo
-    const roundsToWin = 10
+    const modeId = getMatchModeId(match)
+    const evalParams = EVAL_PARAMS[modeId] || EVAL_PARAMS["default"]
+    const roundsToWin = evalParams.rounds_to_win
 
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
     if (!inMatchPlayer) {
         console.log("[ERROR] !inMatchPlayer at getMatchRR")
         return 0
     }
+    
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
 
@@ -55,17 +58,17 @@ export function getMatchRR(match, puuid){
     const acs = inMatchPlayer.stats.score / (teamInfo.rounds.won + teamInfo.rounds.lost)
 
     let result = 0
-    const acs_normalized = normalize(acs)
+    const acs_normalized = normalize(acs, modeId)
     const roundsDiff_normalized = (won ? Math.abs(roundsDiff) : roundsToWin - Math.abs(roundsDiff)) / roundsToWin
 
     let performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
     performance = curve(performance)
 
     if (won) {
-        result = EVAL_PARAMS.min_rr + (EVAL_PARAMS.max_rr - EVAL_PARAMS.min_rr) * performance
+        result = evalParams.min_rr + (evalParams.max_rr - evalParams.min_rr) * performance
     }
     else {
-        result = EVAL_PARAMS.min_rr + (EVAL_PARAMS.max_rr - EVAL_PARAMS.min_rr) * (1 - performance)
+        result = evalParams.min_rr + (evalParams.max_rr - evalParams.min_rr) * (1 - performance)
         result = -result
     }
 
@@ -117,11 +120,11 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         rank: 1 /* getPlayerModeRank(previousMatches, puuid).rank */,
         agent: inMatchPlayer.agent.name,
         won: teamInfo.won,
-        roundsWon: roundsWon,
-        roundsLost: roundsLost,
+        rounds_won: roundsWon,
+        rounds_lost: roundsLost,
         place: place,
-        isTeamMVP: teamMVP === puuid,
-        clutches1v2: playersPerTeam === 2 ? clutchesNKillThemAllRounds.length : null,
+        is_team_mvp: teamMVP === puuid,
+        clutches_1v2: playersPerTeam === 2 ? clutchesNKillThemAllRounds : null,
         kills: kills,
         deaths: deaths,
         assists: inMatchPlayer.stats.assists,
@@ -133,9 +136,9 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         started_at: getStartedAt(match),
         mode: getMatchMode(match),
         hs_perc: isShotDataMissing ? null : kills === 0 ? 0 : Math.round((inMatchPlayer.stats.headshots / shotCount) * 100),
-        DDR: isDamageDataMissing ? null : (inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received) / (roundsWon + roundsLost),
+        ddr: isDamageDataMissing ? null : (inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received) / (roundsWon + roundsLost),
         act_id: match.metadata.season.id, // FK
-        aces: playersPerTeam === 5 ? killedThemAllRounds.length : null,
+        aces: playersPerTeam === 5 ? killedThemAllRounds : null,
         mode_id: getMatchModeId(match)
     }
 }
