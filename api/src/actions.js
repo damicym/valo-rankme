@@ -5,8 +5,6 @@ import {
     getMatchesByPlayers, 
     savePlayerMatchesToDB, 
     updateLastMatchId, 
-    getPlayerMatches, 
-    saveMatchesToDB, 
     updatePlayerRank 
 } from "./libs/db/queries.js"
 import { processNewMatches } from "./worker.js"
@@ -25,7 +23,6 @@ export async function registerPlayer(player) {
     
     if (rawStoredDBMatches && rawStoredDBMatches.length) {
         await savePlayerMatchesToDB(puuid, rawStoredDBMatches)
-        await updateLastMatchId(puuid, getMatchId(rawStoredDBMatches[0]))
         await updatePlayerRank(puuid, rawStoredDBMatches)
     } else {
         console.log(`[${getShortId(puuid)}] No stored matches found in DB for player, skipping PlayerMatches saving step`)

@@ -8,7 +8,6 @@ import {
     getPlayerMatches, 
     saveMatchesToDB, 
     getPlayers,
-    resetRanks,
     insertNewAct
 } from './libs/db/queries.js'
 import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
@@ -121,9 +120,12 @@ async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
         }
         matches.push(...apiMatches)
 
-        areMoreMatches = !matches.some(m => getMatchId(m) === lastStoredMatchId) && fetchesCount < maxExtraFetches
+        const foundLastStoredMatch = matches.find(m => getMatchId(m) === lastStoredMatchId)
+        areMoreMatches = !foundLastStoredMatch && fetchesCount < maxExtraFetches
         if (!areMoreMatches) {
-            matches = matches.slice(0, matches.findIndex(m => getMatchId(m) === lastStoredMatchId))
+            if (foundLastStoredMatch) {
+                matches = matches.slice(0, matches.findIndex(m => getMatchId(m) === lastStoredMatchId))
+            }
         } else {
             startIndex = matchesToFetch * fetchesCount + initialMatches.length
         }
@@ -145,16 +147,17 @@ export async function processNewMatches(puuid, matches) {
             }
         }
     }
+    newMatches = newMatches
+        .sort((a, b) => new Date(getStartedAt(b)) - new Date(getStartedAt(a)))
+
     if (!newMatches || newMatches.length === 0) {
         console.log(`[${getShortId(puuid)}] No new matches to process`)
         return null
     }
 
-    const newestStoredMatchId = getMatchId(newMatches[0])
     await saveMatchesToDB(newMatches)
     await savePlayerMatchesToDB(puuid, newMatches, storedPlayerMatches)
     await updatePlayerRank(puuid, newMatches)
-    await updateLastMatchId(puuid, newestStoredMatchId)
     
-    return newestStoredMatchId
+    return getMatchId(newMatches[0])
 }

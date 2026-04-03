@@ -39,7 +39,7 @@ export function getPlayerModeRank(initialRank, rrChanges) {
 }
 
 export function getMatchRR(match, puuid){
-    if (match.rr_change) return match.rr_change // para stored matches, sino calcula aca abajo
+    if (match?.rr_change !== undefined) return match.rr_change // para stored matches, sino calcula aca abajo
     const modeId = getMatchModeId(match)
     const evalParams = EVAL_PARAMS[modeId] || EVAL_PARAMS["default"]
     const roundsToWin = evalParams.rounds_to_win
@@ -117,6 +117,7 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         player_puuid: puuid, // FK
         team_id: teamColor, // FK
         rr_change: getMatchRR(match, puuid),
+        rr_eval_version: '1.0',
         rank: 1 /* getPlayerModeRank(previousMatches, puuid).rank */,
         agent: inMatchPlayer.agent.name,
         won: teamInfo.won,
@@ -136,7 +137,7 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         started_at: getStartedAt(match),
         mode: getMatchMode(match),
         hs_perc: isShotDataMissing ? null : kills === 0 ? 0 : Math.round((inMatchPlayer.stats.headshots / shotCount) * 100),
-        ddr: isDamageDataMissing ? null : (inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received) / (roundsWon + roundsLost),
+        ddr: isDamageDataMissing ? null : Math.round((inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received) / (roundsWon + roundsLost)),
         act_id: match.metadata.season.id, // FK
         aces: playersPerTeam === 5 ? killedThemAllRounds : null,
         mode_id: getMatchModeId(match)

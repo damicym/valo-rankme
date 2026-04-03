@@ -1,4 +1,5 @@
 import { config } from '../../config.js'
+import { getStartedAt } from './helpers.js'
 
 export async function getHDEVPlayerPuuid(player) {
     const [name, tag] = player.split('#')
@@ -64,7 +65,8 @@ export async function getHDEVMatches(puuid, matchesToFetch, startIndex, gameMode
             return null
         }
     }
-    return result
+    const sortedResult = result.sort((a, b) => new Date(getStartedAt(b)) - new Date(getStartedAt(a)))
+    return sortedResult
 }
 
 export async function getActByDate(date) {

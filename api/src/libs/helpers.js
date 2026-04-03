@@ -1,4 +1,5 @@
 import { EVAL_PARAMS, IMMORTAL_ELO } from '../valorant_config.js'
+import { getSeasonIdByActId } from './db/queries.js'
 
 export function compareActsByDate(actA, actB) {
     const dateA = new Date(actA.startTime).getTime()
@@ -46,12 +47,12 @@ export function getStartedAt(match) {
 
 export function getMatchMode(match) {
     if (match?.mode) return match.mode
-    return match.metadata.queue.name || match.metadata.mode_type
+    return match?.metadata?.queue?.name || match?.metadata?.queue?.mode_type || match?.metadata?.mode_type || null
 }
 
 export function getMatchModeId(match) {
     if (match?.mode_id) return match.mode_id
-    return match.metadata.queue.id
+    return match?.metadata?.queue?.id || null
 }
 
 export function getUniqueMatchesById(matches = []) {
@@ -77,4 +78,11 @@ export function getUserFromRawMatch(match, puuid) {
         return null
     }
     return { name: inMatchPlayer.name, tag: inMatchPlayer.tag }
+}
+
+export async function getMatchSeasonId(match) {
+    if (match?.metadata?.season?.id) return match.metadata.season.id
+    const actId = match.act_id
+    const seasonId = await getSeasonIdByActId(actId)
+    return seasonId
 }
