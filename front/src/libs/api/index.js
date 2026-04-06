@@ -14,7 +14,7 @@ export async function registerPlayer(player) {
         }
 
         const data = await response.json()
-        return data
+        return data[0]?.puuid || null
     } catch (error) {
         console.error('Error fetching player data:', error)
         return null

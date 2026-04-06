@@ -3,14 +3,13 @@ import { isUsefulMatch, getMatchId, getStartedAt, getShortId, compareActsByDate,
 import { 
     updatePlayerRank, 
     savePlayerMatchesToDB, 
-    updateLastMatchId, 
     updatePlayerUser, 
-    getPlayerMatches, 
     saveMatchesToDB, 
     getPlayers,
     insertNewAct
 } from './libs/db/queries.js'
 import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
+import { getDBModes } from './libs/db/queries.js'
 
 const POLLING_INTERVAL = 3 * 60 * 1000
 const PLAYER_SYNC_INTERVAL = 3 * 60 * 1000
@@ -136,8 +135,7 @@ async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
 }
 
 export async function processNewMatches(puuid, matches) {
-    const storedPlayerMatches = await getPlayerMatches(puuid)
-    const seenMatchesIds = new Set(storedPlayerMatches?.map(m => getMatchId(m)) || [])
+    const seenMatchesIds = new Set()
     let newMatches = []
     for (const match of matches) {
         if (!seenMatchesIds.has(getMatchId(match))) {
@@ -154,10 +152,10 @@ export async function processNewMatches(puuid, matches) {
         console.log(`[${getShortId(puuid)}] No new matches to process`)
         return null
     }
-
-    await saveMatchesToDB(newMatches)
-    await savePlayerMatchesToDB(puuid, newMatches, storedPlayerMatches)
-    await updatePlayerRank(puuid, newMatches)
+    const dbModes = await getDBModes()
+    await saveMatchesToDB(newMatches, dbModes)
+    await savePlayerMatchesToDB(puuid, newMatches, dbModes)
+    await updatePlayerRank(puuid, newMatches, dbModes)
     
     return getMatchId(newMatches[0])
 }

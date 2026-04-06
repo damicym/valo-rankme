@@ -1,4 +1,4 @@
-import { EVAL_PARAMS, IMMORTAL_ELO } from '../valorant_config.js'
+import { IMMORTAL_ELO } from '../valorant_config.js'
 import { getSeasonIdByActId } from './db/queries.js'
 
 export function compareActsByDate(actA, actB) {
@@ -17,8 +17,7 @@ export function getRRByElo(elo){
     return elo < IMMORTAL_ELO ? elo % 100 : elo - IMMORTAL_ELO
 }
 
-export function normalize(acs, modeId) {
-    const { min_acs, max_acs } = EVAL_PARAMS[modeId]
+export function normalize(acs, min_acs, max_acs) {
     return Math.max(0, Math.min(1, (acs - min_acs) / (max_acs - min_acs)))
 }
 
@@ -28,11 +27,10 @@ export function curve(x, p = 1.5) {
 }
 
 export function isUsefulMatch(match, lastStoredMatchId) {
-    const availableModes = Object.keys(EVAL_PARAMS)
     return ( match &&
         match.metadata.is_completed && // no está en partida
         match.metadata.party_rr_penaltys.length > 0 && // no es custom
-        availableModes.includes(getMatchModeId(match)) && // es un modo válido
+        // availableModes.includes(getMatchModeId(match)) && // es un modo válido
         (!lastStoredMatchId || getMatchId(match) !== lastStoredMatchId) // es nueva
     )
 }
@@ -80,9 +78,23 @@ export function getUserFromRawMatch(match, puuid) {
     return { name: inMatchPlayer.name, tag: inMatchPlayer.tag }
 }
 
+export function getMatchActId(match) {
+    if (match?.act_id) return match.act_id
+    return match?.metadata?.season?.id || null
+}
+
+export function getMatchMap(match) {
+    if (match?.map) return match.map
+    return match?.metadata?.map?.name || null
+}
+
 export async function getMatchSeasonId(match) {
-    if (match?.metadata?.season?.id) return match.metadata.season.id
-    const actId = match.act_id
+    if (match?.season_id) return match.season_id
+    const actId = getMatchActId(match)
     const seasonId = await getSeasonIdByActId(actId)
     return seasonId
+}
+
+export function getPosibleModeName(id) {
+    return id.split("_").map(w => w[0].toUpperCase() + w.slice(1)).join(" ")
 }

@@ -1,8 +1,7 @@
-import { IMMORTAL_ELO, EVAL_PARAMS } from '../valorant_config.js'
-import { getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode, getMatchModeId } from './helpers.js'
+import { IMMORTAL_ELO } from '../valorant_config.js'
+import { getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode, getMatchModeId, getMatchSeasonId } from './helpers.js'
 
-
-export function getPlayerModeRank(initialRank, rrChanges) {
+export function getPlayerRank(rrChanges, initialRank = null) {
     let currentElo = initialRank?.elo || 50
     let shieldLevel = initialRank?.shield || 0
 
@@ -38,10 +37,12 @@ export function getPlayerModeRank(initialRank, rrChanges) {
     return { elo: currentElo, rr: getRRByElo(currentElo), rank: Math.floor(currentElo / 100), shield: shieldLevel }
 }
 
-export function getMatchRR(match, puuid){
+export function getMatchRR(match, puuid, dbMode) {
     if (match?.rr_change !== undefined) return match.rr_change // para stored matches, sino calcula aca abajo
-    const modeId = getMatchModeId(match)
-    const evalParams = EVAL_PARAMS[modeId] || EVAL_PARAMS["default"]
+    if (!dbMode) console.log(`[WARN] !dbMode at getMatchRR for match ${getShortId(getMatchId(match))} with mode ${getMatchModeId(match)}`)
+    const evalParams = dbMode ?
+        { min_rr: dbMode.min_rr, max_rr: dbMode.max_rr, rounds_to_win: dbMode.rounds_to_win, min_acs: dbMode.min_acs, max_acs: dbMode.max_acs }
+        : { min_rr: 7, max_rr: 33, rounds_to_win: 5, min_acs: 120, max_acs: 550 }
     const roundsToWin = evalParams.rounds_to_win
 
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
@@ -58,7 +59,7 @@ export function getMatchRR(match, puuid){
     const acs = inMatchPlayer.stats.score / (teamInfo.rounds.won + teamInfo.rounds.lost)
 
     let result = 0
-    const acs_normalized = normalize(acs, modeId)
+    const acs_normalized = normalize(acs, evalParams.min_acs, evalParams.max_acs)
     const roundsDiff_normalized = (won ? Math.abs(roundsDiff) : roundsToWin - Math.abs(roundsDiff)) / roundsToWin
 
     let performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
@@ -75,7 +76,7 @@ export function getMatchRR(match, puuid){
     return Math.round(result)
 }
 
-export function getPlayerMatchInfo(match, puuid, previousMatches){
+export async function getPlayerMatchInfo(match, puuid, previousMatches, rankableModes) {
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
     if (!inMatchPlayer) {
         console.log("[ERROR] !inMatchPlayer at getPlayerMatchInfo")
@@ -111,20 +112,23 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
             if (r.ceremony === 'CeremonyClutch') clutchesNKillThemAllRounds++
         }
     })
+    const seasonId = await getMatchSeasonId(match)
+    const isMatchRankable = rankableModes.has(getMatchModeId(match))
+    const dbMode = rankableModes.find(dbM => dbM.id === getMatchModeId(match))
 
     return {
         match_id: getMatchId(match), // PK
         player_puuid: puuid, // FK
         team_id: teamColor, // FK
-        rr_change: getMatchRR(match, puuid),
+        rr_change: isMatchRankable ? getMatchRR(match, puuid, dbMode) : null,
         rr_eval_version: '1.0',
-        rank: 1 /* getPlayerModeRank(previousMatches, puuid).rank */,
+        rank: previousMatches && isMatchRankable ? getPlayerRank(previousMatches.map(m => getMatchRR(m, puuid, dbMode))).rank : null,
         agent: inMatchPlayer.agent.name,
         won: teamInfo.won,
         rounds_won: roundsWon,
         rounds_lost: roundsLost,
         place: place,
-        is_team_mvp: teamMVP === puuid,
+        is_team_mvp: playersPerTeam > 1 ? teamMVP === puuid : null,
         clutches_1v2: playersPerTeam === 2 ? clutchesNKillThemAllRounds : null,
         kills: kills,
         deaths: deaths,
@@ -140,6 +144,8 @@ export function getPlayerMatchInfo(match, puuid, previousMatches){
         ddr: isDamageDataMissing ? null : Math.round((inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received) / (roundsWon + roundsLost)),
         act_id: match.metadata.season.id, // FK
         aces: playersPerTeam === 5 ? killedThemAllRounds : null,
-        mode_id: getMatchModeId(match)
+        mode_id: getMatchModeId(match),
+        season_id: seasonId,
+        is_rankable: isMatchRankable
     }
 }

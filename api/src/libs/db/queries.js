@@ -1,9 +1,9 @@
 import supabase from './supabase.js'
-import { getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, getUniqueMatchesById, getMatchSeasonId } from '../helpers.js'
-import { getPlayerMatchInfo, getMatchRR, getPlayerModeRank } from '../match_parser.js'
+import { getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, getUniqueMatchesById, getMatchSeasonId, getMatchActId, getMatchMap, getPosibleModeName } from '../helpers.js'
+import { getPlayerMatchInfo, getMatchRR, getPlayerRank } from '../match_parser.js'
 import { getHDEVPlayerPuuid } from '../api_requests.js'
 
-export async function updatePlayerRank(puuid, newMatches) {
+export async function updatePlayerRank(puuid, newMatches, dbModes) {
     if (!newMatches || !newMatches.length) {
         console.log("No new matches to update player rank at updatePlayerRank")
         return
@@ -41,27 +41,30 @@ export async function updatePlayerRank(puuid, newMatches) {
         return
     }
 
+    const rankableModes = new Set(dbModes.filter(m => m.is_rankable).map(m => m.id))
     // recorro cada season con sus matches
     for (const [seasonId, matches] of Object.entries(matchesBySeason)) {
         // guardo de cada partida su rr_change, en el array de su respectivo modo
         const rrChangesByMode = {}
-        matches.forEach(m => {
-            const modeId = getMatchModeId(m)?.trim()
+        matches.forEach(match => {
+            const modeId = getMatchModeId(match)?.trim()
             if (modeId) {
                 if (!rrChangesByMode[modeId]) {
                     rrChangesByMode[modeId] = []
                 }
-                const rrChange = getMatchRR(m, puuid)
+                const dbMode = rankableModes.find(dbM => dbM.id === getMatchModeId(match))
+                const rrChange = rankableModes.has(modeId) ? getMatchRR(match, puuid, dbMode) : null
                 if (rrChange !== null && rrChange !== undefined) rrChangesByMode[modeId].push(rrChange)
             }
         })
 
         // por cada modo (e indirectamente por season), consigo el nuevo rango
         for (const [modeId, rrChanges] of Object.entries(rrChangesByMode)) {
+            if (!rankableModes.has(modeId)) continue
+
             const dbRank = ranks.find(r => r.mode_id === modeId && r.season_id === seasonId) || null
-            const newModeRank = getPlayerModeRank(dbRank, rrChanges)
-            // si ya estaba el rango en la db, lo updateo
-            if (dbRank) {
+            const newModeRank = getPlayerRank(rrChanges, dbRank)
+            if (dbRank) { // si ya estaba el rango en la db, lo updateo...
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
                     .update(newModeRank)
@@ -73,34 +76,51 @@ export async function updatePlayerRank(puuid, newMatches) {
                 } else {
                     console.log(`[${getShortId(puuid)}] Updated player mode rank for mode ${modeId} and season ${seasonId} in database`)
                 }
-            } else { // sino lo inserto
+            } else { // ...sino lo inserto
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
                     .insert({ player_puuid: puuid, mode_id: modeId, season_id: seasonId, ...newModeRank })
                 if (error) {
                     console.log(`Error saving player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
                 } else {
-                    console.log(`[${getShortId(puuid)}] Saved player mode rank for mode ${modeId} and season ${seasonId} in database`)
+                    console.log(`[${getShortId(puuid)}] Saved player mode rank for mode ${modeId} and season ${getShortId(seasonId)} in database`)
                 }
             }
         }
     }
 }
 
-export async function savePlayerMatchesToDB(puuid, rawMatches, storedPlayerMatches) {
-    const allMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...rawMatches])
+export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes) {
+    // consigo las partidas del jugador ya guardadas y las mezclo con las nuevas para tener historial
+    const storedPlayerMatches = await getPlayerMatches(puuid)
+    const allMixedMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...newRawMatches])
         .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
     
-    if (!allMatches || !allMatches.length) {
+    if (!allMixedMatches || !allMixedMatches.length) {
         console.log("No matches to save at savePlayerMatchesToDB")
         return
     }
 
-    const rows = rawMatches.map(m => {
-        const mIndex = allMatches.findIndex(match => getMatchId(match) === getMatchId(m))
-        const previousMatches = allMatches.slice(0, mIndex).filter(pm => getMatchMode(pm) !== getMatchMode(m))
-        return getPlayerMatchInfo(m, puuid, previousMatches)
-    })
+    const rankableModes = new Set(dbModes.filter(m => m.is_rankable).map(m => m.id))
+
+    const rows = await Promise.all(newRawMatches.map(async (match) => {
+        const mIndex = allMixedMatches.findIndex(m => getMatchId(m) === getMatchId(match))
+        const matchModeId = getMatchModeId(match)
+        const matchSeasonId = await getMatchSeasonId(match)
+        
+        // para cada partida consigo sus anteriores del mismo modo y season para el cálculo del rank
+        const previousCandidates = await Promise.all(
+            allMixedMatches.slice(0, mIndex).map(async (pm) => {
+                const sameMode = getMatchModeId(pm) === matchModeId
+                const sameSeason = (await getMatchSeasonId(pm)) === matchSeasonId
+                return sameMode && sameSeason ? pm : null
+            })
+        )
+        const previousMatches = previousCandidates.filter(Boolean)
+
+        // conisgo la info de la partida que se va a gurdar
+        return await getPlayerMatchInfo(match, puuid, previousMatches, rankableModes)
+    }))
     
     const { data, error } = await supabase
         .from("player_matches")
@@ -114,10 +134,10 @@ export async function savePlayerMatchesToDB(puuid, rawMatches, storedPlayerMatch
     if (error) {
         console.log("Error saving Player Matches to database: " + error.message)
     } else {
-        console.log(`[${getShortId(puuid)}] Saved ${rawMatches.length} Player Matches to database`)
+        console.log(`[${getShortId(puuid)}] Saved ${newRawMatches.length} Player Matches to database`)
     }
     
-    await updateLastMatchId(puuid, getMatchId(rawMatches[0]))
+    await updateLastMatchId(puuid, getMatchId(newRawMatches[0]))
 }
 
 export async function insertNewAct(targetAct) {
@@ -195,6 +215,7 @@ export async function getPlayerMatches(puuid) {
         .from("player_matches")
         .select("*")
         .eq("player_puuid", puuid)
+        .eq("is_rankable", true)
         .order("started_at", { ascending: false })
     if (error) {
         console.log(`Error fetching player matches from database: ${error.message}`)
@@ -203,22 +224,42 @@ export async function getPlayerMatches(puuid) {
     return data
 }
 
-export async function saveMatchesToDB(matches) {
-    const payload = matches
-        .map(m => ({
+export async function saveNewModesToDB(newModeIds) {
+    const { data, error } = await supabase
+        .from("modes")
+        .insert(newModeIds.map(id => ({ id, name: getPosibleModeName(id), is_rankable: false })))
+    if (error) {
+        console.log(`Error inserting new modes into database: ${error.message}`)
+    }
+}
+
+export async function saveMatchesToDB(matches, dbModes) {
+    // encontrar los modeId que no se encuentren en dbModes
+    const modeIds = matches.map(match => match.mode_id)
+    const dbModeIds = dbModes.map(dbMode => dbMode.id)
+    const newModeIds = modeIds.filter(id => !dbModeIds.has(id))
+    if (newModeIds && newModeIds.length > 0) {
+        await saveNewModesToDB(newModeIds)
+    }
+
+    const rankableModes = new Set(dbModes.filter(m => m.is_rankable).map(m => m.id))
+    const payload = (await Promise.all(
+        matches.map(async (m) => ({
             match_id: getMatchId(m),
             raw_json: m,
             ingested_at: new Date(),
             started_at: getStartedAt(m),
-            act_id: m?.metadata?.season?.id || m?.act_id || null,
-            map: m?.metadata?.map?.name || m?.map || null,
-            mode: getMatchMode(m),
+            act_id: getMatchActId(m),
+            map: getMatchMap(m),
             mode_id: getMatchModeId(m),
-            players: m?.players?.map(p => p.puuid) || []
+            players: m?.players?.map(p => p.puuid) || [],
+            season_id: await getMatchSeasonId(m),
+            is_rankable: rankableModes.has(getMatchModeId(m))
         }))
+        ))
         .filter(m => m.match_id && m.mode)
         .sort((a, b) => new Date(a.started_at) - new Date(b.started_at))
-
+        
     if (!payload.length) {
         console.log("No valid matches to save at saveMatchesToDB")
         return
@@ -287,6 +328,7 @@ export async function getMatchesByPlayers(players) { // players as array of puui
     const { data, error } = await supabase
     .from("matches")
     .select("*")
+    .eq("is_rankable", true)
     .contains("players", players)
     .order("started_at", { ascending: false })
     if (error) {
@@ -297,14 +339,16 @@ export async function getMatchesByPlayers(players) { // players as array of puui
 }
 
 export async function getSeasonIdByActId(actId) {
+    if (!actId) return null
+
     const { data, error } = await supabase
         .from("acts")
         .select("season_id")
         .eq("id", actId)
-        .single()
+        .limit(1)
     if (error) {
         console.log(`Error fetching match season from database: ${error.message}`)
         return null
     }
-    return data?.season_id || null
+    return data?.[0]?.season_id || null
 }

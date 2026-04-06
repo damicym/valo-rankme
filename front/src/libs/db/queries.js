@@ -2,39 +2,49 @@ import { getPlayerRank } from '../helpers/player_helpers'
 import supabase from './supabase'
 import { registerPlayer } from '../api/index.js'
 
-export async function getTwoPlayers(player1, player2, modeIdFilter = null) {
-    let player1Data = await getPlayerData(player1, false)
-    let player2Data = await getPlayerData(player2, false)
-
-    if (!player1Data) {
-        player1Data = await registerPlayer(player1)
+export async function getTwoPlayers(player1, player2, modeId = null, actId = null, seasonId = null) {
+    if (!modeId){
+        console.log("Mode ID is required to fetch two players matches and ranks")
+        return null
     }
-    if (!player2Data) {
-        player2Data = await registerPlayer(player2)
+
+    if (player1 === player2) {
+        console.log("Both players are the same, fetching only one player's data")
+        const playerData = await getOnePlayer(player1, modeId, actId, seasonId)
+        return {
+            player1: playerData.player1,
+            player2: null
+        }
+    }
+
+    let p1Puuid = await getDBPlayerPuuid(player1)
+    let p2Puuid = await getDBPlayerPuuid(player2)
+
+    if (!p1Puuid) {
+        p1Puuid = await registerPlayer(player1)
+    }
+    if (!p2Puuid) {
+        p2Puuid = await registerPlayer(player2)
+    }
+    
+    if (!p1Puuid || !p2Puuid) {
+        console.log("Didn't get puuid for one or both players after registration attempt")
+        return null
     }
 
     // Consigo todas las player_matches del p2
-    const { data: data_p2, error: errorP2 } = await supabase
-        .from("player_matches")
-        .select("*")
-        .eq("player_puuid", player2Data.puuid)
-    if (errorP2) {
-        console.log("Error fetching player2 matches from database: " + errorP2.message)
-        return
-    }
-
-    const player2MatchesAll = data_p2 || []
+    const p2DBMatches = (await getDBPlayerMatches(p2Puuid, modeId, actId, seasonId)) || []
 
     // Si no hay ninguna returneo
-    if (player2MatchesAll.length === 0) {
+    if (p2DBMatches.length === 0) {
         return {
             player1: {
-                puuid: player1Data.puuid,
+                puuid: p1Puuid,
                 matches: [],
                 rankInfo: getPlayerRank([])
             },
             player2: {
-                puuid: player2Data.puuid,
+                puuid: p2Puuid,
                 matches: [],
                 rankInfo: getPlayerRank([])
             }
@@ -44,81 +54,63 @@ export async function getTwoPlayers(player1, player2, modeIdFilter = null) {
     // Diccionario de match_id a team_id para el player2, y lista de match_ids del player2
     const p2TeamByMatch = {}
     const p2MatchIds = []
-    for (const m of player2MatchesAll) {
+    for (const m of p2DBMatches) {
         p2TeamByMatch[m.match_id] = m.team_id
         p2MatchIds.push(m.match_id)
     }
 
     // Fetcheo player_matches del p1 que tengan match_id en la lista del p2
-    const { data: data_p1, error: errorP1 } = await supabase
-        .from("player_matches")
-        .select("*")
-        .eq("player_puuid", player1Data.puuid)
-        .in("match_id", p2MatchIds)
-    if (errorP1) {
-        console.log("Error fetching player1 matches from database: " + errorP1.message)
-        return
-    }
-
-    const player1MatchesAll = data_p1 || []
+    const p1DBMatches = (await getDBPlayerMatches(p1Puuid, modeId, actId, seasonId)) || []
 
     // p1: Filtro por partidas que tengan el mismo team_id
-    const player1Matches = player1MatchesAll.filter(m => p2TeamByMatch[m.match_id] === m.team_id)
+    const player1Matches = p1DBMatches.filter(m => p2TeamByMatch[m.match_id] === m.team_id)
 
     // p2: Filtro por partidas que tengan el mismo team_id y que estén en la lista de matches del p1
     const matchedMatchIds = new Set(player1Matches.map(m => m.match_id))
-    const player2Matches = player2MatchesAll.filter(m => matchedMatchIds.has(m.match_id) && p2TeamByMatch[m.match_id] === m.team_id)
+    const player2Matches = p2DBMatches.filter(m => matchedMatchIds.has(m.match_id) && p2TeamByMatch[m.match_id] === m.team_id)
 
     return {
         player1: {
-            puuid: player1Data.puuid,
+            puuid: p1Puuid,
             matches: player1Matches,
-            rankInfo: getPlayerRank(player1Matches, modeIdFilter)
+            rankInfo: getPlayerRank(player1Matches)
         },
         player2: {
-            puuid: player2Data.puuid,
+            puuid: p2Puuid,
             matches: player2Matches,
-            rankInfo: getPlayerRank(player2Matches, modeIdFilter)
+            rankInfo: getPlayerRank(player2Matches)
         }
     }
 }
 
-export async function getOnePlayer(player, /* modeIdFilter = null */) {
-    let playerData = await getPlayerData(player)
+export async function getOnePlayer(player, modeId = null, actId = null, seasonId = null) {
+    let puuid = await getDBPlayerPuuid(player)
 
-    if (!playerData) {
-        playerData = await registerPlayer(player)
+    if (!puuid) {
+        puuid = await registerPlayer(player)
     }
 
-    const { data, error } = await supabase
-        .from("player_matches")
-        .select("*")
-        .eq("player_puuid", playerData.puuid)
-    if (error) {
-        console.log("Error fetching player matches from database: " + error.message)
-        return
+    const matches = await getDBPlayerMatches(puuid, modeId, actId, seasonId)
+    if (!seasonId) {
+        seasonId = actId ? await getSeasonIdByActId(actId) : null
     }
+    const ranksInfo = await getDBPlayerRanks(puuid, modeId, seasonId)
 
     return {
         player1: {
-            puuid: playerData.puuid,
-            matches: data,
-            rankInfo: {
-                elo: playerData.elo,
-                rr: playerData.rr,
-                rank: playerData.rank,
-                shield: playerData.shield
-            }
+            puuid: puuid,
+            matches: matches,
+            ranksInfo: ranksInfo
         }
     }
 }
 
-async function getPlayerData(player, includeRank = true) {
+async function getDBPlayerPuuid(player) {
     const [name, tag] = player.split("#")
 
     const { data, error } = await supabase
         .from("players")
-        .select(`puuid${includeRank ? ", elo, rr, rank, shield" : ""}`)
+        .select(`puuid`)
         .eq("name", name)
         .eq("tag", tag)
     if (error) {
@@ -126,5 +118,83 @@ async function getPlayerData(player, includeRank = true) {
         return
     }
 
-    return data[0]
+    return data[0]?.puuid || null
+}
+
+
+async function getDBPlayerMatches(puuid, modeId = null, actId = null, seasonId = null) {
+    let query = supabase
+        .from("player_matches")
+        .select("*")
+        .eq("player_puuid", puuid)
+        .eq("is_rankable", true)
+
+    if (modeId !== null) {
+        query = query.eq("mode_id", modeId)
+    }
+    if (actId !== null) {
+        query = query.eq("act_id", actId)
+    } else if (seasonId !== null) {
+        query = query.eq("season_id", seasonId)
+    }
+
+    const { data, error } = await query
+    if (error) {
+        console.log("Error fetching player matches from database: " + error.message)
+        return
+    }
+    return data || []
+}
+
+async function getDBPlayerRanks(puuid, modeId = null, seasonId = null) {
+    let query = supabase
+        .from("player_mode_ranks")
+        .select("*")
+        .eq("player_puuid", puuid)
+
+    if (modeId !== null) {
+        query = query.eq("mode_id", modeId)
+    }
+    if (seasonId !== null) {
+        query = query.eq("season_id", seasonId)
+    }
+
+    const { data, error } = await query
+    if (error) {
+        console.log("Error fetching player rank from database: " + error.message)
+        return
+    }
+    return data || null
+}
+
+export async function getSeasonIdByActId(actId) {
+    if (!actId) return null
+
+    const { data, error } = await supabase
+        .from("acts")
+        .select("season_id")
+        .eq("id", actId)
+        .limit(1)
+    if (error) {
+        console.log(`Error fetching match season from database: ${error.message}`)
+        return null
+    }
+    return data?.[0]?.season_id || null
+}
+
+export async function getDBModes(rankableOnly = false) {
+    let query = supabase
+        .from("modes")
+        .select("*")
+
+    if (rankableOnly) {
+        query = query.eq("is_rankable", true)
+    }
+
+    const { data, error } = await query
+    if (error) {
+        console.log("Error fetching modes from database: " + error.message)
+        return []
+    }
+    return data || []
 }

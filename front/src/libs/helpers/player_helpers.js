@@ -1,9 +1,8 @@
 const IMMORTAL_ELO = 2100
 
-export function getPlayerRank(matches, modeIdFilter = null) {
+export function getPlayerRank(matches) {
     let currentElo = 50
     let shieldLevel = 0
-    matches = modeIdFilter ? matches.filter(m => getMatchModeId(m) === modeIdFilter) : matches
     const matches_rr = matches.map(m => m.rr_change)
 
     matches_rr.forEach(match_rr => {
@@ -38,9 +37,4 @@ export function getPlayerRank(matches, modeIdFilter = null) {
 
 function getRRByElo(elo){
     return elo < IMMORTAL_ELO ? elo % 100 : elo - IMMORTAL_ELO
-}
-
-function getMatchModeId(match) {
-    if (match?.mode_id) return match.mode_id
-    return match.metadata.queue.id
 }

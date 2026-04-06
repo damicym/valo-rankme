@@ -1,20 +1,18 @@
-import { /* useEffect, */ useState } from 'react'
+import { useState } from 'react'
 import { getTwoPlayers, getOnePlayer } from './libs/db/queries.js'
-import twoPlayersLocal from './data/two_players.json'
-import onePlayerLocal from './data/one_player.json'
-import PlayerRank from './components/Player'
+import PlayerRank from './components/PlayerRank.jsx'
 import Match from './components/Match'
 
 function App() {
     const [player1Data, setPlayer1Data] = useState({})
     const [player2Data, setPlayer2Data] = useState({})
     const [showPlayers, setShowPlayers] = useState(false)
-    const [enableAPI, setEnableAPI] = useState(false)
-    const [isSoloQ, setIsSoloQ] = useState(false)
+    const [isSoloQ, setIsSoloQ] = useState(true)
     const [showWelcome, setShowWelcome] = useState(false)
     // const [isEditing, setIsEditing] = useState(true)
     const [p1Input, setP1Input] = useState("")
     const [p2Input, setP2Input] = useState("")
+    const [selectedMode, setSelectedMode] = useState('skirmish_2v2')
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -23,30 +21,19 @@ function App() {
     }
 
     const getPlayerData = async(p1, p2) => {
-        if(enableAPI){
-            if (isSoloQ) {
-                const data = await getOnePlayer(p1)
-                setPlayer1Data(data.player1)
-            } else {
-                const data = await getTwoPlayers(p1, p2)
-                setPlayer1Data(data.player1)
-                setPlayer2Data(data.player2)
-            }
+        if (isSoloQ) {
+            const data = await getOnePlayer(p1)
+            setPlayer1Data(data.player1)
         } else {
-            if (isSoloQ) {
-                const data = onePlayerLocal
-                setPlayer1Data(data.player1)
-            } else {
-                const data = twoPlayersLocal
-                setPlayer1Data(data.player1)
-                setPlayer2Data(data.player2)
-            }
+            const data = await getTwoPlayers(p1, p2)
+            setPlayer1Data(data.player1)
+            setPlayer2Data(data.player2)
         }
     }
 
     return (
         <>
-            <button onClick={() => setEnableAPI(prev => !prev)}>{enableAPI ? 'Usando API 🌐' : 'Usando datos locales 📜'}</button>
+            <br />
             <div className="site">
                 <section className='controlsContainer'>
                     <button className='toggleBtn btn' onClick={() => setIsSoloQ(prev => !prev)}>
@@ -81,13 +68,13 @@ function App() {
                         <div className='centeredChildren'>
                             { showPlayers ? 
                                 <>
-                                    <PlayerRank data={player1Data} user={p1Input} />
+                                    <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p1Input} />
                                     { !isSoloQ &&
                                         <>
                                             <button className='switchPlayersBtn btn' tabIndex={-1}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
                                             </button>
-                                            <PlayerRank data={player2Data} user={p2Input} />
+                                            <PlayerRank rankInfo={player2Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p2Input} />
                                         </>
                                     }
                                 </> : 
@@ -95,7 +82,7 @@ function App() {
                                     <div className='playerRank'>
                                         <div className='inputField'>
                                             <label>Mi usuario</label>
-                                            <input onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my name#tag' />
+                                            <input autoComplete='on' onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my name#tag' />
                                             <span>* Distingue mayúsculas/minúsculas</span>
                                         </div>
                                     </div>
@@ -107,7 +94,7 @@ function App() {
                                             <div className='playerRank'>
                                                 <div className='inputField'>
                                                     <label>Usuario de mi duo</label>
-                                                    <input onChange={(e) => setP2Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my duo#tag' />
+                                                    <input autoComplete='on' onChange={(e) => setP2Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my duo#tag' />
                                                     <span>* Distingue mayúsculas/minúsculas</span>
                                                 </div>
                                             </div>
@@ -129,7 +116,7 @@ function App() {
                     <section className="matchContainer">
                         {/* fecha */}
                         {
-                            player1Data?.matches?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
+                            player1Data?.matches?.filter((m) => m.mode_id === selectedMode)?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
                         }
                     </section>
                 }
