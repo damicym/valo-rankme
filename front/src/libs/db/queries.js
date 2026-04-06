@@ -128,6 +128,7 @@ async function getDBPlayerMatches(puuid, modeId = null, actId = null, seasonId =
         .select("*")
         .eq("player_puuid", puuid)
         .eq("is_rankable", true)
+        .order("started_at", { ascending: false })
 
     if (modeId !== null) {
         query = query.eq("mode_id", modeId)

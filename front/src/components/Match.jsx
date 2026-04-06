@@ -43,13 +43,13 @@ function Match({ index, data }) {
                     <span
                         style={{color: data?.won ? 'var(--green)' : 'auto'}}
                     >
-                        {data?.roundsWon}
+                        {data?.rounds_won}
                     </span>
                     <span style={{textAlign: 'center', width: '18px'}}>:</span>
                     <span
                         style={{color: data?.won ? 'auto' : 'var(--red)'}}
                     >
-                        {data?.roundsLost}
+                        {data?.rounds_lost}
                     </span>
                 </p>
 
@@ -63,17 +63,17 @@ function Match({ index, data }) {
                     >
                         {data?.place === 1 ? 'MVP' : `${data?.place}${getOrdinalSuffixe(data?.place)}`}
                     </p>
-                    { data?.isTeamMVP && data?.place !== 1 &&
+                    { data?.is_team_mvp && data?.place !== 1 &&
                         <p className="pill">Team MVP</p>
                     }
-                    { data?.clutches1v2 > 0 &&
+                    { data?.clutches_1v2 > 0 &&
                     <span 
                         className="pill multpliablePill" 
-                        style={{paddingRight: data?.clutches1v2 === 1 ? '8px' : '0'}}
+                        style={{paddingRight: data?.clutches_1v2 === 1 ? '8px' : '0'}}
                     >
                         1v2 Clutch
-                    { data?.clutches1v2 > 1 &&
-                        <span className="pillMultiplier">x{data?.clutches1v2}</span>
+                    { data?.clutches_1v2 > 1 &&
+                        <span className="pillMultiplier">x{data?.clutches_1v2}</span>
                     }
                     </span>
                     }

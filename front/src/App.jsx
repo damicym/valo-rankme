@@ -9,10 +9,12 @@ function App() {
     const [showPlayers, setShowPlayers] = useState(false)
     const [isSoloQ, setIsSoloQ] = useState(true)
     const [showWelcome, setShowWelcome] = useState(false)
-    // const [isEditing, setIsEditing] = useState(true)
     const [p1Input, setP1Input] = useState("")
     const [p2Input, setP2Input] = useState("")
+    // const [isEditing, setIsEditing] = useState(true)
     const [selectedMode, setSelectedMode] = useState('skirmish_2v2')
+    // const [selectedAct, setSelectedAct] = useState(null)
+    // const [selectedSeason, setSelectedSeason] = useState(null)
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -116,7 +118,9 @@ function App() {
                     <section className="matchContainer">
                         {/* fecha */}
                         {
-                            player1Data?.matches?.filter((m) => m.mode_id === selectedMode)?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
+                            player1Data?.matches
+                                ?.filter((m) => m.mode_id === selectedMode)
+                                ?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
                         }
                     </section>
                 }

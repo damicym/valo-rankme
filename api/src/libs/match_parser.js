@@ -146,6 +146,7 @@ export async function getPlayerMatchInfo(match, puuid, previousMatches, rankable
         aces: playersPerTeam === 5 ? killedThemAllRounds : null,
         mode_id: getMatchModeId(match),
         season_id: seasonId,
-        is_rankable: isMatchRankable
+        is_rankable: isMatchRankable,
+        playtime: Math.round(match.metadata.game_length_in_ms / 60000)
     }
 }
