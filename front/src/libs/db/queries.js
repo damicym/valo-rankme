@@ -1,4 +1,4 @@
-import { getPlayerRank } from '../helpers/player_helpers'
+import { applyRankToMatches, getPlayerRank } from '../helpers/player_helpers'
 import supabase from './supabase'
 import { registerPlayer } from '../api/index.js'
 
@@ -41,12 +41,12 @@ export async function getTwoPlayers(player1, player2, modeId = null, actId = nul
             player1: {
                 puuid: p1Puuid,
                 matches: [],
-                rankInfo: getPlayerRank([])
+                rankInfo: getPlayerRank([]) // unranked en vez de eso
             },
             player2: {
                 puuid: p2Puuid,
                 matches: [],
-                rankInfo: getPlayerRank([])
+                rankInfo: getPlayerRank([]) // unranked en vez de eso
             }
         }
     }
@@ -69,16 +69,18 @@ export async function getTwoPlayers(player1, player2, modeId = null, actId = nul
     const matchedMatchIds = new Set(player1Matches.map(m => m.match_id))
     const player2Matches = p2DBMatches.filter(m => matchedMatchIds.has(m.match_id) && p2TeamByMatch[m.match_id] === m.team_id)
 
+    const player1RRChanges = player1Matches.map(m => m.rr_change)
+    const player2RRChanges = player2Matches.map(m => m.rr_change)
     return {
         player1: {
             puuid: p1Puuid,
-            matches: player1Matches,
-            rankInfo: getPlayerRank(player1Matches)
+            matches: applyRankToMatches(player1Matches),
+            rankInfo: getPlayerRank(player1RRChanges)
         },
         player2: {
             puuid: p2Puuid,
-            matches: player2Matches,
-            rankInfo: getPlayerRank(player2Matches)
+            matches: applyRankToMatches(player2Matches),
+            rankInfo: getPlayerRank(player2RRChanges)
         }
     }
 }

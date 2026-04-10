@@ -96,5 +96,10 @@ export async function getMatchSeasonId(match) {
 }
 
 export function getPosibleModeName(id) {
-    return id.split("_").map(w => w[0].toUpperCase() + w.slice(1)).join(" ")
+    if (typeof id !== "string" || id.length === 0) return "Unknown"
+    return id
+        .split("_")
+        .filter(Boolean)
+        .map(w => w[0].toUpperCase() + w.slice(1))
+        .join(" ")
 }

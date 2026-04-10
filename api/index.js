@@ -1,6 +1,7 @@
 import app from "./app.js"
 import { pollAllPlayers } from "./src/worker.js"
 import { registerPlayer } from "./src/actions.js"
+// import { test } from "./src/test.js"
 
 app.listen(app.get('port'), () => {
     console.clear()
@@ -8,6 +9,7 @@ app.listen(app.get('port'), () => {
 })
 
 pollAllPlayers()
+// test()
 
 app.post('/api/register-player/', async (req, res) => {
     const { player } = req.body

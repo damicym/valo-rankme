@@ -25,7 +25,17 @@ function Match({ index, data }) {
                 <img className='agentIcon' src={agents.find(a => a.name === data?.agent)?.icon} alt={`${data?.agent}_agent_icon`}/>
                 <p>{data?.map}</p>
                 <div className="matchField rankField">
-                    <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rank}_rank_icon`}/>
+                    <div className="rankContainer">
+                        <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rank}_rank_icon`}/>
+                        <div className='rankVariation' style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}>
+                        { data?.rank_variation !== null && data?.won ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-circle-chevron-up"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 13l3 -3l3 3" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg>
+                            : data?.rank_variation !== null && !data?.won ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-circle-chevron-down"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 11l3 3l3 -3" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg>
+                            : null
+                        }
+                        </div>
+                    </div>
                     <p
                         style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}
                     >{data?.won && '+'}{data?.rr_change}</p>
@@ -36,7 +46,7 @@ function Match({ index, data }) {
                     className="resultTitle"
                     style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}
                 >
-                    {data?.won ? 'VICTORIA' : 'DERROTA'}
+                    {data?.won ? 'VICTORIA' : 'DERROTA'}{/* { data?.match_id } */}
                 </span>
 
                 <p className="resultRounds">

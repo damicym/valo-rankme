@@ -41,7 +41,8 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
         return
     }
 
-    const rankableModes = new Set(dbModes.filter(m => m.is_rankable).map(m => m.id))
+    const rankableModes = dbModes.filter(m => m.is_rankable)
+    const rankableModeIds = rankableModes.map(m => m.id)
     // recorro cada season con sus matches
     for (const [seasonId, matches] of Object.entries(matchesBySeason)) {
         // guardo de cada partida su rr_change, en el array de su respectivo modo
@@ -52,15 +53,15 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
                 if (!rrChangesByMode[modeId]) {
                     rrChangesByMode[modeId] = []
                 }
-                const dbMode = rankableModes.find(dbM => dbM.id === getMatchModeId(match))
-                const rrChange = rankableModes.has(modeId) ? getMatchRR(match, puuid, dbMode) : null
+                const dbMode = rankableModes.find(dbM => dbM.id === modeId) || null
+                const rrChange = rankableModeIds.includes(modeId) ? getMatchRR(match, puuid, dbMode) : null
                 if (rrChange !== null && rrChange !== undefined) rrChangesByMode[modeId].push(rrChange)
             }
         })
 
         // por cada modo (e indirectamente por season), consigo el nuevo rango
         for (const [modeId, rrChanges] of Object.entries(rrChangesByMode)) {
-            if (!rankableModes.has(modeId)) continue
+            if (!rankableModeIds.includes(modeId)) continue
 
             const dbRank = ranks.find(r => r.mode_id === modeId && r.season_id === seasonId) || null
             const newModeRank = getPlayerRank(rrChanges, dbRank)
@@ -74,7 +75,7 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
                 if (error) {
                     console.log(`Error updating player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
                 } else {
-                    console.log(`[${getShortId(puuid)}] Updated player mode rank for mode ${modeId} and season ${seasonId} in database`)
+                    console.log(`[${getShortId(puuid)}] Updated player mode rank for mode ${modeId} and season ${getShortId(seasonId)} in database`)
                 }
             } else { // ...sino lo inserto
                 const { data, error } = await supabase
@@ -101,10 +102,9 @@ export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes) {
         return
     }
 
-    const rankableModes = new Set(dbModes.filter(m => m.is_rankable).map(m => m.id))
+    const rankableModes = dbModes.filter(m => m.is_rankable)
 
-    const rows = await Promise.all(newRawMatches.map(async (match) => {
-        const mIndex = allMixedMatches.findIndex(m => getMatchId(m) === getMatchId(match))
+    const rows = await Promise.all(newRawMatches.map(async (match, mIndex) => {
         const matchModeId = getMatchModeId(match)
         const matchSeasonId = await getMatchSeasonId(match)
         
@@ -134,7 +134,7 @@ export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes) {
     if (error) {
         console.log("Error saving Player Matches to database: " + error.message)
     } else {
-        console.log(`[${getShortId(puuid)}] Saved ${newRawMatches.length} Player Matches to database`)
+        console.log(`[${getShortId(puuid)}] Saved/ignored ${newRawMatches.length} Player Matches to database`)
     }
     
     await updateLastMatchId(puuid, getMatchId(newRawMatches[0]))
@@ -224,10 +224,19 @@ export async function getPlayerMatches(puuid) {
     return data
 }
 
-export async function saveNewModesToDB(newModeIds) {
+export async function saveNewModesToDB(newModes) {
     const { data, error } = await supabase
         .from("modes")
-        .insert(newModeIds.map(id => ({ id, name: getPosibleModeName(id), is_rankable: false })))
+        .insert(newModes.map(m => ({ 
+            id: m.id, 
+            name: m?.name || getPosibleModeName(m.id), 
+            ...(m?.min_rr !== undefined ? { min_rr: m.min_rr } : {}),
+            ...(m?.max_rr !== undefined ? { max_rr: m.max_rr } : {}),
+            ...(m?.min_acs !== undefined ? { min_acs: m.min_acs } : {}),
+            ...(m?.max_acs !== undefined ? { max_acs: m.max_acs } : {}),
+            ...(m?.rounds_to_win !== undefined ? { rounds_to_win: m.rounds_to_win } : {}),
+            ...(m?.is_rankable !== undefined ? { is_rankable: m.is_rankable } : {}),
+        })))
     if (error) {
         console.log(`Error inserting new modes into database: ${error.message}`)
     }
@@ -235,14 +244,21 @@ export async function saveNewModesToDB(newModeIds) {
 
 export async function saveMatchesToDB(matches, dbModes) {
     // encontrar los modeId que no se encuentren en dbModes
-    const modeIds = matches.map(match => match.mode_id)
+    const modeIds = Array.from(new Set(
+        matches.map(match => getMatchModeId(match))
+    ))
     const dbModeIds = dbModes.map(dbMode => dbMode.id)
-    const newModeIds = modeIds.filter(id => !dbModeIds.has(id))
+    const newModeIds = modeIds.filter(id => !dbModeIds.includes(id))
     if (newModeIds && newModeIds.length > 0) {
-        await saveNewModesToDB(newModeIds)
+        const newModes = newModeIds.map(id => {
+            const match = matches.find(m => getMatchModeId(m) === id)
+            const modeInfo = { id, name: getMatchMode(match) }
+            return modeInfo
+        })
+        await saveNewModesToDB(newModes)
     }
 
-    const rankableModes = new Set(dbModes.filter(m => m.is_rankable).map(m => m.id))
+    const rankableModes = dbModes.filter(m => m.is_rankable).map(m => m.id)
     const payload = (await Promise.all(
         matches.map(async (m) => ({
             match_id: getMatchId(m),
@@ -254,10 +270,10 @@ export async function saveMatchesToDB(matches, dbModes) {
             mode_id: getMatchModeId(m),
             players: m?.players?.map(p => p.puuid) || [],
             season_id: await getMatchSeasonId(m),
-            is_rankable: rankableModes.has(getMatchModeId(m))
+            is_rankable: rankableModes.includes(getMatchModeId(m))
         }))
         ))
-        .filter(m => m.match_id && m.mode)
+        .filter(getMatchId)
         .sort((a, b) => new Date(a.started_at) - new Date(b.started_at))
         
     if (!payload.length) {
@@ -351,4 +367,52 @@ export async function getSeasonIdByActId(actId) {
         return null
     }
     return data?.[0]?.season_id || null
+}
+
+export async function getPlayerMatchesIds(puuid) {
+    const { data, error } = await supabase
+        .from("player_matches")
+        .select("match_id")
+        .eq("player_puuid", puuid)
+        .order("started_at", { ascending: false })
+    if (error) {
+        console.log(`Error fetching stored match ids for player ${getShortId(puuid)} from database: ${error.message}`)
+        return null
+    }
+    return data ? data.map(d => d.match_id) : []
+}
+
+export async function getStoredRawMatchesByPlayer(puuid) {
+    const matchIds = await getPlayerMatchesIds(puuid)
+    if (!matchIds || matchIds.length === 0) {
+        console.log(`[${getShortId(puuid)}] No stored matches found in database`)
+        return []
+    }
+    const { data, error } = await supabase
+        .from("matches")
+        .select("raw_json")
+        .in("match_id", matchIds)
+        .order("started_at", { ascending: false })
+    if (error) {
+        console.log(`Error fetching stored raw matches for player ${getShortId(puuid)} from database: ${error.message}`)
+        return []
+    }
+    return data ? data.map(d => d.raw_json) : []
+}
+
+export async function getDBModes(rankableOnly = false) {
+    let query = supabase
+        .from("modes")
+        .select("*")
+
+    if (rankableOnly) {
+        query = query.eq("is_rankable", true)
+    }
+
+    const { data, error } = await query
+    if (error) {
+        console.log("Error fetching modes from database: " + error.message)
+        return []
+    }
+    return data || []
 }

@@ -145,6 +145,24 @@
     letter-spacing: 1px;
 }
 
+.rankContainer{
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    position: relative;
+}
+
+.rankVariation{
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+}
+
+.rankVariation svg{
+    width: 20px;
+    height: 20px;
+}
+
 .resultRounds{
     display: flex;
 }
