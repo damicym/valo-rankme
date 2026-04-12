@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { getTwoPlayers, getOnePlayer } from './libs/db/queries.js'
+import { useEffect, useState } from 'react'
+import { getTwoPlayers, getOnePlayer, getDBModes, getDBSeasons } from './libs/db/queries.js'
 import PlayerRank from './components/PlayerRank.jsx'
 import Match from './components/Match'
 
@@ -13,8 +13,19 @@ function App() {
     const [p2Input, setP2Input] = useState("")
     // const [isEditing, setIsEditing] = useState(true)
     const [selectedMode, setSelectedMode] = useState('skirmish_2v2')
-    // const [selectedAct, setSelectedAct] = useState(null)
-    // const [selectedSeason, setSelectedSeason] = useState(null)
+    const [selectedSeason, setSelectedSeason] = useState(null)
+    const [gameModes, setGameModes] = useState([])
+    const [gameSeasons, setGameSeasons] = useState([])
+    const [playersLoading, setPlayersLoading] = useState(false)
+    
+
+    useEffect(() => {
+        const fetchDBData = async () => {
+            setGameModes(await getDBModes())
+            setGameSeasons(await getDBSeasons())
+        }
+        fetchDBData()
+    }, [])
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -23,14 +34,20 @@ function App() {
     }
 
     const getPlayerData = async(p1, p2) => {
+        setPlayersLoading(true)
         if (isSoloQ) {
             const data = await getOnePlayer(p1)
-            setPlayer1Data(data.player1)
+            if (data?.player1) {
+                setPlayer1Data(data.player1)
+            }
         } else {
             const data = await getTwoPlayers(p1, p2)
-            setPlayer1Data(data.player1)
-            setPlayer2Data(data.player2)
+            if (data?.player1) {
+                setPlayer1Data(data.player1)
+                setPlayer2Data(data.player2)
+            }
         }
+        setPlayersLoading(false)
     }
 
     return (
@@ -70,13 +87,13 @@ function App() {
                         <div className='centeredChildren'>
                             { showPlayers ? 
                                 <>
-                                    <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p1Input} />
+                                    <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p1Input} loading={playersLoading} />
                                     { !isSoloQ &&
                                         <>
                                             <button className='switchPlayersBtn btn' tabIndex={-1}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
                                             </button>
-                                            <PlayerRank rankInfo={player2Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p2Input} />
+                                            <PlayerRank rankInfo={player2Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p2Input} loading={playersLoading} />
                                         </>
                                     }
                                 </> : 
@@ -113,16 +130,42 @@ function App() {
                         }
                     </form>
                 </section>
-                { showPlayers &&
-                    // promedios
-                    <section className="matchContainer">
-                        {/* fecha */}
-                        {
-                            player1Data?.matches
-                                ?.filter((m) => m.mode_id === selectedMode)
-                                ?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
-                        }
-                    </section>
+                { showPlayers && !playersLoading &&
+                    <div className='matchesNFilters'>
+                        <div className='filters'>
+                            <section className='selector left'>
+                                {
+                                    Array.from(new Set(player1Data?.matches?.map(m => m.mode_id))).map(modeId =>
+                                        <button className={selectedMode === modeId ? 'filterBtn active' : 'filterBtn'} id={modeId} key={modeId} onClick={() => setSelectedMode(modeId)}>
+                                            {gameModes?.find(m => m.id === modeId)?.name || modeId}
+                                        </button>
+                                    )
+                                }
+                            </section>
+                            <section className='selector right'>
+                                <button
+                                    className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
+                                >
+                                    Todos los episodios
+                                </button>
+                                {
+                                    Array.from(new Set(player1Data?.matches?.map(m => m.season_id))).map(seasonId =>
+                                        <button className={selectedSeason === seasonId ? 'filterBtn active' : 'filterBtn'} id={seasonId} key={seasonId} onClick={() => setSelectedSeason(seasonId)}>
+                                            {gameSeasons?.find(s => s.id === seasonId)?.name || seasonId}
+                                        </button>
+                                    )
+                                }
+                            </section>
+                        </div>
+                        <section className="matchContainer">
+                            {/* fecha */}
+                            {
+                                player1Data?.matches
+                                    ?.filter((m) => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason))
+                                    ?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
+                            }
+                        </section>
+                    </div>
                 }
             </div>
         </>

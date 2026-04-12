@@ -123,7 +123,6 @@ async function getDBPlayerPuuid(player) {
     return data[0]?.puuid || null
 }
 
-
 async function getDBPlayerMatches(puuid, modeId = null, actId = null, seasonId = null) {
     let query = supabase
         .from("player_matches")
@@ -185,6 +184,7 @@ export async function getSeasonIdByActId(actId) {
     return data?.[0]?.season_id || null
 }
 
+
 export async function getDBModes(rankableOnly = false) {
     let query = supabase
         .from("modes")
@@ -197,6 +197,18 @@ export async function getDBModes(rankableOnly = false) {
     const { data, error } = await query
     if (error) {
         console.log("Error fetching modes from database: " + error.message)
+        return []
+    }
+    return data || []
+}
+
+export async function getDBSeasons() {
+    const { data, error } = await supabase
+        .from("seasons")
+        .select("*")
+        .order("start_time", { ascending: false })
+    if (error) {
+        console.log("Error fetching seasons from database: " + error.message)
         return []
     }
     return data || []

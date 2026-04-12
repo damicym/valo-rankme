@@ -21,12 +21,14 @@ function Match({ index, data }) {
                 className="matchColorDetail"
                 style={data?.won ? { backgroundColor: 'var(--green)', filter: 'drop-shadow(0px 0px 10px var(--green))' } : { backgroundColor: 'var(--red)' }}
             ></div>
-            <div className="leftSide">
+            <div className="leftSide left">
                 <img className='agentIcon' src={agents.find(a => a.name === data?.agent)?.icon} alt={`${data?.agent}_agent_icon`}/>
-                <p>{data?.map}</p>
+                <p className='mapName'>{data?.map?.replace("Skirmish", "Site")}</p>
                 <div className="matchField rankField">
                     <div className="rankContainer">
-                        <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rank}_rank_icon`}/>
+                        { data?.rank !== undefined && data?.rank !== null &&
+                            <img className='rankIcon' src={ranks.find(r => r.tier == data?.rank)?.icon || ranks.find(r => r.name == 'UNRANKED').icon} alt={`${data?.rank}_rank_icon`}/>
+                        }
                         <div className='rankVariation' style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}>
                         { data?.rank_variation !== null && data?.won ?
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-circle-chevron-up"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 13l3 -3l3 3" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg>
@@ -36,9 +38,9 @@ function Match({ index, data }) {
                         }
                         </div>
                     </div>
-                    <p
-                        style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}
-                    >{data?.won && '+'}{data?.rr_change}</p>
+                    <p style={{color: data?.won ? 'var(--green)' : 'var(--red)'}}>
+                        {data?.won && data?.rr_change && '+'}{data?.rr_change}
+                    </p>
                 </div>
             </div>
             <div className="matchField resultField">
@@ -64,7 +66,7 @@ function Match({ index, data }) {
                 </p>
 
             </div>
-            <div className="rightSide">
+            <div className="rightSide right">
                 <section className="pillContainer">
                     {/* más pills? -> clutches1v1, rondas seguidas sin morir */}
                     <p 
@@ -79,7 +81,7 @@ function Match({ index, data }) {
                     { data?.clutches_1v2 > 0 &&
                     <span 
                         className="pill multpliablePill" 
-                        style={{paddingRight: data?.clutches_1v2 === 1 ? '8px' : '0'}}
+                        style={{paddingRight: data?.clutches_1v2 === 1 ? '6px' : '0'}}
                     >
                         1v2 Clutch
                     { data?.clutches_1v2 > 1 &&
@@ -87,11 +89,34 @@ function Match({ index, data }) {
                     }
                     </span>
                     }
+                    { data?.aces > 0 &&
+                    <span 
+                        className="pill multpliablePill" 
+                        style={{paddingRight: data?.aces === 1 ? '6px' : '0'}}
+                    >
+                        ACE
+                    { data?.aces > 1 &&
+                        <span className="pillMultiplier">x{data?.aces}</span>
+                    }
+                    </span>
+                    }
                 </section>
-                <div className="matchField statField">
+                <div className="matchField statField kdField">
                     <span className='kda'>{data?.kills} <span style={{opacity: 0.6}}>/</span> {data?.deaths} <span style={{opacity: 0.6}}>/</span> {data?.assists}</span>
                     <p style={{color: data?.kd < 1 ? 'var(--red)' : data?.kd < 1.8 ? 'var(--text)' : 'var(--yellow)'}}>{data?.kd} K/D</p>
                 </div>
+                { data?.ddr !== null &&
+                    <div className="matchField statField">
+                        <span>DDΔ</span>
+                        <p style={{color: data?.ddr < 0 ? 'var(--red)' : data?.ddr < 60 ? 'var(--text)' : 'var(--yellow)'}}>{data?.ddr}</p>
+                    </div>
+                }
+                { data?.hs_perc !== null &&
+                    <div className="matchField statField">
+                        <span>HS%</span>
+                        <p style={{color: data?.hs_perc < 10 ? 'var(--red)' : data?.hs_perc < 40 ? 'var(--text)' : 'var(--yellow)'}}>{data?.hs_perc}</p>
+                    </div>
+                }
                 <div className="matchField statField">
                     <span>ACS</span>
                     <p style={{color: data?.acs < 120 ? 'var(--red)' : data?.acs < 240 ? 'var(--text)' : 'var(--yellow)'}}>{data?.acs}</p>

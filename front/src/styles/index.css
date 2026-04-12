@@ -46,3 +46,71 @@ body {
     font-optical-sizing: auto;
     font-style: normal;
 }
+
+.matchesNFilters{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    align-items: center;
+}
+
+.filters{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.selector{
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-start;
+    
+}
+
+.selector .filterBtn:first-child{
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.selector .filterBtn:last-child{
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.filterBtn{
+    border: 1px solid var(--border);
+    background-color: var(--borderT);
+    color: var(--text);
+    padding: 10px;
+    outline: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.1s;
+    font-size: 1.1rem;
+    font-family: "Lexend", sans-serif;
+}
+
+.filterBtn.active{
+    background-color: var(--red);
+    border: 1px solid var(--red);
+}
+
+.filterBtn:hover{
+    filter: brightness(0.9);
+}
+
+.filterBtn:active{
+    filter: brightness(1);
+}
+
+.left{
+    justify-content: left;
+}
+.right{
+    justify-content: right;
+}

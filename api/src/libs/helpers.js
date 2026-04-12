@@ -49,8 +49,8 @@ export function getMatchMode(match) {
 }
 
 export function getMatchModeId(match) {
-    if (match?.mode_id) return match.mode_id
-    return match?.metadata?.queue?.id || null
+    const rawModeId = match?.mode_id ?? match?.metadata?.queue?.id ?? null
+    return typeof rawModeId === 'string' ? rawModeId.trim() : rawModeId
 }
 
 export function getUniqueMatchesById(matches = []) {

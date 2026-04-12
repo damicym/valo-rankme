@@ -80,7 +80,7 @@ export function getMatchRR(match, puuid, dbMode) {
 
     let result = 0
     const acs_normalized = normalize(acs, evalParams.min_acs, evalParams.max_acs)
-    const roundsDiff_normalized = (won ? Math.abs(roundsDiff) : roundsToWin - Math.abs(roundsDiff)) / roundsToWin
+    const roundsDiff_normalized = Math.max(0, Math.min(1, (won ? Math.abs(roundsDiff) : roundsToWin - Math.abs(roundsDiff)) / roundsToWin))
 
     let performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
     performance = curve(performance)
@@ -136,16 +136,23 @@ export async function getPlayerMatchInfo(match, puuid, previousMatches, rankable
     const modeId = getMatchModeId(match)
     const dbMode = rankableModes.find(dbM => dbM?.id === modeId) || null
     const isMatchRankable = !!dbMode
-    const rrChange = isMatchRankable ? getMatchRR(match, puuid, dbMode) : null
-    const prevRRChanges = previousMatches && isMatchRankable ? previousMatches.map(m => getMatchRR(m, puuid, dbMode)) : null
-    const rankInfo = prevRRChanges ? getPlayerRank(prevRRChanges, null, rrChange) : null
+    const rrChangeRaw = isMatchRankable ? getMatchRR(match, puuid, dbMode) : null
+    const rrChange = Number.isFinite(rrChangeRaw) ? rrChangeRaw : null
+    const prevRRChanges = previousMatches && isMatchRankable
+        ? previousMatches
+            .map(m => getMatchRR(m, puuid, dbMode))
+            .filter(Number.isFinite)
+        : null
+    const rankInfo = rrChange !== null && Array.isArray(prevRRChanges)
+        ? getPlayerRank(prevRRChanges, null, rrChange)
+        : null
 
     return {
         match_id: getMatchId(match), // PK
         player_puuid: puuid, // FK
         act_id: match.metadata.season.id, // FK
         team_id: teamColor, // FK
-        mode_id: getMatchModeId(match),
+        mode_id: modeId,
         season_id: seasonId,
         started_at: getStartedAt(match),
         
@@ -156,7 +163,7 @@ export async function getPlayerMatchInfo(match, puuid, previousMatches, rankable
         is_rankable: isMatchRankable,
 
         rr_change: rrChange,
-        rr_eval_version: '1.1 (added rank_variation)',
+        rr_eval_version: rrChange !== null ? '1.1 (added rank_variation)' : null,
         rank: rankInfo ? rankInfo.rank : null,
         rank_variation: rankInfo ? rankInfo.rankVariation : null,
         
