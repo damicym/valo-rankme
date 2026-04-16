@@ -69,6 +69,7 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
                     .update(newModeRank)
+                    .update({ matches_played: dbRank.matches_played + rrChanges.length })
                     .eq("player_puuid", puuid)
                     .eq("mode_id", modeId)
                     .eq("season_id", seasonId)

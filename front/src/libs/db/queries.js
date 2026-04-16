@@ -153,6 +153,7 @@ async function getDBPlayerRanks(puuid, modeId = null, seasonId = null) {
         .from("player_mode_ranks")
         .select("*")
         .eq("player_puuid", puuid)
+        .order("matches_played", { ascending: false })
 
     if (modeId !== null) {
         query = query.eq("mode_id", modeId)

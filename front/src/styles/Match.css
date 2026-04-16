@@ -96,7 +96,7 @@
     align-items: center;
     display: flex;
     gap: 45px;
-} ¡
+}
 
 .match .mapName{
     width: 60px;
@@ -130,7 +130,7 @@
 .matchColorDetail{
     position: absolute;
     width: 8px;
-    height: 50px;
+    height: 60%;
     left: 0;
     transform: translateX(-3px);
     background-color: var(--border);

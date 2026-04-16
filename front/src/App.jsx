@@ -1,51 +1,48 @@
 import { useEffect, useState } from 'react'
-import { getTwoPlayers, getOnePlayer, getDBModes, getDBSeasons } from './libs/db/queries.js'
+import { /* getTwoPlayers, */ getOnePlayer, getDBModes, getDBSeasons } from './libs/db/queries.js'
 import PlayerRank from './components/PlayerRank.jsx'
-import Match from './components/Match'
+import Filters from './components/Filters.jsx'
+import Matches from './components/Matches.jsx'
 
 function App() {
     const [player1Data, setPlayer1Data] = useState({})
-    const [player2Data, setPlayer2Data] = useState({})
+    const [player2Data/* , setPlayer2Data */] = useState({})
     const [showPlayers, setShowPlayers] = useState(false)
-    const [isSoloQ, setIsSoloQ] = useState(true)
-    const [showWelcome, setShowWelcome] = useState(false)
+    const [isSoloQ/* , setIsSoloQ */] = useState(true)
     const [p1Input, setP1Input] = useState("")
     const [p2Input, setP2Input] = useState("")
-    // const [isEditing, setIsEditing] = useState(true)
-    const [selectedMode, setSelectedMode] = useState('skirmish_2v2')
-    const [selectedSeason, setSelectedSeason] = useState(null)
     const [gameModes, setGameModes] = useState([])
     const [gameSeasons, setGameSeasons] = useState([])
+    const [selectedMode, setSelectedMode] = useState(null)
+    const [selectedSeason, setSelectedSeason] = useState(null)
     const [playersLoading, setPlayersLoading] = useState(false)
+    const [lastSeason, setLastSeason] = useState(null)
     
 
     useEffect(() => {
         const fetchDBData = async () => {
-            setGameModes(await getDBModes())
-            setGameSeasons(await getDBSeasons())
+            const modesData = await getDBModes()
+            const seasonsData = await getDBSeasons()
+            const lastSeason = seasonsData[0]?.id || null
+            setLastSeason(lastSeason)
+            setGameModes(modesData)
+            setGameSeasons(seasonsData)
         }
         fetchDBData()
     }, [])
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        getPlayerData(p1Input, p2Input)
+        getPlayerData(p1Input)
         setShowPlayers(true)
     }
 
-    const getPlayerData = async(p1, p2) => {
+    const getPlayerData = async(p1) => {
         setPlayersLoading(true)
-        if (isSoloQ) {
-            const data = await getOnePlayer(p1)
-            if (data?.player1) {
-                setPlayer1Data(data.player1)
-            }
-        } else {
-            const data = await getTwoPlayers(p1, p2)
-            if (data?.player1) {
-                setPlayer1Data(data.player1)
-                setPlayer2Data(data.player2)
-            }
+        const data = await getOnePlayer(p1)
+        if (data?.player1) {
+            setPlayer1Data(data.player1)
+            setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
         }
         setPlayersLoading(false)
     }
@@ -53,13 +50,14 @@ function App() {
     return (
         <>
             <br />
+            <br />
             <div className="site">
-                <section className='controlsContainer'>
+                {/* <section className='controlsContainer'>
                     <button className='toggleBtn btn' onClick={() => setIsSoloQ(prev => !prev)}>
                         <div className='svgContainer' style={{transform: isSoloQ ? 'translateX(0%)' : 'translateX(-3%)'}}>
                             { isSoloQ ?
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-user"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-users"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
                             }
                         </div>
                         <span className='toggleBtnInner'>{isSoloQ ? 'Partidas en soloQ' : 'Partidas con mi duo'}</span>
@@ -67,8 +65,8 @@ function App() {
                     <button className='toggleBtn btn' onClick={() => setShowWelcome(prev => !prev)}>
                         <div className='svgContainer'>
                             { showWelcome ?
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-eye"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-eye-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /><path d="M3 3l18 18" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-eye"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-eye-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /><path d="M3 3l18 18" /></svg>
                             }
                         </div>
                         <span className='toggleBtnInner'>{showWelcome ? 'Ocultar bienvenida' : 'Mostrar bienvenida'}</span>
@@ -78,7 +76,7 @@ function App() {
                     <section className='bienvenida'>
                         <h1>Skirmish ranks :p</h1>
                     </section>
-                }
+                } */}
                 <section className='playerContainer'>
                     <form 
                         className='allChildren' 
@@ -87,13 +85,13 @@ function App() {
                         <div className='centeredChildren'>
                             { showPlayers ? 
                                 <>
-                                    <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p1Input} loading={playersLoading} />
+                                    <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} user={p1Input} loading={playersLoading} />
                                     { !isSoloQ &&
                                         <>
                                             <button className='switchPlayersBtn btn' tabIndex={-1}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
                                             </button>
-                                            <PlayerRank rankInfo={player2Data?.ranksInfo?.find(r => r.mode_id === selectedMode)} user={p2Input} loading={playersLoading} />
+                                            <PlayerRank rankInfo={player2Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} user={p2Input} loading={playersLoading} />
                                         </>
                                     }
                                 </> : 
@@ -108,7 +106,7 @@ function App() {
                                     { !isSoloQ &&
                                         <>
                                             <button className='switchPlayersBtn btn' tabIndex={-1}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
                                             </button>
                                             <div className='playerRank'>
                                                 <div className='inputField'>
@@ -124,7 +122,7 @@ function App() {
                         </div>
                         { !showPlayers &&
                             <button className='submitBtn btn'>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-send-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4.698 4.034l16.302 7.966l-16.302 7.966a.503 .503 0 0 1 -.546 -.124a.555 .555 0 0 1 -.12 -.568l2.468 -7.274l-2.468 -7.274a.555 .555 0 0 1 .12 -.568a.503 .503 0 0 1 .546 -.124" /><path d="M6.5 12h14.5" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-send-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4.698 4.034l16.302 7.966l-16.302 7.966a.503 .503 0 0 1 -.546 -.124a.555 .555 0 0 1 -.12 -.568l2.468 -7.274l-2.468 -7.274a.555 .555 0 0 1 .12 -.568a.503 .503 0 0 1 .546 -.124" /><path d="M6.5 12h14.5" /></svg>
                                 Vamos!
                             </button>
                         }
@@ -132,39 +130,17 @@ function App() {
                 </section>
                 { showPlayers && !playersLoading &&
                     <div className='matchesNFilters'>
-                        <div className='filters'>
-                            <section className='selector left'>
-                                {
-                                    Array.from(new Set(player1Data?.matches?.map(m => m.mode_id))).map(modeId =>
-                                        <button className={selectedMode === modeId ? 'filterBtn active' : 'filterBtn'} id={modeId} key={modeId} onClick={() => setSelectedMode(modeId)}>
-                                            {gameModes?.find(m => m.id === modeId)?.name || modeId}
-                                        </button>
-                                    )
-                                }
-                            </section>
-                            <section className='selector right'>
-                                <button
-                                    className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
-                                >
-                                    Todos los episodios
-                                </button>
-                                {
-                                    Array.from(new Set(player1Data?.matches?.map(m => m.season_id))).map(seasonId =>
-                                        <button className={selectedSeason === seasonId ? 'filterBtn active' : 'filterBtn'} id={seasonId} key={seasonId} onClick={() => setSelectedSeason(seasonId)}>
-                                            {gameSeasons?.find(s => s.id === seasonId)?.name || seasonId}
-                                        </button>
-                                    )
-                                }
-                            </section>
-                        </div>
-                        <section className="matchContainer">
-                            {/* fecha */}
-                            {
-                                player1Data?.matches
-                                    ?.filter((m) => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason))
-                                    ?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
-                            }
-                        </section>
+                        <Filters 
+                            selectedMode={selectedMode}
+                            setSelectedMode={setSelectedMode}
+                            selectedSeason={selectedSeason}
+                            setSelectedSeason={setSelectedSeason}
+                            matches={player1Data?.matches}
+                            ranksInfo={player1Data?.ranksInfo}
+                            gameModes={gameModes}
+                            gameSeasons={gameSeasons}
+                        />
+                        <Matches matches={player1Data?.matches} selectedMode={selectedMode} selectedSeason={selectedSeason} />
                     </div>
                 }
             </div>

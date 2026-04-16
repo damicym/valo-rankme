@@ -157,7 +157,7 @@ export async function getPlayerMatchInfo(match, puuid, previousMatches, rankable
         started_at: getStartedAt(match),
         
         map: match.metadata.map.name,
-        playtime: Math.round(match.metadata.game_length_in_ms / 60000),
+        playtime: Math.round(match.metadata.game_length_in_ms / 1000),
         
         mode: getMatchMode(match),
         is_rankable: isMatchRankable,
