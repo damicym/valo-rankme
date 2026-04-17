@@ -3,6 +3,7 @@ import { /* getTwoPlayers, */ getOnePlayer, getDBModes, getDBSeasons } from './l
 import PlayerRank from './components/PlayerRank.jsx'
 import Filters from './components/Filters.jsx'
 import Matches from './components/Matches.jsx'
+import PerformanceSummary from './components/PerformanceSummary.jsx'
 
 function App() {
     const [player1Data, setPlayer1Data] = useState({})
@@ -10,7 +11,7 @@ function App() {
     const [showPlayers, setShowPlayers] = useState(false)
     const [isSoloQ/* , setIsSoloQ */] = useState(true)
     const [p1Input, setP1Input] = useState("")
-    const [p2Input, setP2Input] = useState("")
+    const [p2Input/* , setP2Input */] = useState("")
     const [gameModes, setGameModes] = useState([])
     const [gameSeasons, setGameSeasons] = useState([])
     const [selectedMode, setSelectedMode] = useState(null)
@@ -40,7 +41,7 @@ function App() {
     const getPlayerData = async(p1) => {
         setPlayersLoading(true)
         const data = await getOnePlayer(p1)
-        if (data?.player1) {
+        if (data?.player1?.puuid) {
             setPlayer1Data(data.player1)
             setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
         }
@@ -52,31 +53,6 @@ function App() {
             <br />
             <br />
             <div className="site">
-                {/* <section className='controlsContainer'>
-                    <button className='toggleBtn btn' onClick={() => setIsSoloQ(prev => !prev)}>
-                        <div className='svgContainer' style={{transform: isSoloQ ? 'translateX(0%)' : 'translateX(-3%)'}}>
-                            { isSoloQ ?
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-user"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-users"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
-                            }
-                        </div>
-                        <span className='toggleBtnInner'>{isSoloQ ? 'Partidas en soloQ' : 'Partidas con mi duo'}</span>
-                    </button>
-                    <button className='toggleBtn btn' onClick={() => setShowWelcome(prev => !prev)}>
-                        <div className='svgContainer'>
-                            { showWelcome ?
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-eye"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-eye-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /><path d="M3 3l18 18" /></svg>
-                            }
-                        </div>
-                        <span className='toggleBtnInner'>{showWelcome ? 'Ocultar bienvenida' : 'Mostrar bienvenida'}</span>
-                    </button>
-                </section>
-                { showWelcome &&
-                    <section className='bienvenida'>
-                        <h1>Skirmish ranks :p</h1>
-                    </section>
-                } */}
                 <section className='playerContainer'>
                     <form 
                         className='allChildren' 
@@ -85,13 +61,13 @@ function App() {
                         <div className='centeredChildren'>
                             { showPlayers ? 
                                 <>
-                                    <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} user={p1Input} loading={playersLoading} />
+                                    <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} user={p1Input} loading={playersLoading} error={!playersLoading && !player1Data?.puuid} />
                                     { !isSoloQ &&
                                         <>
                                             <button className='switchPlayersBtn btn' tabIndex={-1}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
                                             </button>
-                                            <PlayerRank rankInfo={player2Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} user={p2Input} loading={playersLoading} />
+                                            <PlayerRank rankInfo={player2Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} user={p2Input} loading={playersLoading} error={!playersLoading && !player2Data?.puuid} />
                                         </>
                                     }
                                 </> : 
@@ -99,24 +75,10 @@ function App() {
                                     <div className='playerRank'>
                                         <div className='inputField'>
                                             <label>Mi usuario</label>
-                                            <input autoComplete='on' onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my name#tag' />
+                                            <input autoComplete='on' onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={6} type="text" placeholder='my name#tag' pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
                                             <span>* Distingue mayúsculas/minúsculas</span>
                                         </div>
                                     </div>
-                                    { !isSoloQ &&
-                                        <>
-                                            <button className='switchPlayersBtn btn' tabIndex={-1}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
-                                            </button>
-                                            <div className='playerRank'>
-                                                <div className='inputField'>
-                                                    <label>Usuario de mi duo</label>
-                                                    <input autoComplete='on' onChange={(e) => setP2Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my duo#tag' />
-                                                    <span>* Distingue mayúsculas/minúsculas</span>
-                                                </div>
-                                            </div>
-                                        </>
-                                    }
                                 </>
                             }
                         </div>
@@ -128,7 +90,7 @@ function App() {
                         }
                     </form>
                 </section>
-                { showPlayers && !playersLoading &&
+                { showPlayers && !playersLoading && player1Data?.puuid &&
                     <div className='matchesNFilters'>
                         <Filters 
                             selectedMode={selectedMode}
@@ -140,6 +102,7 @@ function App() {
                             gameModes={gameModes}
                             gameSeasons={gameSeasons}
                         />
+                        <PerformanceSummary matches={player1Data?.matches} />
                         <Matches matches={player1Data?.matches} selectedMode={selectedMode} selectedSeason={selectedSeason} />
                     </div>
                 }
