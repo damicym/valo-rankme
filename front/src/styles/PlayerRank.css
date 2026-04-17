@@ -1,13 +1,8 @@
-.site, .playerRank{
+.playerRank{
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-
-.site{
-    gap: 65px;
-}
-
 .playerContainer{
     display: flex;
     gap: 20px;

@@ -1,0 +1,67 @@
+.filters{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 15px;
+}
+
+.selector{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 8px;
+    border: 0;
+    /* overflow: hidden; */
+    position: relative;
+    padding: 0;
+}
+
+.selector.left{
+    flex: 1;
+}
+
+.filterBtn{
+    border: 1px solid var(--borderT);
+    background-color: #0D1D2C;
+    color: var(--text);
+    padding: 10px;
+    outline: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.1s;
+    font-size: 1.1rem;
+    font-family: "Lexend", sans-serif;
+    white-space: nowrap;
+    flex: 1;
+    height: 42px;
+}
+
+.selector .filterBtn:first-child{
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.selector .filterBtn:last-child{
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.filterBtn svg{
+    stroke: var(--text);
+}
+
+.filterBtn.active{
+    background-color: var(--red);
+    /* border: 1px solid var(--red); */
+}
+
+.filterBtn:hover{
+    filter: brightness(0.9);
+}
+
+.filterBtn:active{
+    filter: brightness(1);
+}

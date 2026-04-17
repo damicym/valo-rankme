@@ -1,6 +1,7 @@
 // import { useEffect, useState } from 'react'
 import agents from '../data/agents.json'
 import ranks from '../data/ranks.json'
+import '../styles/Match.css'
 
 function Match({ index, data }) {
 

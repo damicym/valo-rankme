@@ -1,3 +1,5 @@
+import '../styles/ContextMenu.css'
+
 function ContextMenu({ elements, msg, elOnClick, show }) {
     return (
         <div className='ctxMenu' style={{ display: show ? 'flex' : 'none' }}>

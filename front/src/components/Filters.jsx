@@ -1,5 +1,6 @@
 import { useState } from "react"
 import ContextMenu from "./ContextMenu"
+import '../styles/Filters.css'
 
 function Filters({ ranksInfo, selectedMode, setSelectedMode, selectedSeason, setSelectedSeason, matches, gameModes, gameSeasons }) {
     const modeIds = Array.from(new Set(matches?.map(m => m.mode_id)))

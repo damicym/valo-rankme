@@ -1,3 +1,5 @@
+import '../styles/PerformanceSummary.css'
+
 function PerformanceSummary({ matches = [] }) {
     const perf = matches.reduce((acc, match) => {
         acc.matches_played += 1
@@ -14,21 +16,21 @@ function PerformanceSummary({ matches = [] }) {
             acc.agents[match.agent] += 1
         }
 
-        acc.avg_place += match.place ?? 0
-        acc.avg_acs += match.acs ?? 0
-        acc.avg_kd += match.kd ?? 0
-        acc.avg_ddr += match.ddr ?? 0
-        acc.avg_hs_perc += match.hs_perc ?? 0
-        acc.avg_assists += match.assists ?? 0
-        acc.avg_deaths += match.deaths ?? 0
-        acc.avg_kills += match.kills ?? 0
+        acc.place += match.place ?? 0
+        acc.acs += match.acs ?? 0
+        acc.kd += match.kd ?? 0
+        acc.ddr += match.ddr ?? 0
+        acc.hs_perc += match.hs_perc ?? 0
+        acc.assists += match.assists ?? 0
+        acc.deaths += match.deaths ?? 0
+        acc.kills += match.kills ?? 0
 
         if ((match.rr_change ?? 0) > 0) {
-            acc.avg_rr_up += match.rr_change
+            acc.rr_up += match.rr_change
         }
 
         if ((match.rr_change ?? 0) < 0) {
-            acc.avg_rr_down += match.rr_change
+            acc.rr_down += match.rr_change
         }
 
         return acc
@@ -41,38 +43,50 @@ function PerformanceSummary({ matches = [] }) {
         wins: 0,
         losses: 0,
         agents: {},
+        assists: 0,
+        deaths: 0,
+        kills: 0,
+
         avg_place: 0,
         avg_acs: 0,
         avg_kd: 0,
         avg_ddr: 0,
         avg_hs_perc: 0,
-        avg_assists: 0,
-        avg_deaths: 0,
-        avg_kills: 0,
         avg_rr_up: 0,
         avg_rr_down: 0,
-        win_perc: 0
+        avg_win_perc: 0
     })
 
     const maxOnedecimal = (value) => Math.round((value + Number.EPSILON) * 10) / 10
 
     if (perf.matches_played > 0) {
-        perf.avg_place = maxOnedecimal(perf.avg_place / perf.matches_played)
-        perf.avg_acs = maxOnedecimal(perf.avg_acs / perf.matches_played)
-        perf.avg_kd = maxOnedecimal(perf.avg_kd / perf.matches_played)
-        perf.avg_ddr = maxOnedecimal(perf.avg_ddr / perf.matches_played)
-        perf.avg_hs_perc = maxOnedecimal(perf.avg_hs_perc / perf.matches_played)
-        perf.avg_assists = maxOnedecimal(perf.avg_assists / perf.matches_played)
-        perf.avg_deaths = maxOnedecimal(perf.avg_deaths / perf.matches_played)
-        perf.avg_kills = maxOnedecimal(perf.avg_kills / perf.matches_played)
-        perf.avg_rr_up = maxOnedecimal(perf.avg_rr_up / perf.matches_played)
-        perf.avg_rr_down = maxOnedecimal(perf.avg_rr_down / perf.matches_played)
-        perf.win_perc = maxOnedecimal((perf.wins / perf.matches_played) * 100)
+        perf.avg_place = maxOnedecimal(perf.place / perf.matches_played)
+        perf.avg_acs = maxOnedecimal(perf.acs / perf.matches_played)
+        perf.avg_kd = maxOnedecimal(perf.kd / perf.matches_played)
+        perf.avg_ddr = maxOnedecimal(perf.ddr / perf.matches_played)
+        perf.avg_hs_perc = maxOnedecimal(perf.hs_perc / perf.matches_played)
+        perf.avg_rr_up = maxOnedecimal(perf.rr_up / perf.matches_played)
+        perf.avg_rr_down = maxOnedecimal(perf.rr_down / perf.matches_played)
+        perf.avg_win_perc = maxOnedecimal((perf.wins / perf.matches_played) * 100)
     }
 
+    const fancyKey = (key) => key.split('_').join(' ').toUpperCase()
+
     return (
-        <section>
-        </section>
+        <div className="performance">
+            <section className='mainInfo'>
+                {Object.entries(perf).map(([key, value]) => (
+                    typeof value === 'string' || typeof value === 'number') && (
+                    <div key={key} className="perfEl">
+                        <h1>{fancyKey(key)}</h1>
+                        <h2>{value}</h2>
+                    </div>
+                ))}
+            </section>
+            <section className='secondaryInfo'>
+
+            </section>
+        </div>
     )
 }
 

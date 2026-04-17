@@ -1,0 +1,34 @@
+.performance{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+    width: 1200px;
+}
+
+.perfEl{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 200px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.perfEl h1, .perfEl h2{
+    margin: 0;
+    width: 100%;
+    color: var(--text);
+}
+
+.perfEl h1{
+    opacity: 0.7;
+    font-size: 1.1rem;
+}
+
+.perfEl h2{
+    
+}

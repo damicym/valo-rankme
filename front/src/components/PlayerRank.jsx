@@ -1,6 +1,7 @@
 // import { useEffect, useState } from 'react'
 import ranks from '../data/ranks.json'
 import shields from '../data/shields.json'
+import '../styles/PlayerRank.css'
 
 function PlayerRank({ rankInfo, user, loading, error }) { 
     const safeRankInfo = rankInfo || { rank: 0, rr: 0, shield: 0 }
