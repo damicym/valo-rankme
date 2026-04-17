@@ -75,7 +75,7 @@ function App() {
                                     <div className='playerRank'>
                                         <div className='inputField'>
                                             <label>Mi usuario</label>
-                                            <input autoComplete='on' onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={6} type="text" placeholder='my name#tag' pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
+                                            <input autoComplete='on' required onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={6} type="text" placeholder='my name#tag' pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
                                             <span>* Distingue mayúsculas/minúsculas</span>
                                         </div>
                                     </div>

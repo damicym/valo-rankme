@@ -69,3 +69,7 @@ body {
 .right{
     justify-content: right;
 }
+
+.kda, .kda span{
+    letter-spacing: 0.1px;
+}
