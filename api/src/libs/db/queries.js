@@ -1,7 +1,22 @@
 import supabase from './supabase.js'
 import { getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, getUniqueMatchesById, getMatchSeasonId, getMatchActId, getMatchMap, getPosibleModeName } from '../helpers.js'
 import { getPlayerMatchInfo, getMatchRR, getPlayerRank } from '../match_parser.js'
-import { getHDEVPlayerPuuid } from '../api_requests.js'
+import { getHDEVPlayerDisplay, getHDEVPlayerPuuid } from '../api_requests.js'
+
+export async function updatePlayerDisplay(puuid) {
+    const { banner, icon, titleText, level, levelBorder } = await getHDEVPlayerDisplay(puuid)
+    if (!banner || !icon || !titleText || level === null || !levelBorder) {
+        console.log(`Could not fetch display info for player ${getShortId(puuid)}`)
+        return
+    }
+    const { data, error } = await supabase
+        .from("players")
+        .update({ banner, icon, title: titleText, level, level_border: levelBorder })
+        .eq("puuid", puuid)
+    if (error) {
+        console.log(`Error updating player display in database: ${error.message}`)
+    }
+}
 
 export async function updatePlayerRank(puuid, newMatches, dbModes) {
     if (!newMatches || !newMatches.length) {

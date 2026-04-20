@@ -1,16 +1,15 @@
 .perf{
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     align-items: center;
     justify-content: center;
     width: 100%;
     flex-wrap: wrap;
-    width: 1200px;
     gap: 10px;
-    background-color: var(--borderT);
+    background-color: var(--bgSecondary);
     border: 1px solid var(--border);
-    padding: 10px;
-    border-radius: 8px;
+    padding: 14px;
+    border-radius: 28px;
 }
 
 .perfEl{
@@ -19,11 +18,8 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    /* width: 200px; */
-    padding: 10px;
-    /* border-radius: 10px; */
-    /* background-color: var(--borderT); */
-    /* border: 1px solid var(--border); */
+    padding: 14px;
+    white-space: nowrap;
 }
 
 .perfEl h1, .perfEl h2{
@@ -45,4 +41,5 @@
     width: 35px;
     margin-left: 0;
     margin-right: auto;
+    filter: none;
 }

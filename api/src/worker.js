@@ -6,7 +6,8 @@ import {
     updatePlayerUser, 
     saveMatchesToDB, 
     getPlayers,
-    insertNewAct
+    insertNewAct,
+    updatePlayerDisplay
 } from './libs/db/queries.js'
 import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
 import { getDBModes } from './libs/db/queries.js'
@@ -73,6 +74,8 @@ async function pollPlayer(player, targetAct) {
                 await updatePlayerUser(player.puuid, user.name, user.tag)
             }
     
+            await updatePlayerDisplay(player.puuid)
+
             // Por ahora RIOT no devuelve a HernikDevAPI partidas en curso. Por si en un futuro cambia, lo logueo para darme cuenta
             isInGame = lastMatch && !lastMatch.metadata.is_completed
             if (isInGame){

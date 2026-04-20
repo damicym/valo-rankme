@@ -1,4 +1,4 @@
-import { applyRankToMatches, getPlayerRank } from '../helpers/player_helpers'
+import { applyRankToMatches, getPlayerRank } from '../utils/player_helpers'
 import supabase from './supabase'
 import { registerPlayer } from '../api/index.js'
 
@@ -98,13 +98,31 @@ export async function getOnePlayer(player, modeId = null, actId = null, seasonId
     }
     const ranksInfo = await getDBPlayerRanks(puuid, modeId, seasonId)
 
+    const displayData = await getDBPlayerDisplayData(puuid)
+
     return {
         player1: {
             puuid: puuid,
+            name: player.split('#')[0],
+            tag: player.split('#')[1],
+            display: displayData,
             matches: matches,
             ranksInfo: ranksInfo
         }
     }
+}
+
+async function getDBPlayerDisplayData(puuid) {
+    const { data, error } = await supabase
+        .from("players")
+        .select(`icon, title, banner, level_border, level`)
+        .eq("puuid", puuid)
+        .limit(1)
+    if (error) {
+        console.log("Error fetching player display data from database: " + error.message)
+        return null
+    }
+    return data[0] || null
 }
 
 async function getDBPlayerPuuid(player) {
@@ -117,7 +135,7 @@ async function getDBPlayerPuuid(player) {
         .eq("tag", tag)
     if (error) {
         console.log("Error fetching player rank from database: " + error.message)
-        return
+        return null
     }
 
     return data[0]?.puuid || null

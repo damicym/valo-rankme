@@ -20,20 +20,6 @@
     width: 120px;
 }
 
-.user{
-    color: var(--text);
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-    margin-top: 0;
-    display: flex;
-    align-items: end;
-}
-
-.user span{
-    font-size: 1.05rem;
-    opacity: 0.7;
-}
-
 .rankTitle{
     font-family: "Ubuntu", sans-serif;
     font-weight: 550;

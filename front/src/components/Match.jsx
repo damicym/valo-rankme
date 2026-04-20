@@ -1,7 +1,6 @@
 // import { useEffect, useState } from 'react'
 import agents from '../data/agents.json'
 import ranks from '../data/ranks.json'
-import '../styles/Match.css'
 
 function Match({ index, data }) {
 
@@ -13,6 +12,24 @@ function Match({ index, data }) {
         'th' : ''
     }
 
+    function getTimeAgo(date){
+        const now = new Date()
+        const timeBetween = now - date
+        const suffixes = ['s', 'm', 'h', 'd', 'w', 'mo', 'y']
+        const thresholds = [60000, 3600000, 86400000, 604800000, 2592000000, 31536000000]
+        let unitsAgo
+        let suffix
+        for (let i = 0; i < thresholds.length; i++) {
+            if (timeBetween < thresholds[i]) {
+                unitsAgo = Math.floor(timeBetween / (i === 0 ? 1000 : thresholds[i - 1]))
+                suffix = suffixes[i]
+                break
+            }
+        }
+
+        return `${unitsAgo}${suffix}`
+    }
+
     return (
         <div 
             className="match"
@@ -22,9 +39,14 @@ function Match({ index, data }) {
                 className="matchColorDetail"
                 style={data?.won ? { backgroundColor: 'var(--green)', filter: 'drop-shadow(0px 0px 10px var(--green))' } : { backgroundColor: 'var(--red)' }}
             ></div>
-            <div className="leftSide left">
+            <div className="side left">
                 <img className='agentIcon' src={agents.find(a => a.name === data?.agent)?.icon} alt={`${data?.agent}_agent_icon`}/>
-                <p className='mapName'>{data?.map?.replace("Skirmish", "Site")}</p>
+                <div className='matchField statField' style={{textAlign: 'left', width: '60px'}}>
+                    { data?.started_at &&
+                        <span>{getTimeAgo(new Date(data.started_at))} ago</span>
+                    }
+                    <p className='mapName'>{data?.map?.replace("Skirmish", "Site")}</p>
+                </div>
                 <div className="matchField rankField">
                     <div className="rankContainer">
                         { data?.rank !== undefined && data?.rank !== null &&
@@ -67,7 +89,7 @@ function Match({ index, data }) {
                 </p>
 
             </div>
-            <div className="rightSide right">
+            <div className="side right">
                 <section className="pillContainer">
                     {/* más pills? -> clutches1v1, rondas seguidas sin morir */}
                     <p 

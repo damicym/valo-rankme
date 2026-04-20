@@ -1,5 +1,101 @@
+import e from 'express'
 import { config } from '../../config.js'
 import { getStartedAt } from './helpers.js'
+
+export async function getHDEVPlayerDisplay(puuid) {
+    try{
+        const url = `https://api.henrikdev.xyz/valorant/v2/by-puuid/account/${puuid}`
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': config.HENRIKDEV_ACCESS_TOKEN
+            }
+        })
+        const data = await response.json()
+        if (!response.ok) {
+            if (data.errors && data.errors.length > 0) {
+                throw new Error(`HTTP error ${response.status}, ${JSON.stringify(data.errors)}`)
+            }
+            else {
+                throw new Error(`HTTP error ${response.status}`)
+            }
+        }
+        const playerData = data.data
+        if (!playerData) return null
+        const { card, title, account_level } = playerData
+        const rawCard = await getCardByUuid(card)
+        const banner = rawCard?.wideArt
+        const icon = rawCard?.smallArt
+        const titleText = await getTitleTextByUuid(title)
+        const levelBorder = (await getLevelBorder(account_level)).levelNumberAppearance
+        return { banner, icon, titleText, level: account_level, levelBorder }
+    } catch(err){
+        console.log(err)
+        return null
+    }
+}
+
+async function getLevelBorder(level) {
+    const borders = await getAllLevelBorders()
+    if (!borders) return null
+    const bordersDesc = borders.sort((a, b) => b.startingLevel - a.startingLevel)
+    const border = bordersDesc.find(b => b.startingLevel <= level)
+    return border || null
+}
+
+async function getAllLevelBorders() {
+    try {
+        const url = `https://valorant-api.com/v1/levelborders`
+        const response = await fetch(url, {
+            method: 'GET'
+        })
+        const data = await response.json()
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`HTTP error ${response.status} ${errorText}`)
+        }
+        return data.data
+    } catch(err){
+        console.log(err)
+        return null
+    }
+}
+
+async function getCardByUuid(uuid) {
+    try {
+        const url = `https://valorant-api.com/v1/playercards/${uuid}`
+        const response = await fetch(url, {
+            method: 'GET'
+        })
+        const data = await response.json()
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`HTTP error ${response.status} ${errorText}`)
+        }
+        return data.data
+    } catch(err){
+        console.log(err)
+        return null
+    }
+}
+
+async function getTitleTextByUuid(uuid) {
+    try {
+        const url = `https://valorant-api.com/v1/playertitles/${uuid}`
+        const response = await fetch(url, {
+            method: 'GET'
+        })
+        const data = await response.json()
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`HTTP error ${response.status} ${errorText}`)
+        }
+        return data?.data?.titleText || null
+    } catch(err){
+        console.log(err)
+        return null
+    }
+}
 
 export async function getHDEVPlayerPuuid(player) {
     const [name, tag] = player.split('#')

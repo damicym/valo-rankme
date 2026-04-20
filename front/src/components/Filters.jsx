@@ -11,10 +11,10 @@ function Filters({ ranksInfo, selectedMode, setSelectedMode, selectedSeason, set
     const modes = modeIds.map(id => ({id, name: gameModes?.find(m => m.id === id)?.name || id}))
     const seasons = seasonIds.map(id => ({id, name: gameSeasons?.find(s => s.id === id)?.name || id}))
 
-    const [mainModes, setMainModes] = useState(modes.slice(0, 2))
-    const [mainSeasons, setMainSeasons] = useState(seasons.slice(0, 2))
-    const [secondaryModes, setSecondaryModes] = useState(modes.slice(2))
-    const [secondarySeasons, setSecondarySeasons] = useState(seasons.slice(2))
+    const [mainModes, setMainModes] = useState(modes.slice(0, 3))
+    const [mainSeasons, setMainSeasons] = useState(seasons.slice(0, 1))
+    const [secondaryModes, setSecondaryModes] = useState(modes.slice(3))
+    const [secondarySeasons, setSecondarySeasons] = useState(seasons.slice(1))
 
     const [showModeCtxMenu, setShowModeCtxMenu] = useState(false)
     const [showSeasonCtxMenu, setShowSeasonCtxMenu] = useState(false)
@@ -80,6 +80,7 @@ function Filters({ ranksInfo, selectedMode, setSelectedMode, selectedSeason, set
                             setShowModeCtxMenu(!showModeCtxMenu)
                             setShowSeasonCtxMenu(false)
                         }}
+                        key={-1}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
                     </button>
@@ -94,7 +95,7 @@ function Filters({ ranksInfo, selectedMode, setSelectedMode, selectedSeason, set
                     <button
                         className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
                     >
-                        Todos los episodios
+                        All seasons
                     </button>
                     {
                         mainSeasons.filter(Boolean).map(s =>
@@ -115,6 +116,7 @@ function Filters({ ranksInfo, selectedMode, setSelectedMode, selectedSeason, set
                             setShowSeasonCtxMenu(!showSeasonCtxMenu)
                             setShowModeCtxMenu(false)
                         }}
+                        key={-1}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
                     </button>
