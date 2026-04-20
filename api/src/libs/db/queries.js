@@ -3,6 +3,16 @@ import { getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, get
 import { getPlayerMatchInfo, getMatchRR, getPlayerRank } from '../match_parser.js'
 import { getHDEVPlayerDisplay, getHDEVPlayerPuuid } from '../api_requests.js'
 
+export async function updatePlayerUpdate(puuid, lastPolledAt, nextPollAt) {
+    const { data, error } = await supabase
+        .from("players")
+        .update({ last_updated: lastPolledAt, next_update: nextPollAt })
+        .eq("puuid", puuid)
+    if (error) {
+        console.log(`Error updating player poll times in database: ${error.message}`)
+    }
+}
+
 export async function updatePlayerDisplay(puuid) {
     const { banner, icon, titleText, level, levelBorder } = await getHDEVPlayerDisplay(puuid)
     if (!banner || !icon || !titleText || level === null || !levelBorder) {

@@ -95,6 +95,7 @@ async function pollPlayer(player, targetAct) {
             console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
         }
 
+        updatePlayerUpdate(player.puuid, new Date(), new Date() + POLLING_INTERVAL)
         console.log(`[${getShortId(player.puuid)}] Next poll at ${new Date(Date.now() + POLLING_INTERVAL).toLocaleTimeString()} ---------------------------------`)
         setTimeout(poll, POLLING_INTERVAL) 
     }

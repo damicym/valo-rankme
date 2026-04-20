@@ -98,28 +98,30 @@ export async function getOnePlayer(player, modeId = null, actId = null, seasonId
     }
     const ranksInfo = await getDBPlayerRanks(puuid, modeId, seasonId)
 
-    const displayData = await getDBPlayerDisplayData(puuid)
+    const playerData = await getDBPlayer(puuid)
 
     return {
         player1: {
             puuid: puuid,
-            name: player.split('#')[0],
-            tag: player.split('#')[1],
-            display: displayData,
+            name: playerData.name,
+            tag: playerData.tag,
+            display: { title: playerData.title, banner: playerData.banner, level_border: playerData.level_border, level: playerData.level },
             matches: matches,
-            ranksInfo: ranksInfo
+            ranksInfo: ranksInfo,
+            last_updated: playerData.last_updated,
+            next_update: playerData.next_update
         }
     }
 }
 
-async function getDBPlayerDisplayData(puuid) {
+async function getDBPlayer(puuid) {
     const { data, error } = await supabase
         .from("players")
-        .select(`icon, title, banner, level_border, level`)
+        .select("*")
         .eq("puuid", puuid)
         .limit(1)
     if (error) {
-        console.log("Error fetching player display data from database: " + error.message)
+        console.log("Error fetching player from database: " + error.message)
         return null
     }
     return data[0] || null

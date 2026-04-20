@@ -64,31 +64,29 @@ function App() {
         <>
             <div className="site">
                 { showSearchModal &&
-                    <SearchModal handleSubmit={handleSubmit} />
+                    <SearchModal loading={playersLoading} handleSubmit={handleSubmit} />
                 }
-                <section className='playerContainer'>
-                    { section === SECTIONS.PLAYER &&
-                        <>
+                { section === SECTIONS.PLAYER && player1Data?.puuid ?
+                    <>
+                        <section className='playerContainer'>
                             <UserNav name={player1Data?.name} tag={player1Data?.tag} banner={player1Data?.display?.banner} title={player1Data?.display?.title} level={player1Data?.display?.level} levelBorder={player1Data?.display?.level_border} />
                             <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} name={player1Data?.name} tag={player1Data?.tag} />
-                        </>
-                    }
-                </section>
-                { section === SECTIONS.PLAYER && player1Data?.puuid ?
-                    <div className='matchesNFilters'>
-                        <Filters 
-                            selectedMode={selectedMode}
-                            setSelectedMode={setSelectedMode}
-                            selectedSeason={selectedSeason}
-                            setSelectedSeason={setSelectedSeason}
-                            matches={player1Data?.matches}
-                            ranksInfo={player1Data?.ranksInfo}
-                            gameModes={gameModes}
-                            gameSeasons={gameSeasons}
-                        />
-                        <PerformanceSummary matches={player1Data?.matches?.filter(m => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason))} />
-                        <MatchList matches={player1Data?.matches} selectedMode={selectedMode} selectedModeName={gameModes.find(m => m.id === selectedMode)?.name} selectedSeason={selectedSeason} selectedSeasonName={gameSeasons.find(s => s.id === selectedSeason)?.name} />
-                    </div>
+                        </section>
+                        <div className='matchesNFilters'>
+                            <Filters 
+                                selectedMode={selectedMode}
+                                setSelectedMode={setSelectedMode}
+                                selectedSeason={selectedSeason}
+                                setSelectedSeason={setSelectedSeason}
+                                matches={player1Data?.matches}
+                                ranksInfo={player1Data?.ranksInfo}
+                                gameModes={gameModes}
+                                gameSeasons={gameSeasons}
+                            />
+                            <PerformanceSummary matches={player1Data?.matches?.filter(m => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason))} />
+                            <MatchList matches={player1Data?.matches} selectedMode={selectedMode} selectedModeName={gameModes.find(m => m.id === selectedMode)?.name} selectedSeason={selectedSeason} selectedSeasonName={gameSeasons.find(s => s.id === selectedSeason)?.name} />
+                        </div>
+                    </>
                     : section === SECTIONS.PLAYER && !player1Data?.puuid &&
                     <p>No encontrado</p>
                 }

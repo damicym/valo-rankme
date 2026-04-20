@@ -20,3 +20,19 @@ export async function registerPlayer(player) {
         return null
     }
 }
+
+export async function getAPIStatus() {
+    try {
+        const url = `${import.meta.env.VITE_API_URL}/api`
+        const response = await fetch(url)
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        return response.status === 200 ? 'ok' : 'error'
+    } catch (error) {
+        console.error('Error fetching API status:', error)
+        return 'error'
+    }
+}
