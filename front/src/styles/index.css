@@ -49,8 +49,16 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 65px;
+    /* gap: 65px; */
     padding: 20px;
+}
+
+.playerSection{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    width: 1150px;
 }
 
 .matchesNFilters{
@@ -59,7 +67,7 @@ body {
     gap: 20px;
     padding: 20px;
     align-items: center;
-    width: 1150px;
+    width: 100%;
 }
 
 .left{

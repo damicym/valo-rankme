@@ -6,6 +6,8 @@ import MatchList from './components/MatchList.jsx'
 import PerformanceSummary from './components/PerformanceSummary.jsx'
 import UserNav from './components/UserNav.jsx'
 import SearchModal from './components/SearchModal.jsx'
+import { SECTIONS, USER_SECTIONS } from './config.js'
+import NavBar from './components/NavBar.jsx'
 
 function App() {
     const [player1Data, setPlayer1Data] = useState({})
@@ -15,19 +17,9 @@ function App() {
     const [selectedSeason, setSelectedSeason] = useState(null)
     const [playersLoading, setPlayersLoading] = useState(false)
     const [lastSeason, setLastSeason] = useState(null)
-    const [showSearchModal, setShowSearchModal] = useState(true)
-    const [section, setSection] = useState("home")
-    // const [userSection, setUserSection] = useState(USER_SECTIONS.MATCHES)
-
-    const SECTIONS = {
-        HOME: 0,
-        PLAYER: 1,
-    }
-
-    const USER_SECTIONS = {
-        MATCHES: 0,
-        RANKS: 1,
-    }
+    const [showSearchModal, setShowSearchModal] = useState(false)
+    const [section, setSection] = useState(SECTIONS.HOME)
+    const [userSection, setUserSection] = useState(USER_SECTIONS.MATCHES)
 
     useEffect(() => {
         const fetchDBData = async () => {
@@ -60,18 +52,27 @@ function App() {
         }
     }
 
-    return (
-        <>
-            <div className="site">
-                { showSearchModal &&
-                    <SearchModal loading={playersLoading} handleSubmit={handleSubmit} />
-                }
-                { section === SECTIONS.PLAYER && player1Data?.puuid ?
+    const selectedRankInfo = player1Data?.ranksInfo?.find(
+        r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason)
+    )
+    const filteredMatches = player1Data?.matches?.filter(
+        m => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason)
+    )
+
+    const renderHome = () => (
+        <div className='home'>
+            <h1>Skirmish Ranks</h1>
+            <p>Consulta tu rango y rendimiento en partidas clasificatorias de Valorant.</p>
+            <button className='btn' onClick={() => setShowSearchModal(true)}>¡Empecemos!</button>
+        </div>
+    )
+
+    const renderInfoByUserSection = () => {
+        switch (userSection) {
+            case USER_SECTIONS.MATCHES:
+                return (
                     <>
-                        <section className='playerContainer'>
-                            <UserNav name={player1Data?.name} tag={player1Data?.tag} banner={player1Data?.display?.banner} title={player1Data?.display?.title} level={player1Data?.display?.level} levelBorder={player1Data?.display?.level_border} />
-                            <PlayerRank rankInfo={player1Data?.ranksInfo?.find(r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason))} name={player1Data?.name} tag={player1Data?.tag} />
-                        </section>
+                        <PlayerRank rankInfo={selectedRankInfo} name={player1Data?.name} tag={player1Data?.tag} />
                         <div className='matchesNFilters'>
                             <Filters 
                                 selectedMode={selectedMode}
@@ -83,16 +84,62 @@ function App() {
                                 gameModes={gameModes}
                                 gameSeasons={gameSeasons}
                             />
-                            <PerformanceSummary matches={player1Data?.matches?.filter(m => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason))} />
-                            <MatchList matches={player1Data?.matches} selectedMode={selectedMode} selectedModeName={gameModes.find(m => m.id === selectedMode)?.name} selectedSeason={selectedSeason} selectedSeasonName={gameSeasons.find(s => s.id === selectedSeason)?.name} />
+                            <PerformanceSummary matches={filteredMatches} />
+                            <MatchList
+                                matches={player1Data?.matches}
+                                selectedMode={selectedMode}
+                                selectedModeName={gameModes.find(m => m.id === selectedMode)?.name}
+                                selectedSeason={selectedSeason}
+                                selectedSeasonName={gameSeasons.find(s => s.id === selectedSeason)?.name}
+                            />
                         </div>
                     </>
-                    : section === SECTIONS.PLAYER && !player1Data?.puuid &&
-                    <p>No encontrado</p>
-                }
+                )
+            case USER_SECTIONS.RANKS:
+                return (
+                    <p>ranks :p</p>
+                )
+            default:
+                return null
+        }
+    }
+
+    const renderMainSection = () => {
+        switch (section) {
+            case SECTIONS.HOME:
+                return renderHome()
+            case SECTIONS.PLAYER:
+                if (!player1Data?.puuid) return <p>No encontrado</p>
+                return (
+                    <div className='playerSection'>
+                        <UserNav
+                            selectedSection={userSection}
+                            setSelectedSection={setUserSection}
+                            name={player1Data?.name}
+                            tag={player1Data?.tag}
+                            banner={player1Data?.display?.banner}
+                            title={player1Data?.display?.title}
+                            level={player1Data?.display?.level}
+                            levelBorder={player1Data?.display?.level_border}
+                        />
+                        {renderInfoByUserSection()}
+                    </div>
+                )
+            default:
+                return null
+        }
+    }
+
+    return (
+        <>
+            <div className="site">
+                <NavBar selectedSection={section} setSelectedSection={setSection} showSearchModal={showSearchModal} setShowSearchModal={setShowSearchModal} />
+                {renderMainSection()}
             </div>
+            { showSearchModal &&
+                <SearchModal loading={playersLoading} handleSubmit={handleSubmit} />
+            }
         </>
-        
     )
 }
 

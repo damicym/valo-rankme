@@ -1,6 +1,7 @@
 import '../styles/UserNav.css'
+import { USER_SECTIONS } from '../config'
 
-function UserNav({ name, tag, banner, title, level, levelBorder }) {
+function UserNav({ name, tag, banner, title, level, levelBorder, selectedSection, setSelectedSection }) {
     return (
         <div className="userNav">
             <div className="bannerContainer">
@@ -19,8 +20,17 @@ function UserNav({ name, tag, banner, title, level, levelBorder }) {
                     </div>
                 </div>
             </div>
-            {/* <div className="nav">
-            </div> */}
+            <div className="navButtons">
+                {Object.entries(USER_SECTIONS).map(([section, id]) => (
+                    <button
+                        key={id}
+                        className={`navBtn ${selectedSection === id ? 'active' : ''}`}
+                        onClick={() => setSelectedSection(id)}
+                    >
+                        {section.charAt(0).toUpperCase() + section.slice(1).toLowerCase()}
+                    </button>
+                ))}
+            </div>
         </div>
     )
 }

@@ -14,7 +14,62 @@
 .userNav{
     display: flex;
     align-items: center;
+    /* width: 100%; */
+    justify-content: center;
+    flex-direction: column;
+}
+
+.navButtons{
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+}
+
+.navBtn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    border: 1px solid var(--borderT);
+    background-color: #0D1D2C;
+    color: var(--text);
+    padding: 10px;
+    outline: 0;
+    cursor: pointer;
+    transition: 0.1s;
+    font-size: 1.1rem;
+    font-family: "Lexend", sans-serif;
+    white-space: nowrap;
+    height: 42px;
+    border-radius: 0;
+    position: relative;
+}
+
+.navBtn:first-child{
+    border-bottom-left-radius: 8px;
+}
+
+.navBtn:last-child{
+    border-bottom-right-radius: 8px;
+}
+
+.navBtn.active::after{
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 60%;
+    height: 3px;
+    background-color: var(--red);
+    border-radius: 20px 20px 0 0;
+}
+
+.navBtn:hover{
+    filter: brightness(0.9);
+}
+
+.navBtn:active{
+    filter: brightness(1);
 }
 
 .bannerContainer{
@@ -26,8 +81,8 @@
 }
 
 .bannerContainer .banner{
-    width: 100%;
-    border-radius: 8px;
+    /* width: 100%; */
+    border-radius: 8px 8px 0px 0px;
     height: 100%;
 }
 

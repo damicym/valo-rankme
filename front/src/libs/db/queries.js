@@ -103,13 +103,13 @@ export async function getOnePlayer(player, modeId = null, actId = null, seasonId
     return {
         player1: {
             puuid: puuid,
-            name: playerData.name,
-            tag: playerData.tag,
-            display: { title: playerData.title, banner: playerData.banner, level_border: playerData.level_border, level: playerData.level },
+            name: playerData?.name,
+            tag: playerData?.tag,
+            display: { title: playerData?.title, banner: playerData?.banner, level_border: playerData?.level_border, level: playerData?.level },
             matches: matches,
             ranksInfo: ranksInfo,
-            last_updated: playerData.last_updated,
-            next_update: playerData.next_update
+            last_updated: playerData?.last_updated,
+            next_update: playerData?.next_update
         }
     }
 }

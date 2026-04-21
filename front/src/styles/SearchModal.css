@@ -25,6 +25,9 @@
     gap: 20px;
     align-items: center;
     justify-content: center;
+    background-color: var(--borderT2);
+    padding: 50px;
+    border-radius: 58px;
 }
 
 .inputField{
@@ -54,7 +57,7 @@
     font-family: "Lexend", sans-serif;
     height: 32px;
     font-size: 1.2rem;
-    border-radius: 6px;
+    border-radius: 4px;
     outline: none;
     padding: 5px;
     border: 0;
