@@ -10,16 +10,18 @@ import { SECTIONS, USER_SECTIONS } from './config.js'
 import NavBar from './components/NavBar.jsx'
 
 function App() {
-    const [player1Data, setPlayer1Data] = useState({})
     const [gameModes, setGameModes] = useState([])
     const [gameSeasons, setGameSeasons] = useState([])
-    const [selectedMode, setSelectedMode] = useState(null)
-    const [selectedSeason, setSelectedSeason] = useState(null)
-    const [playersLoading, setPlayersLoading] = useState(false)
     const [lastSeason, setLastSeason] = useState(null)
+    
+    const [player1Data, setPlayer1Data] = useState({})
+    const [playersLoading, setPlayersLoading] = useState(false)
     const [showSearchModal, setShowSearchModal] = useState(false)
+
     const [section, setSection] = useState(SECTIONS.HOME)
     const [userSection, setUserSection] = useState(USER_SECTIONS.MATCHES)
+    const [selectedMode, setSelectedMode] = useState(null)
+    const [selectedSeason, setSelectedSeason] = useState(null)
 
     useEffect(() => {
         const fetchDBData = async () => {
@@ -33,19 +35,46 @@ function App() {
         fetchDBData()
     }, [])
 
+    useEffect(() => {
+        if (!showSearchModal) return
+
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        return () => {
+            document.body.style.overflow = previousOverflow
+        }
+    }, [showSearchModal])
+
+    const resetUserData = () => {
+        setPlayer1Data({})
+        setSelectedMode(null)
+        setSelectedSeason(null)
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         const formData = new FormData(e.target)
         const p1 = formData.get('playerInput')
         setPlayersLoading(true)
-        await processPlayer(p1)
+
+        try{
+            await processPlayer(p1)
+        } catch (error) {
+            setPlayer1Data(prev => ({ ...(prev || {}), error: error.message || 'Error al obtener datos del jugador' }))
+        }
+
         setPlayersLoading(false)
         setShowSearchModal(false)
         setSection(SECTIONS.PLAYER)
     }
 
     const processPlayer = async(p1) => {
+        if (!p1) return
+        const [name, tag] = p1.split('#')
+        if (name === player1Data?.name && tag === player1Data?.tag) return
         const data = await getOnePlayer(p1)
+        resetUserData()
         if (data?.player1?.puuid) {
             setPlayer1Data(data.player1)
             setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
@@ -109,7 +138,12 @@ function App() {
             case SECTIONS.HOME:
                 return renderHome()
             case SECTIONS.PLAYER:
-                if (!player1Data?.puuid) return <p>No encontrado</p>
+                if (!player1Data?.puuid) return (
+                    <>
+                        <p>No encontrado</p>
+                        <span>{player1Data?.error}</span>
+                    </>
+                )
                 return (
                     <div className='playerSection'>
                         <UserNav
@@ -137,7 +171,7 @@ function App() {
                 {renderMainSection()}
             </div>
             { showSearchModal &&
-                <SearchModal loading={playersLoading} handleSubmit={handleSubmit} />
+                <SearchModal loading={playersLoading} handleSubmit={handleSubmit} setShowSearchModal={setShowSearchModal} />
             }
         </>
     )
