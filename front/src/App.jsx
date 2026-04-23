@@ -8,6 +8,7 @@ import UserNav from './components/UserNav.jsx'
 import SearchModal from './components/SearchModal.jsx'
 import { SECTIONS, USER_SECTIONS } from './config.js'
 import NavBar from './components/NavBar.jsx'
+import RankList from './components/RankList.jsx'
 
 function App() {
     const [gameModes, setGameModes] = useState([])
@@ -46,12 +47,6 @@ function App() {
         }
     }, [showSearchModal])
 
-    const resetUserData = () => {
-        setPlayer1Data({})
-        setSelectedMode(null)
-        setSelectedSeason(null)
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault()
         const formData = new FormData(e.target)
@@ -72,9 +67,16 @@ function App() {
     const processPlayer = async(p1) => {
         if (!p1) return
         const [name, tag] = p1.split('#')
-        if (name === player1Data?.name && tag === player1Data?.tag) return
+        setSelectedSeason(null)
+        setUserSection(USER_SECTIONS.MATCHES)
+
+        if (name === player1Data?.name && tag === player1Data?.tag) {
+            setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
+            return
+        }
+
         const data = await getOnePlayer(p1)
-        resetUserData()
+        setPlayer1Data({})
         if (data?.player1?.puuid) {
             setPlayer1Data(data.player1)
             setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
@@ -101,7 +103,7 @@ function App() {
             case USER_SECTIONS.MATCHES:
                 return (
                     <>
-                        <PlayerRank rankInfo={selectedRankInfo} name={player1Data?.name} tag={player1Data?.tag} />
+                        <PlayerRank rankInfo={selectedRankInfo} direction='vertical'/>
                         <div className='matchesNFilters'>
                             <Filters 
                                 selectedMode={selectedMode}
@@ -112,6 +114,7 @@ function App() {
                                 ranksInfo={player1Data?.ranksInfo}
                                 gameModes={gameModes}
                                 gameSeasons={gameSeasons}
+                                displayModes={true}
                             />
                             <PerformanceSummary matches={filteredMatches} />
                             <MatchList
@@ -126,7 +129,16 @@ function App() {
                 )
             case USER_SECTIONS.RANKS:
                 return (
-                    <p>ranks :p</p>
+                    <>
+                        <Filters 
+                            selectedSeason={selectedSeason}
+                            setSelectedSeason={setSelectedSeason}
+                            gameSeasons={gameSeasons}
+                            matches={player1Data?.matches}
+                            displayModes={false}
+                        />
+                        <RankList ranksInfo={player1Data?.ranksInfo} gameModes={gameModes} selectedSeason={selectedSeason} lastSeason={lastSeason} />
+                    </>
                 )
             default:
                 return null

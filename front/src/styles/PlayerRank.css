@@ -5,14 +5,58 @@
 }
 
 .playerRank{
-    gap: 25px;
+    /* gap: 25px; */
     transform-origin: bottom center;
     width: 385px;
     justify-content: flex-start;
 }
 
-.playerRank .rankIcon{
+.rankName{
+    /* font-size: 1.2rem; */
+    font-size: 0.8rem;
+    color: var(--text);
+    opacity: 0.8;
+    margin: 0;
+    /* margin-bottom: 17px; */
+    width: 100%;
+    position: absolute;
+    top: -23px;
+    font-weight: 450;
+}
+
+.rankNameV2{
+    font-size: 1.4rem;
+    color: var(--text);
+    opacity: 0.8;
+    margin-bottom: 17px;
+    width: 100%;
+    font-weight: 450;
+}
+
+.rankHeader{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rankHeader.vertical{
+    flex-direction: column;
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.rankHeader.horizontal{
+    flex-direction: row;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.rankHeader.vertical .rankIcon{
     width: 120px;
+}
+
+.rankHeader.horizontal .rankIcon{
+    width: 65px;
 }
 
 .rankTitle{
@@ -28,6 +72,7 @@
     flex-direction: column;
     gap: 10px;
     align-items: flex-end;
+    position: relative;
 }
 
 .progressBarContainer{

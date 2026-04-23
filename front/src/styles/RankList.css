@@ -1,0 +1,20 @@
+.rankList{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 20px;
+    width: 95%;
+}
+
+.rankItem{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--borderT2);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    position: relative;
+}

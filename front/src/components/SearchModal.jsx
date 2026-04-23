@@ -6,6 +6,9 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal }) {
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
+                if (loading) return () => {
+                    document.removeEventListener('keydown', handleKeyDown)
+                }
                 setShowSearchModal(false)
             }
         }
@@ -14,12 +17,25 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal }) {
         return () => {
             document.removeEventListener('keydown', handleKeyDown)
         }
-    }, [setShowSearchModal])
+    }, [setShowSearchModal, loading])
 
     return (
-        <div className="modalContainer" onMouseDown={() => setShowSearchModal(false)}>
+        <div 
+            className="modalContainer" 
+            onMouseDown={() => {
+                if (loading) return
+                setShowSearchModal(false)}
+            }
+        >
             <div className='searchModal' onMouseDown={(e) => e.stopPropagation()}>
-                <div className='closeBtn' onClick={() => setShowSearchModal(false)}>
+                <div 
+                    className='closeBtn' 
+                    style={loading ? { pointerEvents: 'none', opacity: 0.35 } : {}}
+                    onClick={() => {
+                        if (loading) return
+                        setShowSearchModal(false)}
+                    }
+                >
                     <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-badge-left">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path d="M11 17h6l-4 -5l4 -5h-6l-4 5l4 5" />

@@ -2,7 +2,7 @@ import { useState } from "react"
 import ContextMenu from "./ContextMenu"
 import '../styles/Filters.css'
 
-function Filters({ ranksInfo, selectedMode, setSelectedMode, selectedSeason, setSelectedSeason, matches, gameModes, gameSeasons }) {
+function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selectedSeason, setSelectedSeason, matches, gameModes, gameSeasons }) {
     const modeIds = Array.from(new Set(matches?.map(m => m.mode_id)))
         .sort((a, b) => 
             ranksInfo?.find(r => r.mode_id === a)?.matches_played + ranksInfo?.find(r => r.mode_id === b)?.matches_played
@@ -59,38 +59,40 @@ function Filters({ ranksInfo, selectedMode, setSelectedMode, selectedSeason, set
 
     return (
         <>
-            <div className='filters'>
-                <section className='selector left'>
-                    {
-                        mainModes.filter(Boolean).map(m =>
-                            <button 
-                                className={selectedMode === m.id ? 'filterBtn active' : 'filterBtn'} 
-                                id={m.id} 
-                                key={m.id} 
-                                onClick={() => setSelectedMode(m.id)}
-                            >
-                                {m.name || m.id}
-                            </button>
-                        )
-                    }
-                    <button 
-                        className='filterBtn' 
-                        style={{flex: '0', borderTopRightRadius: '8px', borderBottomRightRadius: '8px'}} 
-                        onClick={() => {
-                            setShowModeCtxMenu(!showModeCtxMenu)
-                            setShowSeasonCtxMenu(false)
-                        }}
-                        key={-1}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
-                    </button>
-                    <ContextMenu 
-                        show={showModeCtxMenu}
-                        elements={secondaryModes}
-                        elOnClick={replaceLastMode}
-                        msg="No se encontraron partidas con más modos"
-                    />
-                </section>
+            <div className='filters' style={displayModes ? {justifyContent: 'space-between'} : {justifyContent: 'flex-end'}}>
+                { displayModes &&
+                    <section className='selector left'>
+                        {
+                            mainModes.filter(Boolean).map(m =>
+                                <button 
+                                    className={selectedMode === m.id ? 'filterBtn active' : 'filterBtn'} 
+                                    id={m.id} 
+                                    key={m.id} 
+                                    onClick={() => setSelectedMode(m.id)}
+                                >
+                                    {m.name || m.id}
+                                </button>
+                            )
+                        }
+                        <button 
+                            className='filterBtn' 
+                            style={{flex: '0', borderTopRightRadius: '8px', borderBottomRightRadius: '8px'}} 
+                            onClick={() => {
+                                setShowModeCtxMenu(!showModeCtxMenu)
+                                setShowSeasonCtxMenu(false)
+                            }}
+                            key={-1}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                        </button>
+                        <ContextMenu 
+                            show={showModeCtxMenu}
+                            elements={secondaryModes}
+                            elOnClick={replaceLastMode}
+                            msg="No se encontraron partidas con más modos"
+                        />
+                    </section>
+                }
                 <section className='selector right'>
                     <button
                         className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
