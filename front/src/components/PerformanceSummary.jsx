@@ -1,8 +1,7 @@
-import agents from '../data/agents.json'
 import '../styles/PerformanceSummary.css'
 import { getPerformanceSummary } from '../libs/utils/match_helpers.js'
 
-function PerformanceSummary({ matches = [] }) {
+function PerformanceSummary({ matches = [], agents = [] }) {
     const perf = getPerformanceSummary(matches)
 
     return (

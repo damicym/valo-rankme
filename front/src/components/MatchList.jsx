@@ -3,7 +3,7 @@ import Match from './Match.jsx'
 import { getPerformanceSummary } from '../libs/utils/match_helpers.js'
 import '../styles/MatchList.css'
 
-function MatchList({ matches, selectedMode, selectedModeName, selectedSeason, selectedSeasonName }) {
+function MatchList({ matches, selectedMode, selectedModeName, selectedSeason, selectedSeasonName, agents = [] }) {
     let matchesByDay = {}
     matches?.filter((m) => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason))
         ?.forEach(m => {
@@ -65,7 +65,7 @@ function MatchList({ matches, selectedMode, selectedModeName, selectedSeason, se
                     </div>
                     <div className="matches">
                         {
-                            dayMatches?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
+                            dayMatches?.map((m, index) => <Match key={m.started_at} index={index} data={m} agents={agents}></Match>)
                         }
                     </div>
                 </Fragment>

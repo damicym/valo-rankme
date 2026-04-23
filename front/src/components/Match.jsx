@@ -1,8 +1,7 @@
 // import { useEffect, useState } from 'react'
-import agents from '../data/agents.json'
 import ranks from '../data/ranks.json'
 
-function Match({ index, data }) {
+function Match({ index, data, agents = [] }) {
 
     function getOrdinalSuffixe(n){
         return n === 1 ? 

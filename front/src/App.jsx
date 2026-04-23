@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { /* getTwoPlayers, */ getOnePlayer, getDBModes, getDBSeasons } from './libs/db/queries.js'
+import { fetchAgents } from './libs/utils/agents.js'
 import PlayerRank from './components/PlayerRank.jsx'
 import Filters from './components/Filters.jsx'
 import MatchList from './components/MatchList.jsx'
@@ -11,6 +12,7 @@ import NavBar from './components/NavBar.jsx'
 import RankList from './components/RankList.jsx'
 
 function App() {
+    const [agents, setAgents] = useState([])
     const [gameModes, setGameModes] = useState([])
     const [gameSeasons, setGameSeasons] = useState([])
     const [lastSeason, setLastSeason] = useState(null)
@@ -34,6 +36,7 @@ function App() {
             setGameSeasons(seasonsData)
         }
         fetchDBData()
+        fetchAgents().then(setAgents).catch(console.error)
     }, [])
 
     useEffect(() => {
@@ -116,13 +119,14 @@ function App() {
                                 gameSeasons={gameSeasons}
                                 displayModes={true}
                             />
-                            <PerformanceSummary matches={filteredMatches} />
+                            <PerformanceSummary matches={filteredMatches} agents={agents} />
                             <MatchList
                                 matches={player1Data?.matches}
                                 selectedMode={selectedMode}
                                 selectedModeName={gameModes.find(m => m.id === selectedMode)?.name}
                                 selectedSeason={selectedSeason}
                                 selectedSeasonName={gameSeasons.find(s => s.id === selectedSeason)?.name}
+                                agents={agents}
                             />
                         </div>
                     </>
