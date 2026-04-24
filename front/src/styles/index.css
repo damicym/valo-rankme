@@ -30,6 +30,10 @@ html{
     --placeholder: #969BA7;
 }
 
+* {
+    scrollbar-color: var(--red) var(--borderT);
+}
+
 @font-face {
   font-family: 'Ubuntu';
   src: url('../assets/Ubuntu-Medium.ttf') format('ttf');

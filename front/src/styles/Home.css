@@ -1,0 +1,114 @@
+.home {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 100px);
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ── fondo de íconos de rango ── */
+.home__ranks-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 40px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.home__rank-icon {
+    width: 110px;
+    opacity: 0.06;
+    filter: grayscale(0.3);
+    animation: floatIcon 6s ease-in-out infinite;
+}
+
+.home__rank-icon:nth-child(2) { animation-delay: 0.7s; }
+.home__rank-icon:nth-child(3) { animation-delay: 1.4s; }
+.home__rank-icon:nth-child(4) { animation-delay: 2.1s; }
+.home__rank-icon:nth-child(5) { animation-delay: 2.8s; }
+.home__rank-icon:nth-child(6) { animation-delay: 3.5s; }
+.home__rank-icon:nth-child(7) { animation-delay: 4.2s; }
+.home__rank-icon:nth-child(8) { animation-delay: 4.9s; }
+.home__rank-icon:nth-child(9) { animation-delay: 5.6s; }
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+}
+
+/* ── contenido central ── */
+.home__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+    max-width: 620px;
+    padding: 40px 20px;
+}
+
+.home__badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    color: var(--red);
+    background-color: var(--redT);
+    border: 1px solid var(--red);
+    border-radius: 100px;
+    padding: 4px 14px;
+    text-transform: uppercase;
+}
+
+.home__title {
+    font-size: clamp(2.6rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.5px;
+}
+
+.home__title--accent {
+    color: var(--red);
+}
+
+.home__subtitle {
+    font-size: 1rem;
+    color: var(--textT);
+    margin: 0;
+    line-height: 1.7;
+    max-width: 480px;
+}
+
+.home__cta {
+    margin-top: 8px;
+    padding: 13px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    gap: 8px;
+    background-color: var(--red);
+    color: var(--text);
+    border-radius: 10px;
+    transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 0 0 0 var(--redT);
+}
+
+.home__cta:hover {
+    filter: brightness(1.12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px var(--redT);
+}
+
+.home__cta:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+}

@@ -76,23 +76,54 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
     }, [clearLoadingResTimers])
 
     return (
-        <div className='statusContainer'>
-            <div
-                onClick={handleReload}
-                className='status'
-                tabIndex={0}
-                aria-label={`Last updated ${getTimeBetweenNow(lastUpdated)}. Next update ${getTimeBetweenNow(nextUpdate)}`}
-                style={{pointerEvents: fakeLoading ? 'none' : 'auto', "--statusColor": serverOnline ? 'var(--green)' : 'var(--red)', "--statusColorSecondary": serverOnline ? '#0D1D2C' : 'var(--text)'}}
-            >
-                <div className='iconContainer' style={{opacity: fakeLoading ? '0.7' : '1'}} >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-reload"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M19.933 13.041a8 8 0 1 1 -9.925 -8.788c3.899 -1 7.935 1.007 9.425 4.747" /><path d="M20 4v5h-5" /></svg>
-                </div>
-                { lastUpdated &&
-                    <div className='info' style={{opacity: fakeLoading ? '0.7' : '1'}} >
-                        <span>Last updated {getTimeBetweenNow(lastUpdated)}</span>
+        <div className='statusPosition'>
+            <div className='statusContainer' style={{pointerEvents: fakeLoading || (showLoadingRes && loadingRes) ? 'none' : 'auto', "--statusColor": serverOnline ? 'var(--green)' : 'var(--red)', "--statusColorSecondary": serverOnline ? '#0D1D2C' : 'var(--text)'}}>
+                <div
+                    onClick={handleReload}
+                    className='status'
+                    tabIndex={0}
+                    aria-label={`Last updated ${getTimeBetweenNow(lastUpdated)}. Next update ${getTimeBetweenNow(nextUpdate)}`}
+                >
+                    <div className='iconContainer' style={{opacity: fakeLoading || (showLoadingRes && loadingRes) ? '0.6' : '1'}} >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-reload"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M19.933 13.041a8 8 0 1 1 -9.925 -8.788c3.899 -1 7.935 1.007 9.425 4.747" /><path d="M20 4v5h-5" /></svg>
                     </div>
-                }
-                <div className='tooltip' role='tooltip' style={lastUpdated ? { left: '0', "--arrow-left": '14px'} : { right: '0', "--arrow-right": '14px'}}>
+                    <div className='info' >
+                        <span>
+                            { !fakeLoading 
+                                ? showLoadingRes && loadingRes 
+                                    ? loadingRes
+                                    : lastUpdated 
+                                        ? `Last updated ${getTimeBetweenNow(lastUpdated)}`
+                                        : 'Click to reload'
+                                : `Updating...`
+                            }
+                        </span>
+                    </div>
+                    { fakeLoading ?
+                        <div 
+                            className='progress' 
+                            style={{ 
+                                backgroundColor: 'var(--borderT2)', 
+                                borderRadius: '6px',
+                                width: fakeLoading && !loading ? '100%' : '0%',
+                                animation: fakeLoading && !loading ? 'none' : 'fakeLoadSubmit 1s cubic-bezier(.3,.8,.3,1) forwards'
+                            }}
+                        ></div>
+                        : showLoadingRes && loadingRes &&
+                            <div 
+                                className='progress' 
+                                style={{ 
+                                    backgroundColor: 'var(--borderT2)', 
+                                    borderRadius: '6px',
+                                    animation: 'loadingResProgress 3.4s linear forwards'
+                                }}
+                            ></div>
+                    }
+                </div>
+                {/* { loadingRes &&
+                    <span className={`msg ${showLoadingRes ? 'msg-enter' : 'msg-exit'}`}>{loadingRes}</span>
+                } */}
+                <div className='tooltip' role='tooltip' /* style={lastUpdated ? { left: '0', "--arrow-left": '14px'} : { right: '0', "--arrow-right": '14px'}} */>
                     { serverOnline ?
                         <>
                             <span>
@@ -122,21 +153,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                         </>
                     }
                 </div>
-                { fakeLoading &&
-                    <div 
-                        className='progress' 
-                        style={{ 
-                            backgroundColor: 'var(--borderT2)', 
-                            borderRadius: '6px',
-                            width: fakeLoading && !loading ? '100%' : '0%',
-                            animation: fakeLoading && !loading ? 'none' : 'fakeLoadSubmit 1s cubic-bezier(.3,.8,.3,1) forwards'
-                        }}
-                    ></div>
-                }
             </div>
-            { loadingRes &&
-                <span className={`msg ${showLoadingRes ? 'msg-enter' : 'msg-exit'}`}>{loadingRes}</span>
-            }
         </div>
     )
 }
