@@ -1,7 +1,8 @@
 import '../styles/UserNav.css'
 import { USER_SECTIONS } from '../config'
+import PlayerStatus from './PlayerStatus.jsx'
 
-function UserNav({ name, tag, banner, title, level, levelBorder, selectedSection, setSelectedSection }) {
+function UserNav({ reloadData, name, tag, banner, title, level, levelBorder, lastUpdated, nextUpdate, serverOnline, selectedSection, setSelectedSection }) {
     return (
         <div className="userNav">
             <div className="bannerContainer">
@@ -19,6 +20,7 @@ function UserNav({ name, tag, banner, title, level, levelBorder, selectedSection
                         <span>{level}</span>
                     </div>
                 </div>
+                <PlayerStatus lastUpdated={lastUpdated} nextUpdate={nextUpdate} serverOnline={serverOnline} reloadData={reloadData} />
             </div>
             <div className="navButtons">
                 {Object.entries(USER_SECTIONS).map(([section, id]) => (

@@ -10,12 +10,14 @@ import SearchModal from './components/SearchModal.jsx'
 import { SECTIONS, USER_SECTIONS } from './config.js'
 import NavBar from './components/NavBar.jsx'
 import RankList from './components/RankList.jsx'
+import { getAPIStatus } from './libs/api/index.js'
 
 function App() {
     const [agents, setAgents] = useState([])
     const [gameModes, setGameModes] = useState([])
     const [gameSeasons, setGameSeasons] = useState([])
     const [lastSeason, setLastSeason] = useState(null)
+    const [APIStatus, setAPIStatus] = useState({})
     
     const [player1Data, setPlayer1Data] = useState({})
     const [playersLoading, setPlayersLoading] = useState(false)
@@ -26,15 +28,45 @@ function App() {
     const [selectedMode, setSelectedMode] = useState(null)
     const [selectedSeason, setSelectedSeason] = useState(null)
 
-    useEffect(() => {
-        const fetchDBData = async () => {
-            const modesData = await getDBModes()
-            const seasonsData = await getDBSeasons()
-            const lastSeason = seasonsData[0]?.id || null
-            setLastSeason(lastSeason)
-            setGameModes(modesData)
-            setGameSeasons(seasonsData)
+    const reloadData = async () => {
+        await checkAPIStatus()
+        await fetchDBData()
+        const playerId = `${player1Data?.name}#${player1Data?.tag}`
+        const previousMatchesCount = player1Data?.matches?.length || 0
+
+        if (!player1Data?.name || !player1Data?.tag) {
+            return 'No player selected'
         }
+
+        try{
+            const updatedPlayer = await processPlayer(playerId, { force: true })
+            const nextMatchesCount = updatedPlayer?.matches?.length ?? previousMatchesCount
+            return previousMatchesCount === nextMatchesCount ? 'No new matches' : 'Data updated'
+        } catch (error) {
+            setPlayer1Data(prev => ({ ...(prev || {}), error: error.message || 'Error al obtener datos del jugador' }))
+            return 'Error updating data'
+        }
+    }
+
+    const checkAPIStatus = async () => {
+        const isOnline = await getAPIStatus()
+        setAPIStatus({
+            online: isOnline,
+            lastChecked: new Date()
+        })
+    }
+
+    const fetchDBData = async () => {
+        const modesData = await getDBModes()
+        const seasonsData = await getDBSeasons()
+        const lastSeason = seasonsData[0]?.id || null
+        setLastSeason(lastSeason)
+        setGameModes(modesData)
+        setGameSeasons(seasonsData)
+    }
+
+    useEffect(() => {
+        checkAPIStatus()
         fetchDBData()
         fetchAgents().then(setAgents).catch(console.error)
     }, [])
@@ -67,15 +99,16 @@ function App() {
         setSection(SECTIONS.PLAYER)
     }
 
-    const processPlayer = async(p1) => {
+    const processPlayer = async(p1, options = {}) => {
         if (!p1) return
+        const { force = false } = options
         const [name, tag] = p1.split('#')
         setSelectedSeason(null)
         setUserSection(USER_SECTIONS.MATCHES)
 
-        if (name === player1Data?.name && tag === player1Data?.tag) {
-            setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
-            return
+        if (!force && name === player1Data?.name && tag === player1Data?.tag) {
+            setSelectedMode(player1Data?.ranksInfo[0]?.mode_id || null)
+            return player1Data
         }
 
         const data = await getOnePlayer(p1)
@@ -83,7 +116,10 @@ function App() {
         if (data?.player1?.puuid) {
             setPlayer1Data(data.player1)
             setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
+            return data.player1
         }
+
+        return null
     }
 
     const selectedRankInfo = player1Data?.ranksInfo?.find(
@@ -154,9 +190,11 @@ function App() {
             case SECTIONS.HOME:
                 return renderHome()
             case SECTIONS.PLAYER:
-                if (!player1Data?.puuid) return (
+                if (!player1Data?.puuid || player1Data?.error) return (
                     <>
-                        <p>No encontrado</p>
+                        { !player1Data?.puuid &&
+                            <p>No encontrado</p>
+                        }
                         <span>{player1Data?.error}</span>
                     </>
                 )
@@ -171,6 +209,10 @@ function App() {
                             title={player1Data?.display?.title}
                             level={player1Data?.display?.level}
                             levelBorder={player1Data?.display?.level_border}
+                            lastUpdated={player1Data?.lastUpdated}
+                            nextUpdate={player1Data?.nextUpdate}
+                            serverOnline={APIStatus?.online}
+                            reloadData={reloadData}
                         />
                         {renderInfoByUserSection()}
                     </div>

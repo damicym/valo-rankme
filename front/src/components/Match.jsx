@@ -1,34 +1,8 @@
 // import { useEffect, useState } from 'react'
 import ranks from '../data/ranks.json'
+import { getOrdinalSuffixe, getTimeBetweenNow } from '../libs/utils/match_helpers.js'
 
 function Match({ index, data, agents = [] }) {
-
-    function getOrdinalSuffixe(n){
-        return n === 1 ? 
-        'st' : n === 2 ? 
-        'nd' : n === 3 ? 
-        'rd' : n > 3 ? 
-        'th' : ''
-    }
-
-    function getTimeAgo(date){
-        const now = new Date()
-        const timeBetween = now - date
-        const suffixes = ['s', 'm', 'h', 'd', 'w', 'mo', 'y']
-        const thresholds = [60000, 3600000, 86400000, 604800000, 2592000000, 31536000000]
-        let unitsAgo
-        let suffix
-        for (let i = 0; i < thresholds.length; i++) {
-            if (timeBetween < thresholds[i]) {
-                unitsAgo = Math.floor(timeBetween / (i === 0 ? 1000 : thresholds[i - 1]))
-                suffix = suffixes[i]
-                break
-            }
-        }
-
-        return `${unitsAgo}${suffix}`
-    }
-
     return (
         <div 
             className="match"
@@ -42,7 +16,7 @@ function Match({ index, data, agents = [] }) {
                 <img className='agentIcon' src={agents.find(a => a.name === data?.agent)?.icon} alt={`${data?.agent}_agent_icon`}/>
                 <div className='matchField statField' style={{textAlign: 'left', width: '60px'}}>
                     { data?.started_at &&
-                        <span>{getTimeAgo(new Date(data.started_at))} ago</span>
+                        <span>{getTimeBetweenNow(new Date(data.started_at))}</span>
                     }
                     <p className='mapName'>{data?.map?.replace("Skirmish", "Site")}</p>
                 </div>

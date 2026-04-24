@@ -74,3 +74,33 @@ export function getPerformanceSummary(matches) {
     }
     return perf
 }
+
+export function getOrdinalSuffixe(n){
+    return n === 1 ? 
+    'st' : n === 2 ? 
+    'nd' : n === 3 ? 
+    'rd' : n > 3 ? 
+    'th' : ''
+}
+
+export function getTimeBetweenNow(date){
+    const now = new Date()
+    const timeBetween = now - date
+    const suffixes = ['s', 'm', 'h', 'd', 'w', 'mo', 'y']
+    const thresholds = [60000, 3600000, 86400000, 604800000, 2592000000, 31536000000]
+    let unitsAgo
+    let suffix
+    for (let i = 0; i < thresholds.length; i++) {
+        if (timeBetween < thresholds[i]) {
+            unitsAgo = Math.floor(timeBetween / (i === 0 ? 1000 : thresholds[i - 1]))
+            suffix = suffixes[i]
+            break
+        }
+    }
+
+    return unitsAgo > 0 
+    ? `${unitsAgo}${suffix} ago` 
+    : unitsAgo > 0 
+        ? `in ${unitsAgo}${suffix}` 
+        : 'just now'
+}

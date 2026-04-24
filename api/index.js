@@ -8,7 +8,7 @@ app.listen(app.get('port'), () => {
     console.log(`   - Server is running on port ${app.get('port')}`)
 })
 
-pollAllPlayers()
+// pollAllPlayers()
 // test()
 
 app.post('/api/register-player/', async (req, res) => {

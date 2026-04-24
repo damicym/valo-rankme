@@ -135,7 +135,7 @@
     border-radius: 10px;
 }
 
-.progress{
+.searchModal .progress{
     position: absolute;
     top: 0;
     left: 0;
@@ -145,8 +145,6 @@
     opacity: 1;
     animation: fakeLoadSubmit 1.3s cubic-bezier(.3,.8,.3,1) forwards;
     z-index: 0;
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
 }
 
 @keyframes fakeLoadSubmit {
@@ -154,6 +152,6 @@
   40%  { width: 60%; }
   70%  { width: 85%; }
   90%  { width: 95%; }
-  95% { width: 97%; }
+  98% { width: 97%; }
   100% { width: 98%; }
 }

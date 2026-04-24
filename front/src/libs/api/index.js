@@ -30,9 +30,9 @@ export async function getAPIStatus() {
             throw new Error(`HTTP error! status: ${response.status}`)
         }
         
-        return response.status === 200 ? 'ok' : 'error'
+        return response.status === 200 ? true : false
     } catch (error) {
         console.error('Error fetching API status:', error)
-        return 'error'
+        return false
     }
 }
