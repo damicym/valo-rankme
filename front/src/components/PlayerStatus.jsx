@@ -62,7 +62,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
     }, [loading])
 
     useEffect(() => {
-        if (!lastUpdated || !nextUpdate) return
+        if (!lastUpdated || !nextUpdate || !serverOnline) return
         if (fakeLoading || loading) return
         const now = new Date()
         timeToNextUpdateRef.current = new Date(nextUpdate) - now
@@ -76,7 +76,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
             }, timeToNextUpdateRef.current + 5 * 1000)
         }
         return () => clearTimeout(timer)
-    }, [lastUpdated, nextUpdate, handleReload, fakeLoading, loading])
+    }, [lastUpdated, nextUpdate, serverOnline, handleReload, fakeLoading, loading])
 
     useEffect(() => {
         return () => {
@@ -95,7 +95,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
     }, [lastUpdated])
 
     useEffect(() => {
-        if (!nextUpdate) return
+        if (timeToNextUpdateRef.current === null || !lastUpdated || !nextUpdate || !serverOnline) return
 
         const interval = setInterval(() => {
             setNextUpdateTick(tick => tick + 1)
@@ -106,7 +106,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
         }, 1000)
 
         return () => clearInterval(interval)
-    }, [nextUpdate, handleReload])
+    }, [nextUpdate, lastUpdated, serverOnline, handleReload])
 
     const lastUpdatedText = getTimeBetweenNow(lastUpdated, { tick: lastUpdatedTick, seconds: false })
     const nextUpdateText = getTimeBetweenNow(nextUpdate, { tick: nextUpdateTick, seconds: 'underMinute', admitPast: false })
