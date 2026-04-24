@@ -7,8 +7,12 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
     const [fakeLoading, setFakeLoading] = useState(false)
     const [loadingRes, setLoadingRes] = useState(null)
     const [showLoadingRes, setShowLoadingRes] = useState(false)
+    const [lastUpdatedTick, setLastUpdatedTick] = useState(0)
+    const [nextUpdateTick, setNextUpdateTick] = useState(0)
+    const isReloadingRef = useRef(false)
     const hideLoadingResTimeout = useRef(null)
     const clearLoadingResTimeout = useRef(null)
+    const timeToNextUpdateRef = useRef(null)
 
     const clearLoadingResTimers = useCallback(() => {
         if (hideLoadingResTimeout.current) {
@@ -23,26 +27,31 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
     
     const handleReload = useCallback(async (e = null) => {
         e?.stopPropagation()
+        if (isReloadingRef.current) return
+        isReloadingRef.current = true
         setLoading(true)
-        const res = await reloadData()
-        setLoading(false)
-        if (res) {
-            setLoadingRes(res)
-            setShowLoadingRes(true)
-            clearLoadingResTimers()
-            hideLoadingResTimeout.current = setTimeout(() => {
-                setShowLoadingRes(false)
-            }, 3600)
-            clearLoadingResTimeout.current = setTimeout(() => {
-                setLoadingRes(null)
-                clearLoadingResTimeout.current = null
-            }, 4000)
+        try {
+            const res = await reloadData()
+            if (res) {
+                setLoadingRes(res)
+                setShowLoadingRes(true)
+                clearLoadingResTimers()
+                hideLoadingResTimeout.current = setTimeout(() => {
+                    setShowLoadingRes(false)
+                }, 3600)
+                clearLoadingResTimeout.current = setTimeout(() => {
+                    setLoadingRes(null)
+                    clearLoadingResTimeout.current = null
+                }, 4000)
+            }
+        } finally {
+            setLoading(false)
+            isReloadingRef.current = false
         }
     }, [reloadData, clearLoadingResTimers])
 
     useEffect(() => {
         if (loading) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFakeLoading(true)
         } else {
             const timeout = setTimeout(() => {
@@ -54,26 +63,53 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
 
     useEffect(() => {
         if (!lastUpdated || !nextUpdate) return
+        if (fakeLoading || loading) return
         const now = new Date()
-        const timeToNextUpdate = new Date(nextUpdate) - now
+        timeToNextUpdateRef.current = new Date(nextUpdate) - now
+        if (timeToNextUpdateRef.current <= 0) return
         let timer
-        if (timeToNextUpdate <= 0) {
-            timer = setTimeout(() => {
-                handleReload()
-            }, 0)
+        if (timeToNextUpdateRef.current < -5000) {
+            handleReload()
         } else {
             timer = setTimeout(() => {
                 handleReload()
-            }, timeToNextUpdate + 5 * 1000)
+            }, timeToNextUpdateRef.current + 5 * 1000)
         }
         return () => clearTimeout(timer)
-    }, [lastUpdated, nextUpdate, handleReload])
+    }, [lastUpdated, nextUpdate, handleReload, fakeLoading, loading])
 
     useEffect(() => {
         return () => {
             clearLoadingResTimers()
         }
     }, [clearLoadingResTimers])
+
+    useEffect(() => {
+        if (!lastUpdated) return
+
+        const interval = setInterval(() => {
+            setLastUpdatedTick(tick => tick + 1)
+        }, 30000)
+
+        return () => clearInterval(interval)
+    }, [lastUpdated])
+
+    useEffect(() => {
+        if (!nextUpdate) return
+
+        const interval = setInterval(() => {
+            setNextUpdateTick(tick => tick + 1)
+            timeToNextUpdateRef.current--
+            if (timeToNextUpdateRef.current < -5000) {
+                handleReload()
+            }
+        }, 1000)
+
+        return () => clearInterval(interval)
+    }, [nextUpdate, handleReload])
+
+    const lastUpdatedText = getTimeBetweenNow(lastUpdated, { tick: lastUpdatedTick, seconds: false })
+    const nextUpdateText = getTimeBetweenNow(nextUpdate, { tick: nextUpdateTick, seconds: 'underMinute', admitPast: false })
 
     return (
         <div className='statusPosition'>
@@ -82,7 +118,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                     onClick={handleReload}
                     className='status'
                     tabIndex={0}
-                    aria-label={`Last updated ${getTimeBetweenNow(lastUpdated)}. Next update ${getTimeBetweenNow(nextUpdate)}`}
+                    aria-label={`Last updated ${lastUpdatedText}. Next update ${nextUpdateText}`}
                 >
                     <div className='iconContainer' style={{opacity: fakeLoading || (showLoadingRes && loadingRes) ? '0.6' : '1'}} >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-reload"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M19.933 13.041a8 8 0 1 1 -9.925 -8.788c3.899 -1 7.935 1.007 9.425 4.747" /><path d="M20 4v5h-5" /></svg>
@@ -93,7 +129,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                                 ? showLoadingRes && loadingRes 
                                     ? loadingRes
                                     : lastUpdated 
-                                        ? `Last updated ${getTimeBetweenNow(lastUpdated)}`
+                                        ? `Last updated ${lastUpdatedText}`
                                         : 'Click to reload'
                                 : `Updating...`
                             }
@@ -136,7 +172,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                             { nextUpdate &&
                                 <>
                                     <div className='line'></div>
-                                    <span>Next update available {getTimeBetweenNow(nextUpdate)}</span>
+                                    <span>Next update available {nextUpdateText}</span>
                                 </>
                             }
                         </>

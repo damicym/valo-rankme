@@ -9,7 +9,7 @@ import {
 } from "./libs/db/queries.js"
 import { processNewMatches } from "./worker.js"
 
-const initialMatchesToFetch = 20
+const initialMatchesToFetch = 30
 
 export async function registerPlayer(player) {
     // Agregar player a la DB

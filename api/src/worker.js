@@ -7,7 +7,8 @@ import {
     saveMatchesToDB, 
     getPlayers,
     insertNewAct,
-    updatePlayerDisplay
+    updatePlayerDisplay,
+    updatePlayerUpdate
 } from './libs/db/queries.js'
 import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
 import { getDBModes } from './libs/db/queries.js'
@@ -95,7 +96,7 @@ async function pollPlayer(player, targetAct) {
             console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
         }
 
-        updatePlayerUpdate(player.puuid, new Date(), new Date() + POLLING_INTERVAL)
+        await updatePlayerUpdate(player.puuid, new Date(), new Date(Date.now() + POLLING_INTERVAL))
         console.log(`[${getShortId(player.puuid)}] Next poll at ${new Date(Date.now() + POLLING_INTERVAL).toLocaleTimeString()} ---------------------------------`)
         setTimeout(poll, POLLING_INTERVAL) 
     }

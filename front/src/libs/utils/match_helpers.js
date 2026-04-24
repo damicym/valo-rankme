@@ -83,24 +83,42 @@ export function getOrdinalSuffixe(n){
     'th' : ''
 }
 
-export function getTimeBetweenNow(date){
-    const now = new Date()
-    const timeBetween = now - date
-    const suffixes = ['s', 'm', 'h', 'd', 'w', 'mo', 'y']
-    const thresholds = [60000, 3600000, 86400000, 604800000, 2592000000, 31536000000]
-    let unitsAgo
-    let suffix
-    for (let i = 0; i < thresholds.length; i++) {
-        if (timeBetween < thresholds[i]) {
-            unitsAgo = Math.floor(timeBetween / (i === 0 ? 1000 : thresholds[i - 1]))
-            suffix = suffixes[i]
+export function getTimeBetweenNow(date, options = {}) {
+    if (!date) return 'unknown'
+    const { seconds = true, admitPast = true } = options
+
+    const parsedDate = date instanceof Date ? date : new Date(date)
+    if (Number.isNaN(parsedDate.getTime())) return 'unknown'
+
+    const nowMs = Date.now()
+    const diffMs = parsedDate.getTime() - nowMs
+    const absDiffMs = Math.abs(diffMs)
+    const showSeconds = seconds === true || (seconds === 'underMinute' && absDiffMs < 60 * 1000)
+
+    if (showSeconds ? absDiffMs < 1000 : absDiffMs < 60 * 1000) return 'just now'
+
+    const units = [
+        ...(showSeconds ? [{ suffix: 's', ms: 1000 }] : []),
+        { suffix: 'm', ms: 60 * 1000 },
+        { suffix: 'h', ms: 60 * 60 * 1000 },
+        { suffix: 'd', ms: 24 * 60 * 60 * 1000 },
+        { suffix: 'w', ms: 7 * 24 * 60 * 60 * 1000 },
+        { suffix: 'mo', ms: 30 * 24 * 60 * 60 * 1000 },
+        { suffix: 'y', ms: 365 * 24 * 60 * 60 * 1000 }
+    ]
+
+    let targetUnit = units[0]
+    for (let i = 0; i < units.length; i++) {
+        const current = units[i]
+        const next = units[i + 1]
+        if (!next || absDiffMs < next.ms) {
+            targetUnit = current
             break
         }
     }
 
-    return unitsAgo > 0 
-    ? `${unitsAgo}${suffix} ago` 
-    : unitsAgo > 0 
-        ? `in ${unitsAgo}${suffix}` 
-        : 'just now'
+    const amount = Math.floor(absDiffMs / targetUnit.ms)
+    if (amount <= 0 || (diffMs < 0 && !admitPast)) return 'just now'
+
+    return diffMs < 0 ? `${amount}${targetUnit.suffix} ago` : `in ${amount}${targetUnit.suffix}`
 }

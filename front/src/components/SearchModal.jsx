@@ -61,7 +61,7 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal }) {
                             }
                         </div>
                         <div>
-                            <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder='my name#tag' pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
+                            <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder='tu nombre#tag' pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
                             <span>* Distingue mayúsculas/minúsculas</span>
                         </div>
                     </div>

@@ -15,7 +15,7 @@ function PerformanceSummary({ matches = [], agents = [] }) {
                     <h2>{perf.avg_kd}</h2>
                 </div>
                 <div className='perfEl'>
-                    <h1>KDA total</h1>
+                    <h1>KDA count</h1>
                     <h2 className='kda'>{perf.kills} <span style={{opacity: 0.6}}>/</span> {perf.deaths} <span style={{opacity: 0.6}}>/</span> {perf.assists}</h2>
                 </div>
                 { perf.avg_ddr !== null &&

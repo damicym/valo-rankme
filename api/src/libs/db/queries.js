@@ -3,13 +3,55 @@ import { getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, get
 import { getPlayerMatchInfo, getMatchRR, getPlayerRank } from '../match_parser.js'
 import { getHDEVPlayerDisplay, getHDEVPlayerPuuid } from '../api_requests.js'
 
+function toIsoTimestamp(value, fallback = null) {
+    if (value === null || value === undefined) return fallback
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? fallback : value.toISOString()
+    }
+
+    if (typeof value === 'number') {
+        const dateFromNumber = new Date(value)
+        return Number.isNaN(dateFromNumber.getTime()) ? fallback : dateFromNumber.toISOString()
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim()
+
+        if (/^\d+$/.test(trimmed)) {
+            const dateFromNumericString = new Date(Number(trimmed))
+            return Number.isNaN(dateFromNumericString.getTime()) ? fallback : dateFromNumericString.toISOString()
+        }
+
+        const directDate = new Date(trimmed)
+        if (!Number.isNaN(directDate.getTime())) {
+            return directDate.toISOString()
+        }
+    }
+
+    return fallback
+}
+
+function compactIsoForLog(isoString) {
+    const date = new Date(isoString)
+    if (Number.isNaN(date.getTime())) return isoString
+    // MM-DD HH:mmZ para logs más cortos y fáciles de leer
+    return `${date.toISOString().slice(5, 16).replace('T', ' ')}Z`
+}
+
 export async function updatePlayerUpdate(puuid, lastPolledAt, nextPollAt) {
+    const normalizedLastPolledAt = toIsoTimestamp(lastPolledAt, new Date().toISOString())
+    const fallbackNextPollAt = new Date(new Date(normalizedLastPolledAt).getTime() + 3 * 60 * 1000).toISOString()
+    const normalizedNextPollAt = toIsoTimestamp(nextPollAt, fallbackNextPollAt)
+
     const { data, error } = await supabase
         .from("players")
-        .update({ last_updated: lastPolledAt, next_update: nextPollAt })
+        .update({ last_updated: normalizedLastPolledAt, next_update: normalizedNextPollAt })
         .eq("puuid", puuid)
     if (error) {
         console.log(`Error updating player poll times in database: ${error.message}`)
+    } else {
+        console.log(`[${getShortId(puuid)}] Poll updated | last ${compactIsoForLog(normalizedLastPolledAt)} | next ${compactIsoForLog(normalizedNextPollAt)}`)
     }
 }
 
@@ -44,10 +86,13 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
         return
     }
     
+    const storedPlayerMatches = await getPlayerMatches(puuid)
+    const soterdMatchesIds = storedPlayerMatches ? storedPlayerMatches.map(m => getMatchId(m)) : []
     // guardo cada partida en su respectivo array de season
     const matchesBySeason = {}
     const uniqueMatches = getUniqueMatchesById([...newMatches])
         .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
+        .filter(m => !soterdMatchesIds.includes(getMatchId(m)))
     const matchesWithSeason = await Promise.all(
         uniqueMatches.map(async m => ({
             match: m,
@@ -93,8 +138,7 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
             if (dbRank) { // si ya estaba el rango en la db, lo updateo...
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
-                    .update(newModeRank)
-                    .update({ matches_played: dbRank.matches_played + rrChanges.length })
+                    .update({ ...newModeRank, matches_played: dbRank.matches_played + rrChanges.length })
                     .eq("player_puuid", puuid)
                     .eq("mode_id", modeId)
                     .eq("season_id", seasonId)
