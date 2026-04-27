@@ -112,10 +112,16 @@
     cursor: not-allowed;
 }
 
+.inputField .inputContainer{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .submitBtn{
     gap: 8px;
     color: var(--bg);
-    background-color: var(--green);
+    background-color: var(--red);
     font-size: 1.7rem;
     padding: 8px;
     grid-column: 3;
@@ -125,14 +131,14 @@
 }
 
 .submitBtn svg{
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
+    color: var(--text);
 }
 
-.submitBtnContainer{
-    position: relative;
-    overflow: hidden;
-    border-radius: 10px;
+.submitBtn:disabled{
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .searchModal .progress{

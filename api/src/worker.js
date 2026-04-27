@@ -22,7 +22,7 @@ export async function pollAllPlayers() {
     let targetAct = await getActByDate(new Date())
 
     const syncPlayers = async () => {
-        const players = await getPlayers()
+        const players = await getPlayers({ readyOnly: true })
         if (!players || players.length === 0) {
             console.log("[INFO] No players found in database to poll.")
         } else {
@@ -113,7 +113,7 @@ async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
     let fetchesCount = 0
     
     areMoreMatches = !matches.some(m => getMatchId(m) === lastStoredMatchId) && fetchesCount < maxExtraFetches
-    while (lastStoredMatchId && areMoreMatches) {
+    while (areMoreMatches) {
         fetchesCount++
         console.log(`[${getShortId(puuid)}] Fetching matches... (#${fetchesCount}, from ${startIndex} to ${startIndex + matchesToFetch - 1})`)
         
@@ -159,8 +159,8 @@ export async function processNewMatches(puuid, matches) {
     }
     const dbModes = await getDBModes()
     await saveMatchesToDB(newMatches, dbModes)
-    await savePlayerMatchesToDB(puuid, newMatches, dbModes)
     await updatePlayerRank(puuid, newMatches, dbModes)
+    await savePlayerMatchesToDB(puuid, newMatches, dbModes)
     
     return getMatchId(newMatches[0])
 }

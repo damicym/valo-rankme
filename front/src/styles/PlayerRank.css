@@ -206,6 +206,14 @@
     filter: brightness(1);
 }
 
+.btn:hover:disabled{
+    filter: none;
+}
+
+.btn:active:disabled{
+    filter: none;
+}
+
 @keyframes fakeLoadRRBar {
   0%   { transform: scaleX(0); }
   40%  { transform: scaleX(0.6); }

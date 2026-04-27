@@ -39,8 +39,21 @@ function compactIsoForLog(isoString) {
     return `${date.toISOString().slice(5, 16).replace('T', ' ')}Z`
 }
 
-export async function updatePlayerUpdate(puuid, lastPolledAt, nextPollAt) {
+export async function updatePlayerUpdate(puuid, lastPolledAt, nextPollAt = null) {
     const normalizedLastPolledAt = toIsoTimestamp(lastPolledAt, new Date().toISOString())
+    if (nextPollAt === null) {
+        const { data, error } = await supabase
+            .from("players")
+            .update({ last_updated: normalizedLastPolledAt })
+            .eq("puuid", puuid)
+        if (error) {
+            console.log(`Error updating player last poll only time in database: ${error.message}`)
+        } else {
+            console.log(`[${getShortId(puuid)}] Last poll only updated | last ${compactIsoForLog(normalizedLastPolledAt)}`)
+        }
+        return
+    }
+    
     const fallbackNextPollAt = new Date(new Date(normalizedLastPolledAt).getTime() + 3 * 60 * 1000).toISOString()
     const normalizedNextPollAt = toIsoTimestamp(nextPollAt, fallbackNextPollAt)
 
@@ -197,7 +210,7 @@ export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes) {
         .upsert(
             rows,
             {
-                onConflict: "match_id",
+                onConflict: "id",
                 ignoreDuplicates: true
             }
         )
@@ -367,10 +380,18 @@ export async function saveMatchesToDB(matches, dbModes) {
     }
 }
 
-export async function getPlayers() {
-    const { data: players, error } = await supabase
+export async function getPlayers(options = {}) {
+    const { readyOnly = false } = options
+    
+    let query = supabase
         .from("players")
         .select("puuid, name, tag, last_match_id")
+
+    if (readyOnly) {
+        query = query.eq("ready_to_poll", true)
+    }
+
+    const { data: players, error } = await query
     if (error) {
         console.log("Error fetching players from database: " + error.message)
     }
@@ -485,4 +506,16 @@ export async function getDBModes(rankableOnly = false) {
         return []
     }
     return data || []
+}
+
+export async function setReadyToPoll(puuid) {
+    const { data, error } = await supabase
+        .from("players")
+        .update({ ready_to_poll: true })
+        .eq("puuid", puuid)
+    if (error) {
+        console.log(`Error setting player ${getShortId(puuid)} ready to poll in database: ${error.message}`)
+    } else {
+        console.log(`[${getShortId(puuid)}] Set player ready to poll in database`)
+    }
 }

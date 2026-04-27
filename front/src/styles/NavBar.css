@@ -34,11 +34,11 @@
     width: 5px;
     height: 100%;
     background-color: var(--red);
-    transition: width 0.3s ease-in-out;
+    transition: width 0.25s ease-in-out;
 }
 
 .logo.active::before{
-    width: 22px;
+    width: 100%;
 }
 
 .logo:hover{
