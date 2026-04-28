@@ -145,16 +145,14 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
         // por cada modo (e indirectamente por season), consigo el nuevo rango
         for (const [modeId, rrChanges] of Object.entries(rrChangesByMode)) {
             if (!rankableModeIds.includes(modeId)) continue
-
-            const dbRank = ranks.find(r => r.mode_id === modeId && r.season_id === seasonId) || null
+            const id = `${modeId}_${seasonId}_${puuid}`
+            const dbRank = ranks.find(r => r.id === id) || null
             const newModeRank = getPlayerRank(rrChanges, dbRank)
             if (dbRank) { // si ya estaba el rango en la db, lo updateo...
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
                     .update({ ...newModeRank, matches_played: dbRank.matches_played + rrChanges.length })
-                    .eq("player_puuid", puuid)
-                    .eq("mode_id", modeId)
-                    .eq("season_id", seasonId)
+                    .eq("id", id)
                 if (error) {
                     console.log(`Error updating player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
                 } else {
@@ -163,7 +161,7 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
             } else { // ...sino lo inserto
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
-                    .insert({ player_puuid: puuid, mode_id: modeId, season_id: seasonId, ...newModeRank })
+                    .insert({ id, player_puuid: puuid, mode_id: modeId, season_id: seasonId, ...newModeRank })
                 if (error) {
                     console.log(`Error saving player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
                 } else {
@@ -174,26 +172,24 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
     }
 }
 
-export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes) {
-    // consigo las partidas del jugador ya guardadas y las mezclo con las nuevas para tener historial
-    const storedPlayerMatches = await getPlayerMatches(puuid)
-    const allMixedMatches = getUniqueMatchesById([...(storedPlayerMatches || []), ...newRawMatches])
+export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes, storedRanks = []) {
+    const usingMatches = getUniqueMatchesById(newRawMatches)
         .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
     
-    if (!allMixedMatches || !allMixedMatches.length) {
+    if (!usingMatches || !usingMatches.length) {
         console.log("No matches to save at savePlayerMatchesToDB")
         return
     }
 
     const rankableModes = dbModes.filter(m => m.is_rankable)
 
-    const rows = await Promise.all(newRawMatches.map(async (match, mIndex) => {
+    const rows = await Promise.all(usingMatches.map(async (match, mIndex) => {
         const matchModeId = getMatchModeId(match)
         const matchSeasonId = await getMatchSeasonId(match)
-        
+
         // para cada partida consigo sus anteriores del mismo modo y season para el cálculo del rank
         const previousCandidates = await Promise.all(
-            allMixedMatches.slice(0, mIndex).map(async (pm) => {
+            usingMatches.slice(0, mIndex === -1 ? 0 : mIndex).map(async (pm) => {
                 const sameMode = getMatchModeId(pm) === matchModeId
                 const sameSeason = (await getMatchSeasonId(pm)) === matchSeasonId
                 return sameMode && sameSeason ? pm : null
@@ -201,8 +197,9 @@ export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes) {
         )
         const previousMatches = previousCandidates.filter(Boolean)
 
+        const initialRank = storedRanks.find(r => r.id === `${matchModeId}_${matchSeasonId}_${puuid}`) || null
         // conisgo la info de la partida que se va a gurdar
-        return await getPlayerMatchInfo(match, puuid, previousMatches, rankableModes)
+        return await getPlayerMatchInfo(match, puuid, previousMatches, rankableModes, initialRank)
     }))
     
     const { data, error } = await supabase
@@ -229,14 +226,14 @@ export async function insertNewAct(targetAct) {
     
     const { data, error } = await supabase
         .from("acts")
-        .insert({
+        .upsert({
             id: targetAct.id,
             start_time: targetAct.startTime,
             end_time: targetAct.endTime,
             season_id: targetAct.seasonId,
             title: targetAct.title,
             act_name: targetAct.actName,
-        })
+        }, { onConflict: "id", ignoreDuplicates: true })
     if (error) {
         console.log(`Error inserting new act into database: ${error.message}`)
     }
@@ -245,12 +242,12 @@ export async function insertNewAct(targetAct) {
 export async function insertNewSeason(startTime, endTime, name, id) {
     const { data, error } = await supabase
         .from("seasons")
-        .insert({
+        .upsert({
             id,
             start_time: startTime,
             end_time: endTime,
             name
-        })
+        }, { onConflict: "id", ignoreDuplicates: true })
     if (error) {
         console.log(`Error inserting new season into database: ${error.message}`)
     }
@@ -518,4 +515,16 @@ export async function setReadyToPoll(puuid) {
     } else {
         console.log(`[${getShortId(puuid)}] Set player ready to poll in database`)
     }
+}
+
+export async function getDBPlayerRanks(puuid) {
+    const { data, error } = await supabase
+        .from("player_mode_ranks")
+        .select("*")
+        .eq("player_puuid", puuid)
+    if (error) {
+        console.log(`Error fetching player ranks from database: ${error.message}`)
+        return []
+    }
+    return data || []
 }

@@ -30,7 +30,7 @@ export function isUsefulMatch(match, lastStoredMatchId) {
     return ( match &&
         match.metadata.is_completed && // no está en partida
         match.metadata.party_rr_penaltys.length > 0 && // no es custom
-        // availableModes.includes(getMatchModeId(match)) && // es un modo válido
+        getMatchModeId(match) !== "custom" && // no es custom
         (!lastStoredMatchId || getMatchId(match) !== lastStoredMatchId) // es nueva
     )
 }

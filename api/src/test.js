@@ -11,7 +11,8 @@ async function loadApelMatch() {
 }
 
 export async function test() {
-    const match = await loadApelMatch()
-    const seasonId = await getMatchSeasonId(match)
-    console.log("Season ID:", seasonId)
+    // [20, -20, -22, -12, -20, -21, 17, 18, 19, 21, 20, 21, 21, 21]
+    const prevRRChanges = [20, -20, -22, -12, -20]
+    const rankInfo = getPlayerRank(prevRRChanges, null, 20)
+    console.log(rankInfo)
 }

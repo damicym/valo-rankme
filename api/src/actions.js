@@ -1,10 +1,9 @@
 import { getHDEVMatches } from "./libs/api_requests.js"
-import { getMatchId, getShortId, getStartedAt } from "./libs/helpers.js"
+import { getShortId, getStartedAt } from "./libs/helpers.js"
 import { 
     insertNewPlayer, 
     getMatchesByPlayers, 
     savePlayerMatchesToDB, 
-    updateLastMatchId, 
     updatePlayerRank, 
     updatePlayerDisplay,
     updatePlayerUpdate,
@@ -13,7 +12,7 @@ import {
 } from "./libs/db/queries.js"
 import { processNewMatches } from "./worker.js"
 
-const initialMatchesToFetch = 30
+const initialMatchesToFetch = 20
 
 export async function registerPlayer(player) {
     console.log(`Registering player ${player}...`)

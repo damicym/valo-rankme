@@ -8,7 +8,8 @@ import {
     getPlayers,
     insertNewAct,
     updatePlayerDisplay,
-    updatePlayerUpdate
+    updatePlayerUpdate,
+    getDBPlayerRanks
 } from './libs/db/queries.js'
 import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
 import { getDBModes } from './libs/db/queries.js'
@@ -90,7 +91,7 @@ async function pollPlayer(player, targetAct) {
                     currentLastStoredMatchId = newestStoredMatchId
                 }
             } else{
-                console.log(`[${getShortId(player.puuid)}] Last match is not useful or already stored. Last match id: ${getShortId(getMatchId(lastMatch))}, current last stored match id: ${getShortId(currentLastStoredMatchId)}`)
+                console.log(`[${getShortId(player.puuid)}] Last match is not useful. Last match id: ${getShortId(getMatchId(lastMatch))}, current last stored match id: ${getShortId(currentLastStoredMatchId)}`)
             }
         } else {
             console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
@@ -126,13 +127,15 @@ async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
 
         const foundLastStoredMatch = matches.find(m => getMatchId(m) === lastStoredMatchId)
         areMoreMatches = !foundLastStoredMatch && fetchesCount < maxExtraFetches
-        if (!areMoreMatches) {
-            if (foundLastStoredMatch) {
-                matches = matches.slice(0, matches.findIndex(m => getMatchId(m) === lastStoredMatchId))
-            }
-        } else {
+        if (areMoreMatches) {
             startIndex = matchesToFetch * fetchesCount + initialMatches.length
         }
+    }
+
+    // Siempre recortar hasta la última partida ya guardada, independientemente de si se hicieron fetches extra
+    const lastStoredIndex = matches.findIndex(m => getMatchId(m) === lastStoredMatchId)
+    if (lastStoredIndex !== -1) {
+        matches = matches.slice(0, lastStoredIndex)
     }
 
     const newestStoredMatchId = await processNewMatches(puuid, matches)
@@ -158,9 +161,10 @@ export async function processNewMatches(puuid, matches) {
         return null
     }
     const dbModes = await getDBModes()
+    const storedRanks = await getDBPlayerRanks(puuid)
     await saveMatchesToDB(newMatches, dbModes)
     await updatePlayerRank(puuid, newMatches, dbModes)
-    await savePlayerMatchesToDB(puuid, newMatches, dbModes)
+    await savePlayerMatchesToDB(puuid, newMatches, dbModes, storedRanks)
     
     return getMatchId(newMatches[0])
 }

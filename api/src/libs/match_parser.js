@@ -11,8 +11,8 @@ export function getPlayerRank(prevRRChanges, initialRank = null, lastRRChange = 
     allRRChanges.forEach((match_rr, index) => {
         if (!Number.isFinite(match_rr)) return
         const newRawElo = currentElo + match_rr
-        const rank = Math.floor(currentElo / 100)
-        const nextRank = Math.floor(newRawElo / 100)
+        const rank = Math.max(0, Math.floor(currentElo / 100))
+        const nextRank = Math.max(0, Math.floor(newRawElo / 100))
         const isImmo = currentElo >= IMMORTAL_ELO
         const won = match_rr > 0
         const atLastMatch = lastRRChange !== null && index === allRRChanges.length - 1
@@ -21,7 +21,7 @@ export function getPlayerRank(prevRRChanges, initialRank = null, lastRRChange = 
         if (atLastMatch) {
             if (won && rank < nextRank) { 
                 rankVariation = true
-            } else if (!won && rank > nextRank) {
+            } else if (!won && rank > nextRank && shieldLevel === 0 && currentElo === rank * 100) {
                 rankVariation = false
             }
         } else {
@@ -96,7 +96,7 @@ export function getMatchRR(match, puuid, dbMode) {
     return Math.round(result)
 }
 
-export async function getPlayerMatchInfo(match, puuid, previousMatches, rankableModes) {
+export async function getPlayerMatchInfo(match, puuid, previousMatches, rankableModes, initialRank = null) {
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
     if (!inMatchPlayer) {
         console.log("[ERROR] !inMatchPlayer at getPlayerMatchInfo")
@@ -144,10 +144,12 @@ export async function getPlayerMatchInfo(match, puuid, previousMatches, rankable
             .filter(Number.isFinite)
         : null
     const rankInfo = rrChange !== null && Array.isArray(prevRRChanges)
-        ? getPlayerRank(prevRRChanges, null, rrChange)
+        ? getPlayerRank(prevRRChanges, initialRank, rrChange)
         : null
 
     return {
+        id: `${getMatchId(match)}_${puuid}`,
+
         match_id: getMatchId(match), // PK
         player_puuid: puuid, // FK
         act_id: match.metadata.season.id, // FK
