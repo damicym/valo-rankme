@@ -97,7 +97,9 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
                     <button
                         className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
                     >
-                        All seasons
+                        {
+                            displayModes ? 'All seasons' : 'Current season'
+                        }
                     </button>
                     {
                         mainSeasons.filter(Boolean).map(s =>

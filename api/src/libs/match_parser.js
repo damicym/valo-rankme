@@ -165,7 +165,7 @@ export async function getPlayerMatchInfo(match, puuid, previousMatches, rankable
         is_rankable: isMatchRankable,
 
         rr_change: rrChange,
-        rr_eval_version: rrChange !== null ? '1.1 (added rank_variation)' : null,
+        rr_eval_version: rrChange !== null ? '1.2 (fixed in-match ranks, variations, and duplicates)' : null,
         rank: rankInfo ? rankInfo.rank : null,
         rank_variation: rankInfo ? rankInfo.rankVariation : null,
         
