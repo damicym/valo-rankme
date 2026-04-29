@@ -1,7 +1,48 @@
-import { useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import '../styles/SearchModal.css'
 
+const cicleInterval = 2 * 1000
+const defMsg = "* Distingue mayúsculas/minúsculas"
+const msgDefList = [
+    "Espiando cámaras de Cypher",
+    "Lurkeando en la base de datos",
+    "Defusando spikes",
+    "Recargando outlaws",
+    "Apuntando lineups",
+    "Desperdiciando updrafts",
+    "Esperando humos",
+    "Limpiando ángulos",
+    "Calculando créditos para la siguiente ronda",
+    "Holdeando mid"
+]
+const shuffleArr = (arr) => {
+    let res = [...arr]
+    res.sort(() => Math.random() - 0.5)
+    return res
+}
+
 function SearchModal({ handleSubmit, loading, setShowSearchModal }) { 
+    const [loadingMsg, setLoadingMsg] = useState(null)
+    const loadingMsgRef = useRef(null)
+    const msgs = useRef(shuffleArr(msgDefList))
+
+    useEffect(() => {
+        if (!loading) return
+        
+        const cicleMsgs = () => {
+            if (loadingMsgRef.current && loadingMsgRef.current !== defMsg) {
+                const currentFirstEl = msgs.current[0]
+                msgs.current.splice(0, 1)
+                msgs.current.push(currentFirstEl)
+            }
+            setLoadingMsg(msgs.current[0])
+            loadingMsgRef.current = msgs.current[0]
+        }
+        
+        cicleMsgs()
+        const cicle = setInterval(cicleMsgs, cicleInterval)
+        return () => clearInterval(cicle)
+    }, [loading])
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -62,7 +103,14 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal }) {
                         </div>
                         <div className='inputContainer'>
                             <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder='tu nombre#tag' pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
-                            <span>* Distingue mayúsculas/minúsculas</span>
+                            <span className='bottomMsg'>
+                                <span className='bottomMsgText'>{loading ? loadingMsg : defMsg}</span>
+                                {loading &&
+                                    <span className='waving'>
+                                        <span style={{"--delay": '0.1s'}}>.</span><span style={{"--delay": '0.2s'}}>.</span><span style={{"--delay": '0.3s'}}>.</span>
+                                    </span>
+                                }
+                            </span>
                             <button 
                                 type='submit'
                                 disabled={loading}

@@ -94,20 +94,23 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
                     </section>
                 }
                 <section className='selector right'>
-                    <button
-                        className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
-                    >
-                        {
-                            displayModes ? 'All seasons' : 'Current season'
-                        }
-                    </button>
+                    { displayModes &&
+                        <button
+                            className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
+                        >
+                            All seasons
+                        </button>
+                    }
                     {
-                        mainSeasons.filter(Boolean).map(s =>
+                        mainSeasons.filter(Boolean).map((s, index) =>
                             <button 
-                                className={selectedSeason === s.id ? 'filterBtn active' : 'filterBtn'} 
+                                className={selectedSeason === s.id || (!displayModes && selectedSeason === null && index === 0) ? 'filterBtn active' : 'filterBtn'} 
                                 id={s.id} 
                                 key={s.id} 
-                                onClick={() => setSelectedSeason(s.id)}
+                                onClick={() => {
+                                    if (selectedSeason === s.id || (!displayModes && selectedSeason === null && index === 0)) return
+                                    setSelectedSeason(s.id)
+                                }}
                             >
                                 {s.name || s.id}
                             </button>

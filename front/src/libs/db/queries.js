@@ -85,11 +85,14 @@ export async function getTwoPlayers(player1, player2, modeId = null, actId = nul
     }
 }
 
-export async function getOnePlayer(player, modeId = null, actId = null, seasonId = null) {
+export async function getOnePlayer(player, modeId = null, actId = null, seasonId = null, setRegisteringPlayer = null) {
     let puuid = await getDBPlayerPuuid(player)
 
     if (!puuid) {
+        const canSetRegistering = typeof setRegisteringPlayer === 'function'
+        if (canSetRegistering) setRegisteringPlayer(true)
         puuid = await registerPlayer(player)
+        if (canSetRegistering) setRegisteringPlayer(false)
     }
 
     const matches = await getDBPlayerMatches(puuid, modeId, actId, seasonId)

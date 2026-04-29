@@ -82,12 +82,48 @@
     z-index: 1;
 }
 
-.inputField span{
+.inputField .bottomMsg{
     position: absolute;
     left: 0;
     bottom: -22px;
     font-size: 0.85rem;
     color: var(--placeholder);
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.bottomMsgText{
+    display: inline-block;
+    flex: 0 0 auto;
+}
+
+.waving{
+    display: inline-flex;
+    gap: 1px;
+    flex: 0 0 auto;
+    width: min-content;
+    justify-content: space-between;
+}
+
+.waving span{
+    display: block;
+    width: 0.3em;
+    text-align: center;
+    line-height: 1;
+    flex: 0 0 auto;
+    animation: wave 2s infinite ease-in-out;
+    animation-delay: var(--delay);
+}
+
+@keyframes wave {
+    0% { transform: translateY(0); }
+    20% { transform: translateY(-1px); }
+    40% { transform: translateY(0); }
+    60% { transform: translateY(-1px); }
+    80% { transform: translateY(0); }
+    100% { transform: translateY(0); }
 }
 
 .playerInput{
