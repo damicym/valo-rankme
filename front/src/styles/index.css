@@ -28,6 +28,7 @@ html{
     --redT: #f0615f80;
     --yellow: #f6aa1c;
     --placeholder: #969BA7;
+    --greenDark: #1ed6b4;
 }
 
 * {
@@ -54,8 +55,6 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* gap: 65px; */
-    padding: 20px;
 }
 
 .playerSection{
