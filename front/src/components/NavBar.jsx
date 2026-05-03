@@ -2,8 +2,9 @@ import '../styles/NavBar.css'
 import { SECTIONS } from '../config'
 import { useEffect, useRef, useState } from 'react'
 
-function NavBar({ selectedSection, setSelectedSection, setShowSearchModal }) { 
+function NavBar({ selectedSection, setSelectedSection, setShowSearchModal, domixUser }) { 
     const [showMsg, setShowMsg] = useState(true)
+    const [isMsgExiting, setIsMsgExiting] = useState(false)
     const [showLoveTooltip, setShowLoveTooltip] = useState(false)
     const [isLoveTooltipExiting, setIsLoveTooltipExiting] = useState(false)
     const loveTooltipHideTimeoutRef = useRef(null)
@@ -51,11 +52,17 @@ function NavBar({ selectedSection, setSelectedSection, setShowSearchModal }) {
     return (
         <>
             { showMsg &&
-                <div className='headerMsg'>
-                    <span>¿Con ganas de encontrar y compartir lineups? Visitá <a href="https://damicym.github.io/clutchboard/" target="_blank">ClutchBoard</a></span>
+                <div className='headerMsg' style={{ animation: isMsgExiting ? 'slideUp 0.2s ease' : 'slideDown 0.5s ease' }}>
+                    <span>¿Con ganas de encontrar o compartir consejos y lineups? Visitá <a href="https://damicym.github.io/clutchboard/" target="_blank">ClutchBoard</a></span>
                     <button 
                         className='closeMsgBtn' 
-                        onClick={() => setShowMsg(prev => !prev)}
+                        onClick={() => {
+                            setIsMsgExiting(true)
+                            setTimeout(() => {
+                                setShowMsg(false)
+                                setIsMsgExiting(false)
+                            }, 150)
+                        }}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-x">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -68,7 +75,7 @@ function NavBar({ selectedSection, setSelectedSection, setShowSearchModal }) {
             <nav className="navBar">
                 <div className={selectedSection === SECTIONS.HOME ? 'logo active' : 'logo'} onClick={() => setSelectedSection(SECTIONS.HOME)}>
                     {/* <img src="./public/favicon.png" alt="logo" /> */}
-                    <span>Home</span>
+                    <span>Inicio</span>
                 </div>
                 <div className='searchBtn' onClick={() => setShowSearchModal(true)}>
                     <div className='iconContainer'>
@@ -83,7 +90,7 @@ function NavBar({ selectedSection, setSelectedSection, setShowSearchModal }) {
                     <div className='loveBtnWrap'>
                         { showLoveTooltip &&
                             <div className={isLoveTooltipExiting ? 'loveTooltip loveTooltip--exit' : 'loveTooltip'} role='tooltip'>
-                                Con mucho amor, por Dami
+                                Con mucho amor, por <span style={{color: 'var(--yellow)', fontWeight: '650'}}>{domixUser}</span>
                             </div>
                         }
                         <button className='showMsgBtn' onClick={handleLoveClick} type='button' aria-label='Mostrar mensaje de amor'>

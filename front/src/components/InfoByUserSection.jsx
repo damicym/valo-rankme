@@ -7,7 +7,7 @@ import { USER_SECTIONS } from '../config.js'
 
 function InfoByUserSection({ userSection, player1Data, selectedMode, setSelectedMode, selectedSeason, setSelectedSeason, selectedRankInfo, filteredMatches, gameModes, gameSeasons, agents, lastSeason }) {
     switch (userSection) {
-        case USER_SECTIONS.MATCHES:
+        case USER_SECTIONS.PARTIDAS:
             return (
                 <>
                     <PlayerRank rankInfo={selectedRankInfo} direction='vertical'/>
@@ -18,7 +18,6 @@ function InfoByUserSection({ userSection, player1Data, selectedMode, setSelected
                             selectedSeason={selectedSeason}
                             setSelectedSeason={setSelectedSeason}
                             matches={player1Data?.matches}
-                            ranksInfo={player1Data?.ranksInfo}
                             gameModes={gameModes}
                             gameSeasons={gameSeasons}
                             displayModes={true}
@@ -35,7 +34,7 @@ function InfoByUserSection({ userSection, player1Data, selectedMode, setSelected
                     </div>
                 </>
             )
-        case USER_SECTIONS.RANKS:
+        case USER_SECTIONS.RANGOS:
             return (
                 <>
                     <Filters 

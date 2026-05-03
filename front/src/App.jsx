@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { /* getTwoPlayers, */ getOnePlayer, getDBModes, getDBSeasons } from './libs/db/queries.js'
+import { /* getTwoPlayers, */ getOnePlayer, getDBModes, getDBSeasons, getPlainUser } from './libs/db/queries.js'
 import { fetchAgents } from './libs/utils/agents.js'
 import SearchModal from './components/SearchModal.jsx'
 import { SECTIONS, USER_SECTIONS } from './config.js'
@@ -9,18 +9,20 @@ import MainSection from './components/MainSection.jsx'
 import { getAPIStatus } from './libs/api/index.js'
 
 function App() {
+    const domixPuuid = '9c10981a-3fc4-5eb4-9a3f-8e3008aeaa20'
     const [agents, setAgents] = useState([])
     const [gameModes, setGameModes] = useState([])
     const [gameSeasons, setGameSeasons] = useState([])
     const [lastSeason, setLastSeason] = useState(null)
     const [APIStatus, setAPIStatus] = useState({})
+    const [domixUser, setDomixUser] = useState(null)
     
     const [player1Data, setPlayer1Data] = useState({})
     const [playersLoading, setPlayersLoading] = useState(false)
     const [showSearchModal, setShowSearchModal] = useState(false)
 
     const [section, setSection] = useState(SECTIONS.HOME)
-    const [userSection, setUserSection] = useState(USER_SECTIONS.MATCHES)
+    const [userSection, setUserSection] = useState(USER_SECTIONS.PARTIDAS)
     const [selectedMode, setSelectedMode] = useState(null)
     const [selectedSeason, setSelectedSeason] = useState(null)
 
@@ -37,9 +39,9 @@ function App() {
         try{
             const updatedPlayer = await processPlayer(playerId, { force: true })
             const nextMatchesCount = updatedPlayer?.matches?.length ?? previousMatchesCount
-            return previousMatchesCount === nextMatchesCount ? 'No new matches' : 'Data updated'
+            return previousMatchesCount >= nextMatchesCount ? 'No new matches' : 'Data updated'
         } catch (error) {
-            setPlayer1Data(prev => ({ ...(prev || {}), error: error.message || 'Error al obtener datos del jugador' }))
+            setPlayer1Data({ puuid: null, error: error.message })
             return 'Error updating data'
         }
     }
@@ -56,9 +58,11 @@ function App() {
         const modesData = await getDBModes()
         const seasonsData = await getDBSeasons()
         const lastSeason = seasonsData[0]?.id || null
+        const domixUserData = await getPlainUser(domixPuuid)
         setLastSeason(lastSeason)
         setGameModes(modesData)
         setGameSeasons(seasonsData)
+        setDomixUser(domixUserData)
     }
 
     useEffect(() => {
@@ -87,7 +91,7 @@ function App() {
         try{
             await processPlayer(p1)
         } catch (error) {
-            setPlayer1Data(prev => ({ ...(prev || {}), error: error.message || 'Error al obtener datos del jugador' }))
+            setPlayer1Data({ puuid: null, error: error.message })
         }
 
         setPlayersLoading(false)
@@ -98,24 +102,41 @@ function App() {
     const processPlayer = async(p1, options = {}) => {
         if (!p1) return
         const { force = false } = options
-        const [name, tag] = p1.split('#')
+        const [name, tag] = p1.split("#").map(part => part.trim())
         setSelectedSeason(null)
-        setUserSection(USER_SECTIONS.MATCHES)
 
         if (!force && name === player1Data?.name && tag === player1Data?.tag) {
-            setSelectedMode(player1Data?.ranksInfo[0]?.mode_id || null)
+            setUserSection(USER_SECTIONS.PARTIDAS)
+            const matchesByMode = player1Data?.matches?.reduce((acc, match) => {
+                if (!acc.has(match.mode_id)) {
+                    acc.set(match.mode_id, 1)
+                } else {
+                    acc.set(match.mode_id, acc.get(match.mode_id) + 1)
+                }
+                return acc
+            }, new Map())
+            const mostPlayedMode = matchesByMode && matchesByMode.size > 0 ? Array.from(matchesByMode.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] : null
+            setSelectedMode(mostPlayedMode)
             return player1Data
         }
 
         const data = await getOnePlayer(p1)
-        setPlayer1Data({})
-        if (data?.player1?.puuid) {
+        if (data?.player1?.puuid && !data?.player1?.error) {
             setPlayer1Data(data.player1)
-            setSelectedMode(data.player1?.ranksInfo[0]?.mode_id || null)
+            const matchesByMode = player1Data?.matches?.reduce((acc, match) => {
+                if (!acc.has(match.mode_id)) {
+                    acc.set(match.mode_id, 1)
+                } else {
+                    acc.set(match.mode_id, acc.get(match.mode_id) + 1)
+                }
+                return acc
+            }, new Map())
+            const mostPlayedMode = matchesByMode && matchesByMode.size > 0 ? Array.from(matchesByMode.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] : null
+            setSelectedMode(mostPlayedMode)
             return data.player1
+        } else {
+            throw new Error(data?.player1?.error || 'Error al obtener datos del jugador')
         }
-
-        return null
     }
 
     const selectedRankInfo = player1Data?.ranksInfo?.find(
@@ -128,8 +149,10 @@ function App() {
     return (
         <>
             <div className="site">
-                <NavBar selectedSection={section} setSelectedSection={setSection} showSearchModal={showSearchModal} setShowSearchModal={setShowSearchModal} />
+                <NavBar domixUser={domixUser} selectedSection={section} setSelectedSection={setSection} showSearchModal={showSearchModal} setShowSearchModal={setShowSearchModal} />
                 <MainSection
+                    setSelectedSection={setSection}
+                    domixUser={domixUser}
                     section={section}
                     userSection={userSection}
                     setUserSection={setUserSection}
@@ -150,7 +173,7 @@ function App() {
                 />
             </div>
             { showSearchModal &&
-                <SearchModal loading={playersLoading} handleSubmit={handleSubmit} setShowSearchModal={setShowSearchModal} />
+                <SearchModal domixUser={domixUser} loading={playersLoading} handleSubmit={handleSubmit} setShowSearchModal={setShowSearchModal} />
             }
         </>
     )

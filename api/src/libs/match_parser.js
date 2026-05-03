@@ -1,5 +1,5 @@
 import { IMMORTAL_ELO } from '../valorant_config.js'
-import { getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode, getMatchModeId, getMatchSeasonId, getShortId } from './helpers.js'
+import { playerLog, getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode, getMatchModeId, getShortId, getMatchActId } from './helpers.js'
 
 export function getPlayerRank(prevRRChanges, initialRank = null, lastRRChange = null) {
     let currentElo = initialRank?.elo ?? 50
@@ -59,7 +59,10 @@ export function getPlayerRank(prevRRChanges, initialRank = null, lastRRChange = 
 
 export function getMatchRR(match, puuid, dbMode) {
     if (match?.rr_change !== undefined) return match.rr_change // para stored matches, sino calcula aca abajo
-    if (!dbMode) console.log(`[WARN] !dbMode at getMatchRR for match ${getShortId(getMatchId(match))} with mode ${getMatchModeId(match)}`)
+    if (!dbMode) {
+        console.log(playerLog(puuid, `[WARN] !dbMode at getMatchRR for match ${getShortId(getMatchId(match))} with mode ${getMatchModeId(match)}`))
+        return null
+    }
     const evalParams = dbMode ?
         { min_rr: dbMode.min_rr, max_rr: dbMode.max_rr, rounds_to_win: dbMode.rounds_to_win, min_acs: dbMode.min_acs, max_acs: dbMode.max_acs }
         : { min_rr: 7, max_rr: 33, rounds_to_win: 5, min_acs: 120, max_acs: 550 }
@@ -67,8 +70,8 @@ export function getMatchRR(match, puuid, dbMode) {
 
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
     if (!inMatchPlayer) {
-        console.log("[ERROR] !inMatchPlayer at getMatchRR")
-        return 0
+        console.log(playerLog(puuid, "[ERROR] !inMatchPlayer at getMatchRR"))
+        return null
     }
     
     const teamColor = inMatchPlayer.team_id
@@ -96,11 +99,11 @@ export function getMatchRR(match, puuid, dbMode) {
     return Math.round(result)
 }
 
-export async function getPlayerMatchInfo(match, puuid, previousMatches, rankableModes, initialRank = null) {
+export async function getPlayerMatchInfo(match, puuid, previousMatches, rankableModes, initialRank = null, resolvedSeasonId = null) {
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
     if (!inMatchPlayer) {
-        console.log("[ERROR] !inMatchPlayer at getPlayerMatchInfo")
-        return 0
+        console.log(playerLog(puuid, "[ERROR] !inMatchPlayer at getPlayerMatchInfo"))
+        return null
     }
     const teamColor = inMatchPlayer.team_id
     const teamInfo = match.teams.find(t => t.team_id === teamColor)
@@ -132,7 +135,7 @@ export async function getPlayerMatchInfo(match, puuid, previousMatches, rankable
             if (r.ceremony === 'CeremonyClutch') clutchesNKillThemAllRounds++
         }
     })
-    const seasonId = await getMatchSeasonId(match)
+    const seasonId = resolvedSeasonId
     const modeId = getMatchModeId(match)
     const dbMode = rankableModes.find(dbM => dbM?.id === modeId) || null
     const isMatchRankable = !!dbMode

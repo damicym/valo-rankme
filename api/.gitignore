@@ -1,4 +1,4 @@
 .env
 node_modules
 local
-api\src\test.js
+src\test.js

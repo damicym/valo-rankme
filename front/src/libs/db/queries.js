@@ -21,10 +21,12 @@ export async function getTwoPlayers(player1, player2, modeId = null, actId = nul
     let p2Puuid = await getDBPlayerPuuid(player2)
 
     if (!p1Puuid) {
-        p1Puuid = await registerPlayer(player1)
+        const p1RegisterResponse = await registerPlayer(player1)
+        p1Puuid = p1RegisterResponse?.puuid || null
     }
     if (!p2Puuid) {
-        p2Puuid = await registerPlayer(player2)
+        const p2RegisterResponse = await registerPlayer(player2)
+        p2Puuid = p2RegisterResponse?.puuid || null
     }
     
     if (!p1Puuid || !p2Puuid) {
@@ -85,21 +87,41 @@ export async function getTwoPlayers(player1, player2, modeId = null, actId = nul
     }
 }
 
-export async function getOnePlayer(player, modeId = null, actId = null, seasonId = null, setRegisteringPlayer = null) {
+export async function getOnePlayer(player, options = {}) {
+    let { modeId = null, actId = null, seasonId = null, setRegisteringPlayer = null } = options
+    player = player.trim()
+
     let puuid = await getDBPlayerPuuid(player)
 
     if (!puuid) {
         const canSetRegistering = typeof setRegisteringPlayer === 'function'
         if (canSetRegistering) setRegisteringPlayer(true)
-        puuid = await registerPlayer(player)
+        const registerResponse = await registerPlayer(player)
         if (canSetRegistering) setRegisteringPlayer(false)
+        if (registerResponse.error || !registerResponse.puuid) {
+            return { player1: { puuid: null, error: registerResponse.error ? registerResponse.error : "Error al registrar jugador" } }
+        }
+        puuid = registerResponse.puuid
     }
 
-    const matches = await getDBPlayerMatches(puuid, modeId, actId, seasonId)
+    const displayedModes = await getDBModes({ displayedOnly: true })
+    const displayedModeIds = displayedModes.map(m => m.id)
+
+    const matches = await getDBPlayerMatches(puuid, { modeId, actId, seasonId, displayedModeIds })
+
+    if (!matches || matches.length === 0) {
+        return {
+            player1: {
+                puuid: puuid,
+                error: "No se encontraron partidas para este jugador"
+            }
+        }
+    }
+
     if (!seasonId) {
         seasonId = actId ? await getSeasonIdByActId(actId) : null
     }
-    const ranksInfo = await getDBPlayerRanks(puuid, modeId, seasonId)
+    const ranksInfo = await getDBPlayerRanks(puuid, { modeId, seasonId, displayedModeIds })
 
     const playerData = await getDBPlayer(puuid)
 
@@ -131,13 +153,15 @@ async function getDBPlayer(puuid) {
 }
 
 async function getDBPlayerPuuid(player) {
-    const [name, tag] = player.split("#")
+    const [name, tag] = player.split("#").map(part => part.trim())
+    if (!name || !tag) return null
 
     const { data, error } = await supabase
         .from("players")
         .select(`puuid`)
-        .eq("name", name)
-        .eq("tag", tag)
+        .ilike("name", name)
+        .ilike("tag", tag)
+        .limit(1)
     if (error) {
         console.log("Error fetching player rank from database: " + error.message)
         return null
@@ -146,14 +170,17 @@ async function getDBPlayerPuuid(player) {
     return data[0]?.puuid || null
 }
 
-async function getDBPlayerMatches(puuid, modeId = null, actId = null, seasonId = null) {
+async function getDBPlayerMatches(puuid, options = {}) {
+    const { modeId = null, actId = null, seasonId = null, displayedModeIds = null } = options
     let query = supabase
         .from("player_matches")
         .select("*")
         .eq("player_puuid", puuid)
-        .eq("is_rankable", true)
         .order("started_at", { ascending: false })
-
+    
+    if (displayedModeIds && displayedModeIds.length > 0) {
+        query = query.in("mode_id", displayedModeIds)
+    }
     if (modeId !== null) {
         query = query.eq("mode_id", modeId)
     }
@@ -171,13 +198,16 @@ async function getDBPlayerMatches(puuid, modeId = null, actId = null, seasonId =
     return data || []
 }
 
-async function getDBPlayerRanks(puuid, modeId = null, seasonId = null) {
+async function getDBPlayerRanks(puuid, options = {}) {
+    const { modeId = null, seasonId = null, displayedModeIds = null } = options
     let query = supabase
         .from("player_mode_ranks")
         .select("*")
         .eq("player_puuid", puuid)
-        .order("matches_played", { ascending: false })
-
+    
+    if (displayedModeIds && displayedModeIds.length > 0) {
+        query = query.in("mode_id", displayedModeIds)
+    }
     if (modeId !== null) {
         query = query.eq("mode_id", modeId)
     }
@@ -208,14 +238,17 @@ export async function getSeasonIdByActId(actId) {
     return data?.[0]?.season_id || null
 }
 
-
-export async function getDBModes(rankableOnly = false) {
+export async function getDBModes(options = {}) {
+    const { rankableOnly = false, displayedOnly = true } = options
     let query = supabase
         .from("modes")
         .select("*")
 
     if (rankableOnly) {
         query = query.eq("is_rankable", true)
+    }
+    if (displayedOnly) {
+        query = query.eq("is_displayed", true)
     }
 
     const { data, error } = await query
@@ -236,4 +269,21 @@ export async function getDBSeasons() {
         return []
     }
     return data || []
+}
+
+export async function getPlainUser(puuid) {
+    const { data, error } = await supabase
+        .from("players")
+        .select("name, tag")
+        .eq("puuid", puuid)
+        .limit(1)
+    if (error) {
+        console.log("Error fetching player from database: " + error.message)
+        return null
+    }
+    if (!data || data.length === 0 || !data[0].name || !data[0].tag) {
+        console.log("Player data not found or incomplete")
+        return null
+    }
+    return `${data[0].name}#${data[0].tag}`
 }

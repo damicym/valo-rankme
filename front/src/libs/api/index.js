@@ -8,16 +8,24 @@ export async function registerPlayer(player) {
             },
             body: JSON.stringify({ player })
         })
-
+        const data = await response.json()
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            return {
+                puuid: null,
+                error: data?.error || `Error en el servidor al registrar jugador (${response.status})`
+            }
         }
 
-        const data = await response.json()
-        return data[0]?.puuid || null
+        return {
+            puuid: data?.puuid || null,
+            error: data?.error || null
+        }
     } catch (error) {
         console.error('Error fetching player data:', error)
-        return null
+        return {
+            puuid: null,
+            error: error?.message || 'Error en el servidor al registrar jugador'
+        }
     }
 }
 

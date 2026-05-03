@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import '../styles/SearchModal.css'
 
 const cicleInterval = 2 * 1000
-const defMsg = "* Distingue mayúsculas/minúsculas"
+const defMsg = ""
 const msgDefList = [
     "Espiando cámaras de Cypher",
     "Lurkeando en la base de datos",
@@ -12,7 +12,7 @@ const msgDefList = [
     "Desperdiciando updrafts",
     "Esperando humos",
     "Limpiando ángulos",
-    "Calculando créditos para la siguiente ronda",
+    "Calculando créditos",
     "Holdeando mid"
 ]
 const shuffleArr = (arr) => {
@@ -21,7 +21,7 @@ const shuffleArr = (arr) => {
     return res
 }
 
-function SearchModal({ handleSubmit, loading, setShowSearchModal }) { 
+function SearchModal({ handleSubmit, loading, setShowSearchModal, domixUser }) { 
     const [loadingMsg, setLoadingMsg] = useState(null)
     const loadingMsgRef = useRef(null)
     const msgs = useRef(shuffleArr(msgDefList))
@@ -102,7 +102,7 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal }) {
                             }
                         </div>
                         <div className='inputContainer'>
-                            <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder='tu nombre#tag' pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
+                            <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder={domixUser ? domixUser : 'tu nombre#tag'} pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
                             <span className='bottomMsg'>
                                 <span className='bottomMsgText'>{loading ? loadingMsg : defMsg}</span>
                                 {loading &&

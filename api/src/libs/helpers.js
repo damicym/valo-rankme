@@ -71,11 +71,13 @@ export function getMatchTeam(m, puuid) {
 
 export function getUserFromRawMatch(match, puuid) {
     const inMatchPlayer = match.players.find(p => p.puuid === puuid)
-    if (!inMatchPlayer) {
-        console.log("[ERROR] !inMatchPlayer at getUserFromRawMatch")
+    const name = typeof inMatchPlayer?.name === 'string' ? inMatchPlayer.name.trim() : ''
+    const tag = typeof inMatchPlayer?.tag === 'string' ? inMatchPlayer.tag.trim() : ''
+    if (!inMatchPlayer || !name || !tag) {
+        console.log(playerLog(puuid, "[ERROR] !inMatchPlayer || !name || !tag at getUserFromRawMatch"))
         return null
     }
-    return { name: inMatchPlayer.name, tag: inMatchPlayer.tag }
+    return { name, tag }
 }
 
 export function getMatchActId(match) {
@@ -102,4 +104,8 @@ export function getPosibleModeName(id) {
         .filter(Boolean)
         .map(w => w[0].toUpperCase() + w.slice(1))
         .join(" ")
+}
+
+export function playerLog(puuid, message) {
+    return puuid ? `[${getShortId(puuid)}] ${message}` : message
 }

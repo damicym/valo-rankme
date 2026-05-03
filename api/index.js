@@ -15,11 +15,14 @@ app.post('/api/register-player/', async (req, res) => {
     const { player } = req.body
     try {
         const registerResponse = await registerPlayer(player)
-        if (registerResponse.error || !registerResponse.data) res.status(400).json({ message: registerResponse.error })
-            else res.status(200).json(registerResponse.data.puuid)
+        if (registerResponse.error || !registerResponse.puuid) {
+            res.status(400).json({ puuid: null, error: registerResponse.error?.message || "Error al registrar jugador" })
+        } else {
+            res.status(200).json({ puuid: registerResponse.puuid, error: null })
+        }
     } catch (error) {
         console.log(`Error registering player ${player}: ${error.message}`)
-        res.status(500).json({ message: `Error registering player ${player}: ${error.message}` })
+        res.status(500).json({ puuid: null, error: `Error desconocido en el servidor al registrar jugador ${player}: ${error.message}` })
     }
 })
 

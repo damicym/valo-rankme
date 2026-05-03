@@ -1,7 +1,39 @@
 import supabase from './supabase.js'
-import { getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, getUniqueMatchesById, getMatchSeasonId, getMatchActId, getMatchMap, getPosibleModeName } from '../helpers.js'
+import { playerLog, getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, getUniqueMatchesById, getMatchActId, getMatchMap, getPosibleModeName } from '../helpers.js'
 import { getPlayerMatchInfo, getMatchRR, getPlayerRank } from '../match_parser.js'
 import { getHDEVPlayerDisplay, getHDEVPlayerPuuid } from '../api_requests.js'
+import { getActByDate } from '../api_requests.js'
+
+export async function resolveMatchSeasonId(match, options = {}) {
+    const { cache = null, puuid = null } = options
+    const actId = getMatchActId(match)
+    if (!actId) return null
+
+    if (cache && cache.has(actId)) {
+        return cache.get(actId)
+    }
+
+    let seasonId = await getSeasonIdByActId(actId)
+    if (!seasonId) {
+        const startedAt = getStartedAt(match)
+        const targetAct = await getActByDate(new Date(startedAt))
+        if (targetAct && targetAct.id === actId) {
+            await insertNewAct(targetAct, puuid)
+            seasonId = await getSeasonIdByActId(actId)
+        } else if (targetAct) {
+            console.log(playerLog(puuid, `[WARN] Could not backfill act ${getShortId(actId)} because date lookup returned ${getShortId(targetAct.id)}`))
+        } else {
+            console.log(playerLog(puuid, `[WARN] Could not backfill act ${getShortId(actId)} from date ${startedAt}`))
+        }
+    }
+
+    const resolved = seasonId || null
+    if (cache) {
+        cache.set(actId, resolved)
+    }
+
+    return resolved
+}
 
 function toIsoTimestamp(value, fallback = null) {
     if (value === null || value === undefined) return fallback
@@ -47,9 +79,9 @@ export async function updatePlayerUpdate(puuid, lastPolledAt, nextPollAt = null)
             .update({ last_updated: normalizedLastPolledAt })
             .eq("puuid", puuid)
         if (error) {
-            console.log(`Error updating player last poll only time in database: ${error.message}`)
+            console.log(playerLog(puuid, `Error updating player last poll only time in database: ${error.message}`))
         } else {
-            console.log(`[${getShortId(puuid)}] Last poll only updated | last ${compactIsoForLog(normalizedLastPolledAt)}`)
+            console.log(playerLog(puuid, `Last poll only updated | last ${compactIsoForLog(normalizedLastPolledAt)}`))
         }
         return
     }
@@ -62,30 +94,60 @@ export async function updatePlayerUpdate(puuid, lastPolledAt, nextPollAt = null)
         .update({ last_updated: normalizedLastPolledAt, next_update: normalizedNextPollAt })
         .eq("puuid", puuid)
     if (error) {
-        console.log(`Error updating player poll times in database: ${error.message}`)
+        console.log(playerLog(puuid, `Error updating player poll times in database: ${error.message}`))
     } else {
-        console.log(`[${getShortId(puuid)}] Poll updated | last ${compactIsoForLog(normalizedLastPolledAt)} | next ${compactIsoForLog(normalizedNextPollAt)}`)
+        console.log(playerLog(puuid, `Poll updated | last ${compactIsoForLog(normalizedLastPolledAt)} | next ${compactIsoForLog(normalizedNextPollAt)}`))
     }
 }
 
 export async function updatePlayerDisplay(puuid) {
-    const { banner, icon, titleText, level, levelBorder } = await getHDEVPlayerDisplay(puuid)
-    if (!banner || !icon || !titleText || level === null || !levelBorder) {
-        console.log(`Could not fetch display info for player ${getShortId(puuid)}`)
+    const { banner, icon, titleText, level, levelBorder, name, tag } = await getHDEVPlayerDisplay(puuid)
+    if (!banner || !icon || !titleText || level === null || !levelBorder || !name || !tag) {
+        console.log(playerLog(puuid, `[DISPLAY-WARN] Display info for player is incomplete (banner: ${!!banner}, icon: ${!!icon}, title: ${!!titleText}, level: ${level !== null}, levelBorder: ${!!levelBorder}, name: ${!!name}, tag: ${!!tag})`))
+    }
+
+    const { data: currentDBPlayer, error: currentDBPlayerError } = await supabase
+        .from("players")
+        .select("banner, icon, title, level, level_border, name, tag")
+        .eq("puuid", puuid)
+        .limit(1)
+
+    if (currentDBPlayerError) {
+        console.log(playerLog(puuid, `[DISPLAY-ERROR] Error fetching current player display from database: ${currentDBPlayerError.message}`))
         return
     }
+
+    const currentDisplay = currentDBPlayer?.[0] || null
+    const nextDisplay = {
+        ...(banner && { banner }),
+        ...(icon && { icon }),
+        ...(titleText && { title: titleText }),
+        ...(level !== null && { level }),
+        ...(levelBorder && { level_border: levelBorder }),
+        ...(name && { name }),
+        ...(tag && { tag })
+    }
+
+    const displayChanged = !currentDisplay || Object.entries(nextDisplay).some(([key, value]) => currentDisplay[key] !== value)
+    if (!displayChanged) return
+        else if (name && tag && currentDisplay.name && currentDisplay.tag && (currentDisplay.name !== name || currentDisplay.tag !== tag)) {
+            console.log(playerLog(puuid, `Player display name/tag changed from ${currentDisplay.name}#${currentDisplay.tag} to ${name}#${tag}`))
+        }
+
     const { data, error } = await supabase
         .from("players")
-        .update({ banner, icon, title: titleText, level, level_border: levelBorder })
+        .update(nextDisplay)
         .eq("puuid", puuid)
     if (error) {
-        console.log(`Error updating player display in database: ${error.message}`)
+        console.log(playerLog(puuid, `Error updating player display in database: ${error.message}`))
+    } else {
+        console.log(playerLog(puuid, `Updated player display in database`))
     }
 }
 
 export async function updatePlayerRank(puuid, newMatches, dbModes) {
     if (!newMatches || !newMatches.length) {
-        console.log("No new matches to update player rank at updatePlayerRank")
+        console.log(playerLog(puuid, "No new matches to update player rank at updatePlayerRank"))
         return
     }
 
@@ -95,7 +157,7 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
         .select("*")
         .eq("player_puuid", puuid)
     if (ranksFetchError) {
-        console.log(`Error fetching player rank (${getShortId(puuid)}) from database: ${ranksFetchError.message}`)
+        console.log(playerLog(puuid, `Error fetching player rank from database: ${ranksFetchError.message}`))
         return
     }
     
@@ -106,10 +168,13 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
     const uniqueMatches = getUniqueMatchesById([...newMatches])
         .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
         .filter(m => !soterdMatchesIds.includes(getMatchId(m)))
+
+    const resolvedSeasonByAct = new Map()
+
     const matchesWithSeason = await Promise.all(
         uniqueMatches.map(async m => ({
             match: m,
-            seasonId: await getMatchSeasonId(m)
+            seasonId: await resolveMatchSeasonId(m, { cache: resolvedSeasonByAct })
         }))
     )
     matchesWithSeason.forEach(({ match, seasonId }) => {
@@ -120,7 +185,7 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
         matchesBySeason[seasonId].push(match)
     })
     if (!matchesBySeason || Object.keys(matchesBySeason).length === 0) {
-        console.log(`[${getShortId(puuid)}] No matches with season info to update player rank at updatePlayerRank`)
+        console.log(playerLog(puuid, `No matches with season info to update player rank at updatePlayerRank`))
         return
     }
 
@@ -151,21 +216,21 @@ export async function updatePlayerRank(puuid, newMatches, dbModes) {
             if (dbRank) { // si ya estaba el rango en la db, lo updateo...
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
-                    .update({ ...newModeRank, matches_played: dbRank.matches_played + rrChanges.length })
+                    .update({ ...newModeRank })
                     .eq("id", id)
                 if (error) {
-                    console.log(`Error updating player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
+                    console.log(playerLog(puuid, `Error updating player mode rank in database: ${error.message}`))
                 } else {
-                    console.log(`[${getShortId(puuid)}] Updated player mode rank for mode ${modeId} and season ${getShortId(seasonId)} in database`)
+                    console.log(playerLog(puuid, `Updated player mode rank for mode ${modeId} and season ${getShortId(seasonId)} in database`))
                 }
             } else { // ...sino lo inserto
                 const { data, error } = await supabase
                     .from("player_mode_ranks")
                     .insert({ id, player_puuid: puuid, mode_id: modeId, season_id: seasonId, ...newModeRank })
                 if (error) {
-                    console.log(`Error saving player mode rank (${getShortId(puuid)}) in database: ${error.message}`)
+                    console.log(playerLog(puuid, `Error saving player mode rank in database: ${error.message}`))
                 } else {
-                    console.log(`[${getShortId(puuid)}] Saved player mode rank for mode ${modeId} and season ${getShortId(seasonId)} in database`)
+                    console.log(playerLog(puuid, `Saved player mode rank for mode ${modeId} and season ${getShortId(seasonId)} in database`))
                 }
             }
         }
@@ -177,21 +242,23 @@ export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes, store
         .sort((a, b) => new Date(getStartedAt(a)) - new Date(getStartedAt(b)))
     
     if (!usingMatches || !usingMatches.length) {
-        console.log("No matches to save at savePlayerMatchesToDB")
+        console.log(playerLog(puuid, "No matches to save at savePlayerMatchesToDB"))
         return
     }
 
     const rankableModes = dbModes.filter(m => m.is_rankable)
 
+    const resolvedSeasonByAct = new Map()
+
     const rows = await Promise.all(usingMatches.map(async (match, mIndex) => {
         const matchModeId = getMatchModeId(match)
-        const matchSeasonId = await getMatchSeasonId(match)
+        const matchSeasonId = await resolveMatchSeasonId(match, { cache: resolvedSeasonByAct, puuid })
 
         // para cada partida consigo sus anteriores del mismo modo y season para el cálculo del rank
         const previousCandidates = await Promise.all(
             usingMatches.slice(0, mIndex === -1 ? 0 : mIndex).map(async (pm) => {
                 const sameMode = getMatchModeId(pm) === matchModeId
-                const sameSeason = (await getMatchSeasonId(pm)) === matchSeasonId
+                const sameSeason = (await resolveMatchSeasonId(pm, { cache: resolvedSeasonByAct, puuid })) === matchSeasonId
                 return sameMode && sameSeason ? pm : null
             })
         )
@@ -199,7 +266,7 @@ export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes, store
 
         const initialRank = storedRanks.find(r => r.id === `${matchModeId}_${matchSeasonId}_${puuid}`) || null
         // conisgo la info de la partida que se va a gurdar
-        return await getPlayerMatchInfo(match, puuid, previousMatches, rankableModes, initialRank)
+        return await getPlayerMatchInfo(match, puuid, previousMatches, rankableModes, initialRank, matchSeasonId)
     }))
     
     const { data, error } = await supabase
@@ -212,17 +279,17 @@ export async function savePlayerMatchesToDB(puuid, newRawMatches, dbModes, store
             }
         )
     if (error) {
-        console.log("Error saving Player Matches to database: " + error.message)
+        console.log(playerLog(puuid, "Error saving Player Matches to database: " + error.message))
     } else {
-        console.log(`[${getShortId(puuid)}] Saved/ignored ${newRawMatches.length} Player Matches to database`)
+        console.log(playerLog(puuid, `Saved/ignored ${newRawMatches.length} Player Matches to database`))
     }
     
     await updateLastMatchId(puuid, getMatchId(newRawMatches[0]))
 }
 
-export async function insertNewAct(targetAct) {
-    const season = await getSeasonById(targetAct.seasonId)
-    if (!season) await insertNewSeason(targetAct.seasonStartTime, targetAct.seasonEndTime, targetAct.seasonName, targetAct.seasonId)
+export async function insertNewAct(targetAct, puuid = null) {
+    const season = await getSeasonById(targetAct.seasonId, puuid)
+    if (!season) await insertNewSeason(targetAct.seasonStartTime, targetAct.seasonEndTime, targetAct.seasonName, targetAct.seasonId, puuid)
     
     const { data, error } = await supabase
         .from("acts")
@@ -235,11 +302,11 @@ export async function insertNewAct(targetAct) {
             act_name: targetAct.actName,
         }, { onConflict: "id", ignoreDuplicates: true })
     if (error) {
-        console.log(`Error inserting new act into database: ${error.message}`)
+            console.log(playerLog(puuid, `Error inserting new act into database: ${error.message}`))
     }
 }
 
-export async function insertNewSeason(startTime, endTime, name, id) {
+    export async function insertNewSeason(startTime, endTime, name, id, puuid = null) {
     const { data, error } = await supabase
         .from("seasons")
         .upsert({
@@ -249,17 +316,17 @@ export async function insertNewSeason(startTime, endTime, name, id) {
             name
         }, { onConflict: "id", ignoreDuplicates: true })
     if (error) {
-        console.log(`Error inserting new season into database: ${error.message}`)
+            console.log(playerLog(puuid, `Error inserting new season into database: ${error.message}`))
     }
 }
 
-export async function getSeasonById(seasonId) {
+    export async function getSeasonById(seasonId, puuid = null) {
     const { data, error } = await supabase
         .from("seasons")
         .select("*")
         .eq("id", seasonId)
     if (error) {
-        console.log(`Error fetching season from database: ${error.message}`)
+        console.log(playerLog(puuid, `Error fetching season from database: ${error.message}`))
         return null
     }
     return data[0]
@@ -271,21 +338,28 @@ export async function updateLastMatchId(puuid, matchId) {
         .update({ last_match_id: matchId })
         .eq("puuid", puuid)
     if (error) {
-        console.log("Error updating last match id in database: " + error.message)
+        console.log(playerLog(puuid, "Error updating last match id in database: " + error.message))
     } else {
-        console.log(`[${getShortId(puuid)}] Updated last match id to ${getShortId(matchId)} in database`)
+        console.log(playerLog(puuid, `Updated last match id to ${getShortId(matchId)} in database`))
     }
 }
 
 export async function updatePlayerUser(puuid, name, tag) {
+    const normalizedName = typeof name === 'string' ? name.trim() : ''
+    const normalizedTag = typeof tag === 'string' ? tag.trim() : ''
+    if (!normalizedName || !normalizedTag) {
+        console.log(`[WARN] Skipping player user update for ${getShortId(puuid)} because name/tag is empty`)
+        return
+    }
+
     const { data, error } = await supabase
         .from("players")
-        .update({ name, tag })
+        .update({ name: normalizedName, tag: normalizedTag })
         .eq("puuid", puuid)
     if (error) {
-        console.log("Error updating player user in database: " + error.message)
+        console.log(playerLog(puuid, "Error updating player user in database: " + error.message))
     } else {
-        console.log(`[${getShortId(puuid)}] Updated player user in database`)
+        console.log(playerLog(puuid, "Updated player user in database"))
     }
 
 }
@@ -298,7 +372,7 @@ export async function getPlayerMatches(puuid) {
         .eq("is_rankable", true)
         .order("started_at", { ascending: false })
     if (error) {
-        console.log(`Error fetching player matches from database: ${error.message}`)
+        console.log(playerLog(puuid, `Error fetching player matches from database: ${error.message}`))
         return null
     }
     return data
@@ -322,7 +396,7 @@ export async function saveNewModesToDB(newModes) {
     }
 }
 
-export async function saveMatchesToDB(matches, dbModes) {
+export async function saveMatchesToDB(matches, dbModes, puuid = null) {
     // encontrar los modeId que no se encuentren en dbModes
     const modeIds = Array.from(new Set(
         matches.map(match => getMatchModeId(match))
@@ -339,6 +413,8 @@ export async function saveMatchesToDB(matches, dbModes) {
     }
 
     const rankableModes = dbModes.filter(m => m.is_rankable).map(m => m.id)
+    const resolvedSeasonByAct = new Map()
+
     const payload = (await Promise.all(
         matches.map(async (m) => ({
             match_id: getMatchId(m),
@@ -349,15 +425,20 @@ export async function saveMatchesToDB(matches, dbModes) {
             map: getMatchMap(m),
             mode_id: getMatchModeId(m),
             players: m?.players?.map(p => p.puuid) || [],
-            season_id: await getMatchSeasonId(m),
+            season_id: await resolveMatchSeasonId(m, { cache: resolvedSeasonByAct, puuid }),
             is_rankable: rankableModes.includes(getMatchModeId(m))
         }))
         ))
         .filter(getMatchId)
+        .filter((m) => {
+            if (m.season_id) return true
+            console.log(playerLog(puuid, `[WARN] Skipping match ${m.match_id} because season_id could not be resolved`))
+            return false
+        })
         .sort((a, b) => new Date(a.started_at) - new Date(b.started_at))
         
     if (!payload.length) {
-        console.log("No valid matches to save at saveMatchesToDB")
+        console.log(playerLog(puuid, "No valid matches to save at saveMatchesToDB"))
         return
     }
 
@@ -371,9 +452,9 @@ export async function saveMatchesToDB(matches, dbModes) {
             }
         )
     if (error) {
-        console.log("Error saving Matches to database: " + error.message)
+        console.log(playerLog(puuid, "Error saving Matches to database: " + error.message))
     } else {
-        console.log(`Saved/ignored ${payload.length} Matches in database`)
+        console.log(playerLog(puuid, `Saved/ignored ${payload.length} Matches in database`))
     }
 }
 
@@ -399,20 +480,19 @@ export async function insertNewPlayer(player) {
     const puuid = await getHDEVPlayerPuuid(player)
     if (!puuid) {
         console.log(`Error fetching player puuid for ${player}`)
-        return { data: null, error: new Error(`Player ${player} not found`) }
+        return { puuid: null, error: new Error(`Jugador ${player} no encontrado en Valorant`) }
     }
 
-    const [name, tag] = player.split("#")
+    const [name, tag] = player.split("#").map(part => part.trim())
     const { data, error } = await supabase
         .from("players")
         .insert({ puuid, name, tag })
     if (error) {
         console.log("Error registering player in database: " + error.message)
-        return { data: null, error: new Error("Error registering player in database") }
+        return { puuid: null, error: new Error("Error al registrar jugador en la base de datos") }
     }
     
-    const newPlayer = await getPlayerByPuuid(puuid)
-    return { data: newPlayer, error: null }
+    return { puuid, error: null }
 }
 
 export async function getPlayerByPuuid(puuid){
@@ -488,13 +568,16 @@ export async function getStoredRawMatchesByPlayer(puuid) {
     return data ? data.map(d => d.raw_json) : []
 }
 
-export async function getDBModes(rankableOnly = false) {
+export async function getDBModes(rankableOnly = false, displayedOnly = false) {
     let query = supabase
         .from("modes")
         .select("*")
 
     if (rankableOnly) {
         query = query.eq("is_rankable", true)
+    }
+    if (displayedOnly) {
+        query = query.eq("is_displayed", true)
     }
 
     const { data, error } = await query

@@ -1,15 +1,29 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import ContextMenu from "./ContextMenu"
 import '../styles/Filters.css'
 
-function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selectedSeason, setSelectedSeason, matches, gameModes, gameSeasons }) {
-    const modeIds = Array.from(new Set(matches?.map(m => m.mode_id)))
-        .sort((a, b) => 
-            ranksInfo?.find(r => r.mode_id === a)?.matches_played + ranksInfo?.find(r => r.mode_id === b)?.matches_played
-        )
-    const seasonIds = Array.from(new Set(matches?.map(m => m.season_id)))
-    const modes = modeIds.map(id => ({id, name: gameModes?.find(m => m.id === id)?.name || id}))
-    const seasons = seasonIds.map(id => ({id, name: gameSeasons?.find(s => s.id === id)?.name || id}))
+function Filters({ displayModes, selectedMode, setSelectedMode, selectedSeason, setSelectedSeason, matches, gameModes, gameSeasons }) {
+    const modeIds = useMemo(() => {
+        const matchesByMode = matches?.reduce((acc, match) => {
+            if (!acc.has(match.mode_id)) {
+                acc.set(match.mode_id, 1)
+            } else {
+                acc.set(match.mode_id, acc.get(match.mode_id) + 1)
+            }
+            return acc
+        }, new Map())
+        return Array.from(new Set((matches ?? []).map(m => m.mode_id)))
+            .sort((a, b) => (matchesByMode.get(b) ?? 0) - (matchesByMode.get(a) ?? 0))
+    }, [matches])
+    const seasonIds = useMemo(() => {
+        return Array.from(new Set((matches ?? []).map(m => m.season_id)))
+    }, [matches])
+    const modes = useMemo(() => {
+        return modeIds.map(id => ({id, name: gameModes?.find(m => m.id === id)?.name || id}))
+    }, [modeIds, gameModes])
+    const seasons = useMemo(() => {
+        return seasonIds.map(id => ({id, name: gameSeasons?.find(s => s.id === id)?.name || id}))
+    }, [seasonIds, gameSeasons])
 
     const [mainModes, setMainModes] = useState(modes.slice(0, 3))
     const [mainSeasons, setMainSeasons] = useState(seasons.slice(0, 1))
@@ -18,6 +32,35 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
 
     const [showModeCtxMenu, setShowModeCtxMenu] = useState(false)
     const [showSeasonCtxMenu, setShowSeasonCtxMenu] = useState(false)
+
+    useEffect(() => {
+        setMainModes(modes.slice(0, 3))
+        setSecondaryModes(modes.slice(3))
+    }, [modes])
+
+    useEffect(() => {
+        if (!displayModes || typeof setSelectedMode !== 'function') return
+        if (!modeIds.length) {
+            if (selectedMode !== null) setSelectedMode(null)
+            return
+        }
+
+        if (selectedMode === null || !modeIds.includes(selectedMode)) {
+            setSelectedMode(modeIds[0])
+        }
+    }, [displayModes, modeIds, selectedMode, setSelectedMode])
+
+    useEffect(() => {
+        setMainSeasons(seasons.slice(0, 1))
+        setSecondarySeasons(seasons.slice(1))
+    }, [seasons])
+
+    useEffect(() => {
+        if (typeof setSelectedSeason !== 'function') return
+        if (selectedSeason !== null && !seasonIds.includes(selectedSeason)) {
+            setSelectedSeason(null)
+        }
+    }, [seasonIds, selectedSeason, setSelectedSeason])
 
     const replaceLastMode = (id) => {
         const nextMode = modes.find(m => m.id === id)
@@ -68,7 +111,10 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
                                     className={selectedMode === m.id ? 'filterBtn active' : 'filterBtn'} 
                                     id={m.id} 
                                     key={m.id} 
-                                    onClick={() => setSelectedMode(m.id)}
+                                    onClick={() => {
+                                        setSelectedMode(m.id)
+                                        setShowModeCtxMenu(false)
+                                    }}
                                 >
                                     {m.name || m.id}
                                 </button>
@@ -83,7 +129,10 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
                             }}
                             key={-1}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                            { !showModeCtxMenu
+                                ? <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                                : <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+                            }
                         </button>
                         <ContextMenu 
                             show={showModeCtxMenu}
@@ -96,9 +145,12 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
                 <section className='selector right'>
                     { displayModes &&
                         <button
-                            className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => setSelectedSeason(null)}
+                            className={selectedSeason === null ? 'filterBtn active' : 'filterBtn'} id="allSeasonsBtn" key="allSeasonsBtn" onClick={() => {
+                                setSelectedSeason(null)
+                                setShowSeasonCtxMenu(false)
+                            }}
                         >
-                            All seasons
+                            Todos los episodios
                         </button>
                     }
                     {
@@ -110,6 +162,7 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
                                 onClick={() => {
                                     if (selectedSeason === s.id || (!displayModes && selectedSeason === null && index === 0)) return
                                     setSelectedSeason(s.id)
+                                    setShowSeasonCtxMenu(false)
                                 }}
                             >
                                 {s.name || s.id}
@@ -125,7 +178,10 @@ function Filters({ ranksInfo, displayModes, selectedMode, setSelectedMode, selec
                         }}
                         key={-1}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                        { !showSeasonCtxMenu
+                            ? <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                            : <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+                        }
                     </button>
                     <ContextMenu 
                         show={showSeasonCtxMenu}

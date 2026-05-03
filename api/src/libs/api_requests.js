@@ -22,13 +22,13 @@ export async function getHDEVPlayerDisplay(puuid) {
         }
         const playerData = data.data
         if (!playerData) return null
-        const { card, title, account_level } = playerData
+        const { card, title, account_level, name, tag } = playerData
         const rawCard = await getCardByUuid(card)
         const banner = rawCard?.wideArt
         const icon = rawCard?.smallArt
         const titleText = await getTitleTextByUuid(title)
         const levelBorder = (await getLevelBorder(account_level)).levelNumberAppearance
-        return { banner, icon, titleText, level: account_level, levelBorder }
+        return { banner, icon, titleText, level: account_level, levelBorder, name, tag }
     } catch(err){
         console.log(err)
         return null
@@ -98,7 +98,7 @@ async function getTitleTextByUuid(uuid) {
 }
 
 export async function getHDEVPlayerPuuid(player) {
-    const [name, tag] = player.split('#')
+    const [name, tag] = player.split("#").map(part => part.trim())
     try{
         const url = `https://api.henrikdev.xyz/valorant/v2/account/${name}/${tag}`
         const response = await fetch(url, {
@@ -128,7 +128,7 @@ export async function getHDEVPlayerPuuid(player) {
     }
 }
 
-export async function getHDEVMatches(puuid, matchesToFetch, startIndex, gameMode, region = 'latam', platform = 'pc'){
+export async function getHDEVMatches(puuid, matchesToFetch = 10, startIndex = 0, gameMode = null, region = 'latam', platform = 'pc'){
     const maxMatchesForSet = 10
     let matchesLeft = matchesToFetch
     let result = []
@@ -170,20 +170,20 @@ export async function getActByDate(date) {
         const res = await fetch('https://valorant-api.com/v1/seasons')
         if (!res.ok) {
             const errorText = await res.text()
-            console.log(`Error fetching seasons from valorant-api: HTTP ${res.status} ${errorText}`)
+            console.log(`[API-ERROR] Error fetching seasons from valorant-api: HTTP ${res.status} ${errorText}`)
             return null
         }
 
         const payload = await res.json()
         const seasons = payload?.data
         if (!Array.isArray(seasons)) {
-            console.log('Error fetching seasons from valorant-api: invalid payload format')
+            console.log(`[API-ERROR] Error fetching seasons from valorant-api: invalid payload format`)
             return null
         }
 
         const targetDate = date instanceof Date ? date : new Date(date)
         if (Number.isNaN(targetDate.getTime())) {
-            console.log(`Invalid date at getActByDate: ${date}`)
+            console.log(`[API-ERROR] Invalid date at getActByDate: ${date}`)
             return null
         }
 
@@ -191,13 +191,13 @@ export async function getActByDate(date) {
 
         const rawAct = seasons.find(s => s.type === "EAresSeasonType::Act" && new Date(s.startTime) <= targetDate && new Date(s.endTime) > targetDate)
         if (!rawAct) {
-            console.log(`[ERROR] !rawAct at getActByDate for date ${targetDate.toLocaleDateString()}`)
+            console.log(`[API-ERROR] !rawAct at getActByDate for date ${targetDate.toLocaleDateString()}`)
             return null
         }
 
         const rawSeason = seasons.find(s => s.uuid === rawAct.parentUuid)
         if (!rawSeason) {
-            console.log(`[ERROR] !rawAct or !rawSeason at getActByDate for date ${targetDate.toLocaleDateString()}`)
+            console.log(`[API-ERROR] !rawAct or !rawSeason at getActByDate for date ${targetDate.toLocaleDateString()}`)
             return null
         }
 

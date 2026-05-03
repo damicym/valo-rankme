@@ -3,6 +3,6 @@ export const SECTIONS = {
     PLAYER: 1,
 }
 export const USER_SECTIONS = {
-    MATCHES: 0,
-    RANKS: 1,
+    PARTIDAS: 0,
+    RANGOS: 1,
 }

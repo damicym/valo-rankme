@@ -15,15 +15,18 @@ import { processNewMatches } from "./worker.js"
 const initialMatchesToFetch = 20
 
 export async function registerPlayer(player) {
+    player = player.trim().toLowerCase()
     console.log(`Registering player ${player}...`)
     // Agregar player a la DB
     const insertResponse = await insertNewPlayer(player)
-    if (insertResponse.error || !insertResponse.data) return insertResponse
-    const puuid = insertResponse.data.puuid
+    if (insertResponse.error || !insertResponse.puuid) return insertResponse
+    const puuid = insertResponse.puuid
     await updatePlayerDisplay(puuid)
     // Guardar PlayerMatches en base a Matches ya gurdadas en la DB
     const storedDBMatches = await getMatchesByPlayers([puuid])
-    const rawStoredDBMatches = storedDBMatches.map(m => m.raw_json).sort((a, b) => getStartedAt(b) - getStartedAt(a))
+    const rawStoredDBMatches = Array.isArray(storedDBMatches)
+        ? storedDBMatches.map(m => m.raw_json).sort((a, b) => getStartedAt(b) - getStartedAt(a))
+        : []
 
     const dbModes = await getDBModes()
     if (rawStoredDBMatches && rawStoredDBMatches.length) {
@@ -37,11 +40,13 @@ export async function registerPlayer(player) {
     const lastMatches = await getHDEVMatches(puuid, initialMatchesToFetch, 0)
     if (lastMatches && lastMatches.length) {
         await processNewMatches(puuid, lastMatches)
+    } else {
+        console.log(`[${getShortId(puuid)}] No matches found from API for player, skipping new matches processing step`)
     }
 
     await updatePlayerUpdate(puuid, new Date())
     await setReadyToPoll(puuid)
     
-    console.log(`[${getShortId(puuid)}] Registration result: ${insertResponse.data.puuid} | Errors: ${insertResponse.error}`)
+    console.log(`[${getShortId(puuid)}] Registration result: ${puuid} | Errors?: ${insertResponse.error}`)
     return insertResponse
 }

@@ -1,5 +1,5 @@
 export function getPerformanceSummary(matches) {
-    const perf = matches.reduce((acc, match) => {
+    const perf = matches?.reduce((acc, match) => {
         acc.matches_played += 1
         acc.playtime += match.playtime ?? 0
         acc.wins += match.won ? 1 : 0
@@ -67,10 +67,10 @@ export function getPerformanceSummary(matches) {
         perf.win_perc = maxOnedecimal((perf.wins / perf.matches_played) * 100)
         perf.top_agent = Object.keys(perf.agents).reduce((a, b) => perf.agents[a] > perf.agents[b] ? a : b)
 
-        if (!matches.some(m => m.ddr !== null)) perf.avg_ddr = null
-        if (!matches.some(m => m.hs_perc !== null)) perf.avg_hs_perc = null
-        if (!matches.some(m => m.playtime !== null)) perf.playtime = null
-        if (!matches.some(m => m.aces !== null)) perf.aces = null
+        if (!matches?.some(m => m.ddr !== null)) perf.avg_ddr = null
+        if (!matches?.some(m => m.hs_perc !== null)) perf.avg_hs_perc = null
+        if (!matches?.some(m => m.playtime !== null)) perf.playtime = null
+        if (!matches?.some(m => m.aces !== null)) perf.aces = null
     }
     return perf
 }

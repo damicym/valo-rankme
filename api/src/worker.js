@@ -1,9 +1,8 @@
 import { config } from '../config.js'
-import { isUsefulMatch, getMatchId, getStartedAt, getShortId, compareActsByDate, getUserFromRawMatch } from './libs/helpers.js'
+import { isUsefulMatch, getMatchId, getStartedAt, getShortId, compareActsByDate } from './libs/helpers.js'
 import { 
     updatePlayerRank, 
-    savePlayerMatchesToDB, 
-    updatePlayerUser, 
+    savePlayerMatchesToDB,  
     saveMatchesToDB, 
     getPlayers,
     insertNewAct,
@@ -56,6 +55,8 @@ async function pollPlayer(player, targetAct) {
             console.log(`[${getShortId(player.puuid)}] No initial matches found`)
             return null
         }
+        
+        await updatePlayerDisplay(player.puuid)
 
         if (currentLastStoredMatchId !== getMatchId(lastMatch)) {
             console.log(`[${getShortId(player.puuid)}] Got last match: ${getShortId(getMatchId(lastMatch))}`)
@@ -65,18 +66,9 @@ async function pollPlayer(player, targetAct) {
             const atcsCompare = compareActsByDate(matchAct, targetAct)
             if (atcsCompare > 0) {
                 console.log(`[${getShortId(player.puuid)}] New act detected: ${matchAct.title} (${getShortId(matchAct.id)}), valid from ${matchAct.startTime.toLocaleDateString()} to ${matchAct.endTime.toLocaleDateString()}`)
-                await insertNewAct(matchAct)
+                await insertNewAct(matchAct, player.puuid)
                 targetAct = matchAct
             }
-
-            // Verificar si el nombre o tag del player cambió
-            const user = getUserFromRawMatch(lastMatch, player.puuid)
-            if (user && (user.name !== player.name || user.tag !== player.tag)) {
-                console.log(`[${getShortId(player.puuid)}] Player does not match: ${player.name}#${player.tag}. Updating user...`)
-                await updatePlayerUser(player.puuid, user.name, user.tag)
-            }
-    
-            await updatePlayerDisplay(player.puuid)
 
             // Por ahora RIOT no devuelve a HernikDevAPI partidas en curso. Por si en un futuro cambia, lo logueo para darme cuenta
             isInGame = lastMatch && !lastMatch.metadata.is_completed
@@ -84,14 +76,14 @@ async function pollPlayer(player, targetAct) {
                 console.log(`[IN-GAME] Player ${getShortId(player.puuid)}, match ${getShortId(getMatchId(lastMatch))}, started at ${new Date(getStartedAt(lastMatch)).toLocaleTimeString()}`)
             }
             
-            // Si la última partida jugada es nueva y útil, proceso las nuevas partidas
+            // Si la última partida jugada es nueva y útil (no custom), proceso...
             if (isUsefulMatch(lastMatch, currentLastStoredMatchId)) {
                 const newestStoredMatchId = await getNewMatches(player.puuid, currentLastStoredMatchId, initialMatches)
                 if (newestStoredMatchId) {
                     currentLastStoredMatchId = newestStoredMatchId
                 }
             } else{
-                console.log(`[${getShortId(player.puuid)}] Last match is not useful. Last match id: ${getShortId(getMatchId(lastMatch))}, current last stored match id: ${getShortId(currentLastStoredMatchId)}`)
+                console.log(`[${getShortId(player.puuid)}] Last match (${getShortId(getMatchId(lastMatch))}) is useless (custom/ongoing). Current last stored match id: ${getShortId(currentLastStoredMatchId)}`)
             }
         } else {
             console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
@@ -162,7 +154,7 @@ export async function processNewMatches(puuid, matches) {
     }
     const dbModes = await getDBModes()
     const storedRanks = await getDBPlayerRanks(puuid)
-    await saveMatchesToDB(newMatches, dbModes)
+    await saveMatchesToDB(newMatches, dbModes, puuid)
     await updatePlayerRank(puuid, newMatches, dbModes)
     await savePlayerMatchesToDB(puuid, newMatches, dbModes, storedRanks)
     
