@@ -63,6 +63,10 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal, domixUser }) {
     return (
         <div 
             className="modalContainer" 
+            style={{
+                backdropFilter: 'blur(16px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(18px) saturate(120%)',
+            }}
             onMouseDown={() => {
                 if (loading) return
                 setShowSearchModal(false)}
