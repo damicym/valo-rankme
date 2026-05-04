@@ -146,6 +146,7 @@
     color: var(--bg);
     background-color: var(--text);
     width: 400px;
+    font-weight: 450;
 }
 
 .playerInput::placeholder{
@@ -155,6 +156,15 @@
 
 .playerInput:disabled{
     cursor: not-allowed;
+    color: var(--bgT) !important;
+    -webkit-text-fill-color: var(--bgT) !important;
+    opacity: 1 !important;
+}
+
+.playerInput:disabled::placeholder{
+    color: var(--bgT) !important;
+    -webkit-text-fill-color: var(--bgT) !important;
+    opacity: 1 !important;
 }
 
 .inputField .inputContainer{

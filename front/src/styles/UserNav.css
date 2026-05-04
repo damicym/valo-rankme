@@ -14,7 +14,7 @@
 .userNav{
     display: flex;
     align-items: center;
-    /* width: 100%; */
+    width: 706px;
     justify-content: center;
     flex-direction: column;
 }

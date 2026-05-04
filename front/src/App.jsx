@@ -82,10 +82,17 @@ function App() {
         }
     }, [showSearchModal])
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        const formData = new FormData(e.target)
-        const p1 = formData.get('playerInput')
+    const isUserFormat = (str) => {
+        const regex = /^[^#]+#[^#]+$/
+        return regex.test(str)
+    }
+
+    const handleSearch = async (formData) => {
+        let p1 = formData.get('playerInput')
+        if (!p1) return
+        if (!isUserFormat(p1)) {
+            return 'El formato debe ser nombre#tag'
+        }
         setPlayersLoading(true)
 
         try{
@@ -97,6 +104,7 @@ function App() {
         setPlayersLoading(false)
         setShowSearchModal(false)
         setSection(SECTIONS.PLAYER)
+        return null
     }
 
     const processPlayer = async(p1, options = {}) => {
@@ -173,7 +181,7 @@ function App() {
                 />
             </div>
             { showSearchModal &&
-                <SearchModal domixUser={domixUser} loading={playersLoading} handleSubmit={handleSubmit} setShowSearchModal={setShowSearchModal} />
+                <SearchModal domixUser={domixUser} loading={playersLoading} handleSearch={handleSearch} setShowSearchModal={setShowSearchModal} />
             }
         </>
     )

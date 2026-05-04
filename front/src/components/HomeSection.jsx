@@ -6,7 +6,7 @@ function HomeSection({ setShowSearchModal }) {
             <div className='ranksBg' aria-hidden='true'>
                 {[1,4,7,10,13,16,19,22,24].map(tier => {
                     const rank = ranks.find(r => r.tier == tier)
-                    return rank ? <img key={tier} src={rank.icon} alt='' className='bgRankIcon' /> : null
+                    return rank ? <img key={tier} src={rank.icon} alt='' className='bgRankIcon' loading='lazy' decoding='async' /> : null
                 })}
             </div>
             <div className='content'>

@@ -21,10 +21,26 @@ const shuffleArr = (arr) => {
     return res
 }
 
-function SearchModal({ handleSubmit, loading, setShowSearchModal, domixUser }) { 
+function SearchModal({ handleSearch, loading, setShowSearchModal, domixUser }) { 
     const [loadingMsg, setLoadingMsg] = useState(null)
     const loadingMsgRef = useRef(null)
     const msgs = useRef(shuffleArr(msgDefList))
+    const [error, setError] = useState(null)
+    const inputRef = useRef(null)
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setError(null)
+        const formData = new FormData(e.target)
+        if (!formData.get('playerInput') && domixUser) {
+            formData.set('playerInput', domixUser)
+        }
+        const error = await handleSearch(formData)
+        if (error) {
+            setError(error)
+            inputRef.current.focus()
+        }
+    }
 
     useEffect(() => {
         if (!loading) return
@@ -106,9 +122,19 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal, domixUser }) {
                             }
                         </div>
                         <div className='inputContainer'>
-                            <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder={domixUser ? `Ej.: ${domixUser}` : 'tu nombre#tag'} pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
+                            <input 
+                                className='playerInput'
+                                ref={inputRef}
+                                disabled={loading} 
+                                id="playerInput" 
+                                name='playerInput' 
+                                autoComplete='on' 
+                                maxLength={100} 
+                                type="text" 
+                                placeholder={domixUser ? domixUser : 'tu nombre#tag'} 
+                            />
                             <span className='bottomMsg'>
-                                <span className='bottomMsgText'>{loading ? loadingMsg : defMsg}</span>
+                                <span className='bottomMsgText' style={error ? { color: 'var(--red)' } : {}}>{error ? error : loading ? loadingMsg : defMsg}</span>
                                 {loading &&
                                     <span className='waving'>
                                         <span style={{"--delay": '0.1s'}}>.</span><span style={{"--delay": '0.2s'}}>.</span><span style={{"--delay": '0.3s'}}>.</span>
