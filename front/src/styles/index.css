@@ -15,6 +15,7 @@ body, html{
 
 html{
     --bg: #00111C;
+    --bgT: #00111cc2;
     --bgSecondary: #001A2C;
     --border: #33415C;
     --borderT: #33415C40;

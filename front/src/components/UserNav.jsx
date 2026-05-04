@@ -6,7 +6,7 @@ function UserNav({ reloadData, name, tag, banner, title, level, levelBorder, las
     return (
         <div className="userNav">
             <div className="bannerContainer">
-                <img className='banner' src={banner} alt="banner" />
+                <img className='banner' src={banner} alt="banner" loading='lazy' decoding='async' />
                 <div className="userInfo">
                     <div className="user">
                         {name}
@@ -16,7 +16,7 @@ function UserNav({ reloadData, name, tag, banner, title, level, levelBorder, las
                 </div>
                 <div className="levelContainer">
                     <div className='levelSubContainer'>
-                        <img src={levelBorder} alt="level border" />
+                        <img src={levelBorder} alt="level border" loading='lazy' decoding='async' />
                         <span>{level}</span>
                     </div>
                 </div>

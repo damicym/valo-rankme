@@ -70,7 +70,7 @@ function MatchList({ matches, selectedMode, selectedModeName, selectedSeason, se
                     </div>
                 </Fragment>
             ))}
-            <span style={{marginBlock: '4px', color: 'var(--textT)'}}>No more results on mode {selectedModeName} {selectedSeason !== null && `and season ${selectedSeasonName}`}</span>
+            <span style={{marginBlock: '4px', color: 'var(--textT)'}}>No hay más resultados en el modo {selectedModeName} {selectedSeason !== null && `y temporada ${selectedSeasonName}`}</span>
         </section>
     )
 }

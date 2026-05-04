@@ -26,6 +26,8 @@
     opacity: 0.06;
     filter: grayscale(0.3);
     animation: floatIcon 6s ease-in-out infinite;
+    will-change: transform;
+    contain: layout style paint;
 }
 
 .bgRankIcon:nth-child(2) { animation-delay: 0.7s; }
@@ -62,7 +64,6 @@
     border: 1px solid var(--red);
     border-radius: 100px;
     padding: 4px 14px;
-    text-transform: uppercase;
 }
 
 .mainTitle {
