@@ -1,42 +1,62 @@
-.site, .playerRank{
+.playerRank{
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.site{
-    gap: 65px;
-}
-
-.playerContainer{
-    display: flex;
-    gap: 20px;
-    height: 300px;
-}
-
 .playerRank{
-    gap: 25px;
+    /* gap: 25px; */
     transform-origin: bottom center;
     width: 385px;
     justify-content: flex-start;
 }
 
-.playerRank .rankIcon{
+.rankName{
+    /* font-size: 1.2rem; */
+    font-size: 0.8rem;
+    color: var(--text);
+    opacity: 0.8;
+    margin: 0;
+    /* margin-bottom: 17px; */
+    width: 100%;
+    position: absolute;
+    top: -23px;
+    font-weight: 450;
+}
+
+.rankNameV2{
+    font-size: 1.4rem;
+    color: var(--text);
+    opacity: 0.8;
+    margin-bottom: 17px;
+    width: 100%;
+    font-weight: 450;
+}
+
+.rankHeader{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rankHeader.vertical{
+    flex-direction: column;
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.rankHeader.horizontal{
+    flex-direction: row;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.rankHeader.vertical .rankIcon{
     width: 120px;
 }
 
-.user{
-    color: var(--text);
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-    margin-top: 0;
-    display: flex;
-    align-items: end;
-}
-
-.user span{
-    font-size: 1.05rem;
-    opacity: 0.7;
+.rankHeader.horizontal .rankIcon{
+    width: 65px;
 }
 
 .rankTitle{
@@ -52,6 +72,7 @@
     flex-direction: column;
     gap: 10px;
     align-items: flex-end;
+    position: relative;
 }
 
 .progressBarContainer{
@@ -105,50 +126,9 @@
     left: 4px;
 }
 
-.playerInput{
-    font-family: "Lexend", sans-serif;
-    width: 220px;
-    height: 32px;
-    font-size: 1.2rem;
-    border-radius: 6px;
-    outline: none;
-    padding: 5px;
-    border: 0;
-    color: var(--bg);
-    background-color: var(--text);
-}
-
-.playerInput::placeholder{
-    color: var(--placeholder);
-    user-select: none;
-}
-
-.inputField{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.inputField label{
-    position: absolute;
-    left: 0;
-    top: -20px;
-    font-size: 0.8rem;
-    color: var(--text);
-}
-
-.inputField span{
-    position: absolute;
-    left: 0;
-    bottom: -20px;
-    font-size: 0.7rem;
-    color: var(--placeholder);
-}
-
 .btn{
     font-family: "Lexend", sans-serif;
-    border-radius: 12px;
+    border-radius: 8px;
     border: 0;
     outline: 0;
     display: flex;
@@ -218,22 +198,6 @@
     cursor: pointer;
 }
 
-.submitBtn{
-    gap: 6px;
-    height: 40px;
-    transform: translateY(-4px);
-    color: var(--bg);
-    background-color: var(--green);
-    font-size: 1.4rem;
-    padding: 8px;
-    grid-column: 3;
-    /* dynamic: */
-    cursor: auto;
-    opacity: 0.55;
-    cursor: pointer;
-    opacity: 1;
-}
-
 .btn:hover{
     filter: brightness(0.9);
 }
@@ -242,22 +206,12 @@
     filter: brightness(1);
 }
 
-.allChildren{
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: flex-start;
-    height: min-content;
-
+.btn:hover:disabled{
+    filter: none;
 }
 
-.centeredChildren{
-    display: flex;
-    gap: 20px;
-    height: 300px;
-    grid-column: 2;
-    align-items: flex-start;
-    height: min-content;
-    width: min-content;
+.btn:active:disabled{
+    filter: none;
 }
 
 @keyframes fakeLoadRRBar {

@@ -1,0 +1,199 @@
+.modalContainer{
+    position: fixed;
+    inset: 0;
+    background-color: rgba(13, 29, 44, 0.18);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    place-items: center;
+}
+
+.searchModal form{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.searchModal{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    border-radius: 58px;
+}
+
+.closeBtn{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    cursor: pointer;
+    margin-right: auto;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.closeBtn:hover{
+    opacity: 1;
+}
+
+.closeBtn:active{
+    opacity: 0.6;
+}
+
+.searchModal label{
+    font-size: 2.6rem;
+    font-weight: 450;
+    width: 100%;
+    letter-spacing: 1px;
+    pointer-events: none;
+    margin-bottom: 22px;
+}
+
+.inputField{
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    position: relative;
+}
+
+.inputField .iconContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 7px;
+    width: 54px;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.inputField .iconContainer svg{
+    fill: var(--text);
+    position: relative;
+    z-index: 1;
+}
+
+.inputField .bottomMsg{
+    position: absolute;
+    left: 0;
+    bottom: -22px;
+    font-size: 0.85rem;
+    color: var(--placeholder);
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.bottomMsgText{
+    display: inline-block;
+    flex: 0 0 auto;
+}
+
+.waving{
+    display: inline-flex;
+    gap: 1px;
+    flex: 0 0 auto;
+    width: min-content;
+    justify-content: space-between;
+}
+
+.waving span{
+    display: block;
+    width: 0.3em;
+    text-align: center;
+    line-height: 1;
+    flex: 0 0 auto;
+    animation: wave 2s infinite ease-in-out;
+    animation-delay: var(--delay);
+}
+
+@keyframes wave {
+    0% { transform: translateY(0); }
+    20% { transform: translateY(-1px); }
+    40% { transform: translateY(0); }
+    60% { transform: translateY(-1px); }
+    80% { transform: translateY(0); }
+    100% { transform: translateY(0); }
+}
+
+.playerInput{
+    font-family: "Lexend", sans-serif;
+    font-size: 1.2rem;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    outline: none;
+    padding: 15px;
+    border: 0;
+    color: var(--bg);
+    background-color: var(--text);
+    width: 400px;
+}
+
+.playerInput::placeholder{
+    color: var(--placeholder);
+    user-select: none;
+}
+
+.playerInput:disabled{
+    cursor: not-allowed;
+}
+
+.inputField .inputContainer{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.submitBtn{
+    gap: 8px;
+    color: var(--bg);
+    background-color: var(--red);
+    font-size: 1.7rem;
+    padding: 8px;
+    grid-column: 3;
+    opacity: 0.55;
+    cursor: pointer;
+    opacity: 1;
+}
+
+.submitBtn svg{
+    width: 24px;
+    height: 24px;
+    color: var(--text);
+}
+
+.submitBtn:disabled{
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.searchModal .progress{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background-color: var(--red);
+    opacity: 1;
+    animation: fakeLoadSubmit 1.3s cubic-bezier(.3,.8,.3,1) forwards;
+    z-index: 0;
+}
+
+@keyframes fakeLoadSubmit {
+  0%   { width: 0%; }
+  40%  { width: 60%; }
+  70%  { width: 85%; }
+  90%  { width: 95%; }
+  98% { width: 97%; }
+  100% { width: 98%; }
+}

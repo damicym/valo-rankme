@@ -1,37 +1,87 @@
-.matchContainer{
+.matchList{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background-color: var(--bgSecondary);
+    border-radius: 28px;
+    border: 1px solid var(--border);
+    padding: 20px;
+}
+
+.matchDay{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    font-size: 1.2rem;
+    padding: 8px 20px 8px 0px;
+}
+
+.matchDay .date{
+    font-weight: 500;
+    width: 260px;
+}
+
+.matchDay .resultField{
+    font-size: 1.1rem;
+}
+
+/* .dayResultRounds{
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 5px;
+}
+
+.dayResultRounds span:first-child{
+    text-align: right;
+}
+
+.dayResultRounds span:last-child{
+    text-align: left;
+} */
+
+.matchDay .statField{
+    gap: 1px;
+}
+
+.matchDay p{
+    margin: 0;
+}
+
+.matches{
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 20px;
-    padding: 20px;
-    /* background-color: var(--bgSecondary); */
-    /* border-radius: 28px; */
-    /* border: 1px solid var(--border); */
+    width: 100% ;
+    margin-bottom: 6px;
 }
 
 .match{
     width: 100%;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 8px 20px 8px 20px;
     align-items: center;
     justify-content: center;
-    gap: 40px;
+    gap: 45px;
     font-size: 1rem;
     position: relative;
     overflow: hidden;
     box-shadow: inset -8px 0 8px -8px rgba(0, 0, 0, 0.4);
+    height: 83px;
 }
 
 .pillContainer{
-    flex: 1;
+    /* flex: 1; */
     width: 150px;
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    flex-direction: row-reverse;
 }
 
 .pill{
@@ -75,39 +125,33 @@
 
 .statField{
     text-align: right;
+    /* width: 50px; */
+}
+
+.kdField{
+    width: 100px;
 }
 
 .statField span{
     opacity: 0.75;
-    font-size: 1rem;
+    font-size: 0.85rem;
 }
 
 .statField p{
     font-size: 1.15rem;
 }
 
-.match .leftSide, .match .rightSide{
+.side{
     align-items: center;
-    /* justify-content: center; */
     display: flex;
-    gap: 60px;
-    width: 100%;
-} 
-
-.match .leftSide{
-    justify-content: left;
-    grid-column: 1;
-} 
-
-.match .rightSide{
-    justify-content: right;
-    grid-column: 3;
-} 
+    gap: 45px;
+}
 
 .resultField{
     text-align: center;
     grid-column: 2;
     align-items: center;
+    flex: 1;
 }
 
 .matchField{
@@ -131,7 +175,7 @@
 .matchColorDetail{
     position: absolute;
     width: 8px;
-    height: 50px;
+    height: 60%;
     left: 0;
     transform: translateX(-3px);
     background-color: var(--border);
@@ -145,6 +189,24 @@
     letter-spacing: 1px;
 }
 
+.rankContainer{
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    position: relative;
+}
+
+.rankVariation{
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+}
+
+.rankVariation svg{
+    width: 20px;
+    height: 20px;
+}
+
 .resultRounds{
     display: flex;
 }
@@ -154,12 +216,6 @@
 }
 .resultRounds:last-child{
     text-align: start;
-}
-
-.agentIcon{
-    width: 55px;
-    margin-left: 10px;
-    filter: drop-shadow(0px 2px 10px var(--bg));
 }
 
 .match .rankIcon{
@@ -173,6 +229,8 @@
     align-items: center;
 }
 
-.kda, .kda span{
-    letter-spacing: 0.1px;
+.agentIcon{
+    width: 55px;
+    margin-left: 10px;
+    filter: drop-shadow(0px 2px 10px var(--bg));
 }

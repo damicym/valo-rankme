@@ -1,141 +1,181 @@
-import { /* useEffect, */ useState } from 'react'
-import { getTwoPlayers, getOnePlayer } from './libs/db/queries.js'
-import twoPlayersLocal from './data/two_players.json'
-import onePlayerLocal from './data/one_player.json'
-import PlayerRank from './components/Player'
-import Match from './components/Match'
+import { useEffect, useState } from 'react'
+import { /* getTwoPlayers, */ getOnePlayer, getDBModes, getDBSeasons, getPlainUser } from './libs/db/queries.js'
+import { fetchAgents } from './libs/utils/agents.js'
+import SearchModal from './components/SearchModal.jsx'
+import { SECTIONS, USER_SECTIONS } from './config.js'
+import './styles/Home.css'
+import NavBar from './components/NavBar.jsx'
+import MainSection from './components/MainSection.jsx'
+import { getAPIStatus } from './libs/api/index.js'
 
 function App() {
+    const domixPuuid = '9c10981a-3fc4-5eb4-9a3f-8e3008aeaa20'
+    const [agents, setAgents] = useState([])
+    const [gameModes, setGameModes] = useState([])
+    const [gameSeasons, setGameSeasons] = useState([])
+    const [lastSeason, setLastSeason] = useState(null)
+    const [APIStatus, setAPIStatus] = useState({})
+    const [domixUser, setDomixUser] = useState(null)
+    
     const [player1Data, setPlayer1Data] = useState({})
-    const [player2Data, setPlayer2Data] = useState({})
-    const [showPlayers, setShowPlayers] = useState(false)
-    const [enableAPI, setEnableAPI] = useState(false)
-    const [isSoloQ, setIsSoloQ] = useState(false)
-    const [showWelcome, setShowWelcome] = useState(false)
-    // const [isEditing, setIsEditing] = useState(true)
-    const [p1Input, setP1Input] = useState("")
-    const [p2Input, setP2Input] = useState("")
+    const [playersLoading, setPlayersLoading] = useState(false)
+    const [showSearchModal, setShowSearchModal] = useState(false)
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        getPlayerData(p1Input, p2Input)
-        setShowPlayers(true)
-    }
+    const [section, setSection] = useState(SECTIONS.HOME)
+    const [userSection, setUserSection] = useState(USER_SECTIONS.PARTIDAS)
+    const [selectedMode, setSelectedMode] = useState(null)
+    const [selectedSeason, setSelectedSeason] = useState(null)
 
-    const getPlayerData = async(p1, p2) => {
-        if(enableAPI){
-            if (isSoloQ) {
-                const data = await getOnePlayer(p1)
-                setPlayer1Data(data.player1)
-            } else {
-                const data = await getTwoPlayers(p1, p2)
-                setPlayer1Data(data.player1)
-                setPlayer2Data(data.player2)
-            }
-        } else {
-            if (isSoloQ) {
-                const data = onePlayerLocal
-                setPlayer1Data(data.player1)
-            } else {
-                const data = twoPlayersLocal
-                setPlayer1Data(data.player1)
-                setPlayer2Data(data.player2)
-            }
+    const reloadData = async () => {
+        await checkAPIStatus()
+        await fetchDBData()
+        const playerId = `${player1Data?.name}#${player1Data?.tag}`
+        const previousMatchesCount = player1Data?.matches?.length || 0
+
+        if (!player1Data?.name || !player1Data?.tag) {
+            return 'No player selected'
+        }
+
+        try{
+            const updatedPlayer = await processPlayer(playerId, { force: true })
+            const nextMatchesCount = updatedPlayer?.matches?.length ?? previousMatchesCount
+            return previousMatchesCount >= nextMatchesCount ? 'No new matches' : 'Data updated'
+        } catch (error) {
+            setPlayer1Data({ puuid: null, error: error.message })
+            return 'Error updating data'
         }
     }
 
+    const checkAPIStatus = async () => {
+        const isOnline = await getAPIStatus()
+        setAPIStatus({
+            online: isOnline,
+            lastChecked: new Date()
+        })
+    }
+
+    const fetchDBData = async () => {
+        const modesData = await getDBModes()
+        const seasonsData = await getDBSeasons()
+        const lastSeason = seasonsData[0]?.id || null
+        const domixUserData = await getPlainUser(domixPuuid)
+        setLastSeason(lastSeason)
+        setGameModes(modesData)
+        setGameSeasons(seasonsData)
+        setDomixUser(domixUserData)
+    }
+
+    useEffect(() => {
+        checkAPIStatus()
+        fetchDBData()
+        fetchAgents().then(setAgents).catch(console.error)
+    }, [])
+
+    useEffect(() => {
+        if (!showSearchModal) return
+
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        return () => {
+            document.body.style.overflow = previousOverflow
+        }
+    }, [showSearchModal])
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        const formData = new FormData(e.target)
+        const p1 = formData.get('playerInput')
+        setPlayersLoading(true)
+
+        try{
+            await processPlayer(p1)
+        } catch (error) {
+            setPlayer1Data({ puuid: null, error: error.message })
+        }
+
+        setPlayersLoading(false)
+        setShowSearchModal(false)
+        setSection(SECTIONS.PLAYER)
+    }
+
+    const processPlayer = async(p1, options = {}) => {
+        if (!p1) return
+        const { force = false } = options
+        const [name, tag] = p1.split("#").map(part => part.trim())
+        setSelectedSeason(null)
+
+        if (!force && name === player1Data?.name && tag === player1Data?.tag) {
+            setUserSection(USER_SECTIONS.PARTIDAS)
+            const matchesByMode = player1Data?.matches?.reduce((acc, match) => {
+                if (!acc.has(match.mode_id)) {
+                    acc.set(match.mode_id, 1)
+                } else {
+                    acc.set(match.mode_id, acc.get(match.mode_id) + 1)
+                }
+                return acc
+            }, new Map())
+            const mostPlayedMode = matchesByMode && matchesByMode.size > 0 ? Array.from(matchesByMode.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] : null
+            setSelectedMode(mostPlayedMode)
+            return player1Data
+        }
+
+        const data = await getOnePlayer(p1)
+        if (data?.player1?.puuid && !data?.player1?.error) {
+            setPlayer1Data(data.player1)
+            const matchesByMode = player1Data?.matches?.reduce((acc, match) => {
+                if (!acc.has(match.mode_id)) {
+                    acc.set(match.mode_id, 1)
+                } else {
+                    acc.set(match.mode_id, acc.get(match.mode_id) + 1)
+                }
+                return acc
+            }, new Map())
+            const mostPlayedMode = matchesByMode && matchesByMode.size > 0 ? Array.from(matchesByMode.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] : null
+            setSelectedMode(mostPlayedMode)
+            return data.player1
+        } else {
+            throw new Error(data?.player1?.error || 'Error al obtener datos del jugador')
+        }
+    }
+
+    const selectedRankInfo = player1Data?.ranksInfo?.find(
+        r => r.mode_id === selectedMode && (selectedSeason === null ? r.season_id === lastSeason : r.season_id === selectedSeason)
+    )
+    const filteredMatches = player1Data?.matches?.filter(
+        m => m.mode_id === selectedMode && (selectedSeason === null || m.season_id === selectedSeason)
+    )
+
     return (
         <>
-            <button onClick={() => setEnableAPI(prev => !prev)}>{enableAPI ? 'Usando API 🌐' : 'Usando datos locales 📜'}</button>
             <div className="site">
-                <section className='controlsContainer'>
-                    <button className='toggleBtn btn' onClick={() => setIsSoloQ(prev => !prev)}>
-                        <div className='svgContainer' style={{transform: isSoloQ ? 'translateX(0%)' : 'translateX(-3%)'}}>
-                            { isSoloQ ?
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
-                            }
-                        </div>
-                        <span className='toggleBtnInner'>{isSoloQ ? 'Partidas en soloQ' : 'Partidas con mi duo'}</span>
-                    </button>
-                    <button className='toggleBtn btn' onClick={() => setShowWelcome(prev => !prev)}>
-                        <div className='svgContainer'>
-                            { showWelcome ?
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-eye"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-eye-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /><path d="M3 3l18 18" /></svg>
-                            }
-                        </div>
-                        <span className='toggleBtnInner'>{showWelcome ? 'Ocultar bienvenida' : 'Mostrar bienvenida'}</span>
-                    </button>
-                </section>
-                { showWelcome &&
-                    <section className='bienvenida'>
-                        <h1>Skirmish ranks :p</h1>
-                    </section>
-                }
-                <section className='playerContainer'>
-                    <form 
-                        className='allChildren' 
-                        onSubmit={handleSubmit}
-                    >
-                        <div className='centeredChildren'>
-                            { showPlayers ? 
-                                <>
-                                    <PlayerRank data={player1Data} user={p1Input} />
-                                    { !isSoloQ &&
-                                        <>
-                                            <button className='switchPlayersBtn btn' tabIndex={-1}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
-                                            </button>
-                                            <PlayerRank data={player2Data} user={p2Input} />
-                                        </>
-                                    }
-                                </> : 
-                                <>
-                                    <div className='playerRank'>
-                                        <div className='inputField'>
-                                            <label>Mi usuario</label>
-                                            <input onChange={(e) => setP1Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my name#tag' />
-                                            <span>* Distingue mayúsculas/minúsculas</span>
-                                        </div>
-                                    </div>
-                                    { !isSoloQ &&
-                                        <>
-                                            <button className='switchPlayersBtn btn' tabIndex={-1}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-switch-horizontal"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 3l4 4l-4 4" /><path d="M10 7l10 0" /><path d="M8 13l-4 4l4 4" /><path d="M4 17l9 0" /></svg>
-                                            </button>
-                                            <div className='playerRank'>
-                                                <div className='inputField'>
-                                                    <label>Usuario de mi duo</label>
-                                                    <input onChange={(e) => setP2Input(e.target.value)} className='playerInput' maxLength={100} minLength={5} type="text" placeholder='my duo#tag' />
-                                                    <span>* Distingue mayúsculas/minúsculas</span>
-                                                </div>
-                                            </div>
-                                        </>
-                                    }
-                                </>
-                            }
-                        </div>
-                        { !showPlayers &&
-                            <button className='submitBtn btn'>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-send-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4.698 4.034l16.302 7.966l-16.302 7.966a.503 .503 0 0 1 -.546 -.124a.555 .555 0 0 1 -.12 -.568l2.468 -7.274l-2.468 -7.274a.555 .555 0 0 1 .12 -.568a.503 .503 0 0 1 .546 -.124" /><path d="M6.5 12h14.5" /></svg>
-                                Vamos!
-                            </button>
-                        }
-                    </form>
-                </section>
-                { showPlayers &&
-                    // promedios
-                    <section className="matchContainer">
-                        {/* fecha */}
-                        {
-                            player1Data?.matches?.map((m, index) => <Match key={m.started_at} index={index} data={m}></Match>)
-                        }
-                    </section>
-                }
+                <NavBar domixUser={domixUser} selectedSection={section} setSelectedSection={setSection} showSearchModal={showSearchModal} setShowSearchModal={setShowSearchModal} />
+                <MainSection
+                    setSelectedSection={setSection}
+                    domixUser={domixUser}
+                    section={section}
+                    userSection={userSection}
+                    setUserSection={setUserSection}
+                    player1Data={player1Data}
+                    selectedMode={selectedMode}
+                    setSelectedMode={setSelectedMode}
+                    selectedSeason={selectedSeason}
+                    setSelectedSeason={setSelectedSeason}
+                    selectedRankInfo={selectedRankInfo}
+                    filteredMatches={filteredMatches}
+                    gameModes={gameModes}
+                    gameSeasons={gameSeasons}
+                    agents={agents}
+                    lastSeason={lastSeason}
+                    APIStatus={APIStatus}
+                    reloadData={reloadData}
+                    setShowSearchModal={setShowSearchModal}
+                />
             </div>
+            { showSearchModal &&
+                <SearchModal domixUser={domixUser} loading={playersLoading} handleSubmit={handleSubmit} setShowSearchModal={setShowSearchModal} />
+            }
         </>
-        
     )
 }
 

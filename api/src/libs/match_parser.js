@@ -1,0 +1,195 @@
+import { IMMORTAL_ELO } from '../valorant_config.js'
+import { playerLog, getRRByElo, curve, normalize, getMatchId, getStartedAt, getMatchMode, getMatchModeId, getShortId, getMatchActId } from './helpers.js'
+
+export function getPlayerRank(prevRRChanges, initialRank = null, lastRRChange = null) {
+    let currentElo = initialRank?.elo ?? 50
+    let shieldLevel = initialRank?.shield ?? 0
+    let allRRChanges = [...(prevRRChanges || [])]
+    if (lastRRChange !== null) allRRChanges.push(lastRRChange)
+    let rankVariation = null
+
+    allRRChanges.forEach((match_rr, index) => {
+        if (!Number.isFinite(match_rr)) return
+        const newRawElo = currentElo + match_rr
+        const rank = Math.max(0, Math.floor(currentElo / 100))
+        const nextRank = Math.max(0, Math.floor(newRawElo / 100))
+        const isImmo = currentElo >= IMMORTAL_ELO
+        const won = match_rr > 0
+        const atLastMatch = lastRRChange !== null && index === allRRChanges.length - 1
+
+        // si es la ultima partida, en vez de calcular el elo, fijarse si con esa suba o baja de rango
+        if (atLastMatch) {
+            if (won && rank < nextRank) { 
+                rankVariation = true
+            } else if (!won && rank > nextRank && shieldLevel === 0 && currentElo === rank * 100) {
+                rankVariation = false
+            }
+        } else {
+            // no puede bajar de 0 de elo
+            if (newRawElo < 0) {
+                currentElo = 0
+            }
+            // al pasar un múltiplo de 100 por menos de 10 rr antes de immortal, se le suma lo necesario para pasarlo por 10 rr
+            else if (!isImmo && won && rank < nextRank) {
+                currentElo = Math.max(newRawElo, nextRank * 100 + 10)
+                // si sube al primer rango de la división, se le da 2 escudos. Pero si está en hierro 1 no
+                if (currentElo % 300 < 100 && currentElo > 100) shieldLevel = 2
+            }
+            // al pasar un múltiplo de 100 por menos de 10 rr, se le suma lo necesario para pasarlo por 10 rr
+            // no se aplica en immortal (100 rr, 200 rr, etc.)
+            else if (currentElo < IMMORTAL_ELO + 100 && !won && rank > nextRank && (currentElo > rank * 100 || shieldLevel > 0)) {
+                currentElo = rank * 100
+                // sacarle escudo en vez de bajar
+                if (shieldLevel > 0) shieldLevel -= 1
+            }
+            else {
+                currentElo = newRawElo
+            }
+        }
+    })
+    
+    return { 
+        elo: currentElo, 
+        rr: getRRByElo(currentElo), 
+        rank: Math.floor(currentElo / 100), 
+        shield: shieldLevel, 
+        ...(lastRRChange !== null && { rankVariation })
+    }
+}
+
+export function getMatchRR(match, puuid, dbMode) {
+    if (match?.rr_change !== undefined) return match.rr_change // para stored matches, sino calcula aca abajo
+    if (!dbMode) {
+        console.log(playerLog(puuid, `[WARN] !dbMode at getMatchRR for match ${getShortId(getMatchId(match))} with mode ${getMatchModeId(match)}`))
+        return null
+    }
+    const evalParams = dbMode ?
+        { min_rr: dbMode.min_rr, max_rr: dbMode.max_rr, rounds_to_win: dbMode.rounds_to_win, min_acs: dbMode.min_acs, max_acs: dbMode.max_acs }
+        : { min_rr: 7, max_rr: 33, rounds_to_win: 5, min_acs: 120, max_acs: 550 }
+    const roundsToWin = evalParams.rounds_to_win
+
+    const inMatchPlayer = match.players.find(p => p.puuid === puuid)
+    if (!inMatchPlayer) {
+        console.log(playerLog(puuid, "[ERROR] !inMatchPlayer at getMatchRR"))
+        return null
+    }
+    
+    const teamColor = inMatchPlayer.team_id
+    const teamInfo = match.teams.find(t => t.team_id === teamColor)
+
+    const won = teamInfo.won
+    const roundsDiff = teamInfo.rounds.won - teamInfo.rounds.lost
+    const acs = inMatchPlayer.stats.score / (teamInfo.rounds.won + teamInfo.rounds.lost)
+
+    let result = 0
+    const acs_normalized = normalize(acs, evalParams.min_acs, evalParams.max_acs)
+    const roundsDiff_normalized = Math.max(0, Math.min(1, (won ? Math.abs(roundsDiff) : roundsToWin - Math.abs(roundsDiff)) / roundsToWin))
+
+    let performance = (acs_normalized * 0.65) + (roundsDiff_normalized * 0.35)
+    performance = curve(performance)
+
+    if (won) {
+        result = evalParams.min_rr + (evalParams.max_rr - evalParams.min_rr) * performance
+    }
+    else {
+        result = evalParams.min_rr + (evalParams.max_rr - evalParams.min_rr) * (1 - performance)
+        result = -result
+    }
+
+    return Math.round(result)
+}
+
+export async function getPlayerMatchInfo(match, puuid, previousMatches, rankableModes, initialRank = null, resolvedSeasonId = null) {
+    const inMatchPlayer = match.players.find(p => p.puuid === puuid)
+    if (!inMatchPlayer) {
+        console.log(playerLog(puuid, "[ERROR] !inMatchPlayer at getPlayerMatchInfo"))
+        return null
+    }
+    const teamColor = inMatchPlayer.team_id
+    const teamInfo = match.teams.find(t => t.team_id === teamColor)
+
+    const roundsWon = teamInfo.rounds.won
+    const roundsLost = teamInfo.rounds.lost
+    const kills = inMatchPlayer.stats.kills
+    const deaths = inMatchPlayer.stats.deaths
+    const scores = match.players
+        .map(p => ({
+            puuid: p.puuid,
+            team: p.team_id,
+            score: p.stats.score
+        }))
+        .sort((a, b) => b.score - a.score)
+    const place = scores.findIndex(p => p.puuid === puuid) + 1
+    const teamMVP = scores.find(p => p.team === teamColor)?.puuid
+    const isShotDataMissing = inMatchPlayer.stats.headshots === 0 && inMatchPlayer.stats.bodyshots === 0 && inMatchPlayer.stats.legshots === 0 && kills > 0
+    const shotCount = isShotDataMissing ? null : inMatchPlayer.stats.headshots + inMatchPlayer.stats.bodyshots + inMatchPlayer.stats.legshots
+    const isDamageDataMissing = inMatchPlayer.stats.damage.dealt === 0 && inMatchPlayer.stats.damage.received === 0 && kills > 0 && deaths > 0
+    
+    const playersPerTeam = match.players.filter(p => p.team_id === teamColor).length
+    let killedThemAllRounds = 0
+    let clutchesNKillThemAllRounds = 0
+    match.rounds.forEach(r => {
+        const inRoundPlayer = r.stats.find(playerStat => playerStat.player.puuid === puuid)
+        if (inRoundPlayer?.stats.kills === playersPerTeam) {
+            killedThemAllRounds++
+            if (r.ceremony === 'CeremonyClutch') clutchesNKillThemAllRounds++
+        }
+    })
+    const seasonId = resolvedSeasonId
+    const modeId = getMatchModeId(match)
+    const dbMode = rankableModes.find(dbM => dbM?.id === modeId) || null
+    const isMatchRankable = !!dbMode
+    const rrChangeRaw = isMatchRankable ? getMatchRR(match, puuid, dbMode) : null
+    const rrChange = Number.isFinite(rrChangeRaw) ? rrChangeRaw : null
+    const prevRRChanges = previousMatches && isMatchRankable
+        ? previousMatches
+            .map(m => getMatchRR(m, puuid, dbMode))
+            .filter(Number.isFinite)
+        : null
+    const rankInfo = rrChange !== null && Array.isArray(prevRRChanges)
+        ? getPlayerRank(prevRRChanges, initialRank, rrChange)
+        : null
+
+    return {
+        id: `${getMatchId(match)}_${puuid}`,
+
+        match_id: getMatchId(match), // PK
+        player_puuid: puuid, // FK
+        act_id: match.metadata.season.id, // FK
+        team_id: teamColor, // FK
+        mode_id: modeId,
+        season_id: seasonId,
+        started_at: getStartedAt(match),
+        
+        map: match.metadata.map.name,
+        playtime: Math.round(match.metadata.game_length_in_ms / 1000),
+        
+        mode: getMatchMode(match),
+        is_rankable: isMatchRankable,
+
+        rr_change: rrChange,
+        rr_eval_version: rrChange !== null ? '1.2 (fixed in-match ranks, variations, and duplicates)' : null,
+        rank: rankInfo ? rankInfo.rank : null,
+        rank_variation: rankInfo ? rankInfo.rankVariation : null,
+        
+        agent: inMatchPlayer.agent.name,
+        won: teamInfo.won,
+        rounds_won: roundsWon,
+        rounds_lost: roundsLost,
+        place: place,
+        
+        kills: kills,
+        deaths: deaths,
+        assists: inMatchPlayer.stats.assists,
+        kd: deaths === 0
+            ? kills
+            : Math.round((kills / deaths) * 100) / 100,
+        acs: Math.round(inMatchPlayer.stats.score / (roundsWon + roundsLost)),
+
+        is_team_mvp: playersPerTeam > 1 ? teamMVP === puuid : null,
+        clutches_1v2: playersPerTeam === 2 ? clutchesNKillThemAllRounds : null,
+        hs_perc: isShotDataMissing ? null : kills === 0 ? 0 : Math.round((inMatchPlayer.stats.headshots / shotCount) * 100),
+        ddr: isDamageDataMissing ? null : Math.round((inMatchPlayer.stats.damage.dealt - inMatchPlayer.stats.damage.received) / (roundsWon + roundsLost)),
+        aces: playersPerTeam === 5 ? killedThemAllRounds : null
+    }
+}

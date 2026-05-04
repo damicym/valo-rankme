@@ -1,0 +1,1 @@
+export const IMMORTAL_ELO = 2100
