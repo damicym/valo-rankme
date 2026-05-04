@@ -24,7 +24,7 @@ export async function registerPlayer(player) {
         console.error('Error fetching player data:', error)
         return {
             puuid: null,
-            error: error?.message || 'Error en el servidor al registrar jugador'
+            error: error?.message === 'Failed to fetch' ? 'El servidor no está disponible' : error?.message
         }
     }
 }

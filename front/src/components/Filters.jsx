@@ -114,6 +114,7 @@ function Filters({ displayModes, selectedMode, setSelectedMode, selectedSeason, 
                                     onClick={() => {
                                         setSelectedMode(m.id)
                                         setShowModeCtxMenu(false)
+                                        setShowSeasonCtxMenu(false)
                                     }}
                                 >
                                     {m.name || m.id}
@@ -163,6 +164,7 @@ function Filters({ displayModes, selectedMode, setSelectedMode, selectedSeason, 
                                     if (selectedSeason === s.id || (!displayModes && selectedSeason === null && index === 0)) return
                                     setSelectedSeason(s.id)
                                     setShowSeasonCtxMenu(false)
+                                    setShowModeCtxMenu(false)
                                 }}
                             >
                                 {s.name || s.id}

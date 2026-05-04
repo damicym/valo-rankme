@@ -4,8 +4,8 @@ import '../styles/SearchModal.css'
 const cicleInterval = 2 * 1000
 const defMsg = ""
 const msgDefList = [
-    "Espiando cámaras de Cypher",
-    "Lurkeando en la base de datos",
+    "Espiando cámaras",
+    "Lurkeando spawns",
     "Defusando spikes",
     "Recargando outlaws",
     "Apuntando lineups",
@@ -102,7 +102,7 @@ function SearchModal({ handleSubmit, loading, setShowSearchModal, domixUser }) {
                             }
                         </div>
                         <div className='inputContainer'>
-                            <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder={domixUser ? domixUser : 'tu nombre#tag'} pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
+                            <input disabled={loading} id="playerInput" name='playerInput' autoComplete='on' required className='playerInput' maxLength={100} minLength={6} type="text" placeholder={domixUser ? `Ej.: ${domixUser}` : 'tu nombre#tag'} pattern='[^#]+#[^#]+' title='El formato debe ser nombre#tag' />
                             <span className='bottomMsg'>
                                 <span className='bottomMsgText'>{loading ? loadingMsg : defMsg}</span>
                                 {loading &&
