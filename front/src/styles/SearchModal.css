@@ -1,7 +1,7 @@
 .modalContainer{
     position: fixed;
     inset: 0;
-    background-color: rgba(13, 29, 44, 0.18);
+    background-color: rgba(13, 29, 44, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -11,7 +11,7 @@
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .modalContainer {
-        background-color: rgba(13, 29, 44, 0.72);
+        background-color: rgba(13, 29, 44, 0.92);
     }
 
     .searchModal {

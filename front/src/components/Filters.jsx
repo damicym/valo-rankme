@@ -139,7 +139,7 @@ function Filters({ displayModes, selectedMode, setSelectedMode, selectedSeason, 
                             show={showModeCtxMenu}
                             elements={secondaryModes}
                             elOnClick={replaceLastMode}
-                            msg="No se encontraron partidas con más modos"
+                            msg="No se encontraron partidas en otros modos"
                         />
                     </section>
                 }
@@ -189,7 +189,7 @@ function Filters({ displayModes, selectedMode, setSelectedMode, selectedSeason, 
                         show={showSeasonCtxMenu}
                         elements={secondarySeasons}
                         elOnClick={replaceLastSeason}
-                        msg="No se encontraron partidas con más episodios"
+                        msg="No se encontraron partidas en otros episodios"
                     />
                 </section>
             </div>

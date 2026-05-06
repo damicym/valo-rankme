@@ -17,7 +17,7 @@ function HomeSection({ setShowSearchModal }) {
                     <span className='light'>no competitivo</span>
                 </h1>
                 <p className='subtitle'>
-                    Buscá cualquier jugador y explorá su historial de partidas, estadísticas, y rangos para los modos en los que Valorant no te da un rango.
+                    Buscá cualquier jugador y explorá su historial de partidas, estadísticas y <span style={{ textDecoration: 'underline' }}>rangos para todos los modos</span>.
                 </p>
                 <section className='btnList'>
                     <div className='btnContainer'>
