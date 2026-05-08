@@ -11,9 +11,9 @@ const msgDefList = [
     "Apuntando lineups",
     "Desperdiciando updrafts",
     "Esperando humos",
-    "Limpiando ángulos",
+    "Holdeando ángulos",
     "Calculando créditos",
-    "Holdeando mid"
+    "Limpiando esquinas"
 ]
 const shuffleArr = (arr) => {
     let res = [...arr]

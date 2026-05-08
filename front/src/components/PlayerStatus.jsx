@@ -156,10 +156,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                             ></div>
                     }
                 </div>
-                {/* { loadingRes &&
-                    <span className={`msg ${showLoadingRes ? 'msg-enter' : 'msg-exit'}`}>{loadingRes}</span>
-                } */}
-                <div className='tooltip' role='tooltip' /* style={lastUpdated ? { left: '0', "--arrow-left": '14px'} : { right: '0', "--arrow-right": '14px'}} */>
+                <div className='tooltip' role='tooltip'>
                     { serverOnline ?
                         <>
                             <span>

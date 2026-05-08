@@ -82,96 +82,6 @@
     flex: 1;
 }
 
-.loveBtnWrap{
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.loveTooltip{
-    position: absolute;
-    right: calc(100% + 12px);
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: var(--red);
-    color: var(--text);
-    font-size: 0.8rem;
-    font-weight: 500;
-    padding: 7px 10px;
-    border-radius: 8px;
-    white-space: nowrap;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-    z-index: 950;
-    pointer-events: none;
-    animation: loveTooltipIn 0.14s ease-out;
-    filter: drop-shadow(0 0px 1px var(--red));
-}
-
-.loveTooltip--exit{
-    animation: loveTooltipOut 0.16s ease-in forwards;
-}
-
-.loveTooltip::after{
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: calc(100% - 6px);
-    width: 10px;
-    height: 10px;
-    background-color: var(--red);
-    transform: translateY(-50%) rotate(45deg);
-    border-radius: 2px;
-}
-
-@keyframes loveTooltipIn {
-    from {
-        opacity: 0;
-        transform: translateY(-50%) translateX(4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(-50%) translateX(0);
-    }
-}
-
-@keyframes loveTooltipOut {
-    from {
-        opacity: 1;
-        transform: translateY(-50%) translateX(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-50%) translateX(-4px);
-    }
-}
-
-.showMsgBtn{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: "Lexend", sans-serif;
-    cursor: pointer;
-
-    border: 2px solid var(--border);
-    color: var(--border);
-    background-color: var(--borderT);
-    padding: 6px;
-    border-radius: 8px;
-    width: 50px;
-    transition: 0.15s ease;
-    opacity: 0.85;
-}
-
-.showMsgBtn:hover{
-    filter: brightness(1.15);
-    opacity: 1;
-}
-
-.showMsgBtn:active{
-    filter: brightness(0.85);
-    opacity: 1;
-}
-
 .logo{
     display: flex;
     align-items: center;
@@ -234,7 +144,7 @@
     align-items: center;
     gap: 6px;
     font-size: 1.2rem;
-    padding: 7px 45px 7px 11px;
+    padding: 7px 40px 7px 11px;
     opacity: 0.6;
     font-weight: 300;
     letter-spacing: 0.75px;
