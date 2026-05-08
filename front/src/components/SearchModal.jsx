@@ -21,26 +21,31 @@ const shuffleArr = (arr) => {
     return res
 }
 
-function SearchModal({ handleSearch, loading, setShowSearchModal, domixUser }) { 
+function SearchModal({ handleSearch, loading, setShowSearchModal, isUserFormat }) { 
     const [loadingMsg, setLoadingMsg] = useState(null)
     const loadingMsgRef = useRef(null)
     const msgs = useRef(shuffleArr(msgDefList))
     const [error, setError] = useState(null)
     const inputRef = useRef(null)
+    const [validInput, setValidInput] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError(null)
         const formData = new FormData(e.target)
-        if (!formData.get('playerInput') && domixUser) {
-            formData.set('playerInput', domixUser)
-        }
         const error = await handleSearch(formData)
         if (error) {
             setError(error)
             inputRef.current.focus()
         }
     }
+
+    const evalValidity = (e) => {
+        const value = e.target.value
+        const valid = isUserFormat(value)
+        setValidInput(valid)
+    }
+
 
     useEffect(() => {
         if (!loading) return
@@ -131,7 +136,8 @@ function SearchModal({ handleSearch, loading, setShowSearchModal, domixUser }) {
                                 autoComplete='on' 
                                 maxLength={100} 
                                 type="text" 
-                                placeholder={domixUser ? domixUser : 'tu nombre#tag'} 
+                                placeholder='nombre#tag'
+                                onChange={evalValidity}
                             />
                             <span className='bottomMsg'>
                                 <span className='bottomMsgText' style={error ? { color: 'var(--red)' } : {}}>{error ? error : loading ? loadingMsg : defMsg}</span>
@@ -143,7 +149,7 @@ function SearchModal({ handleSearch, loading, setShowSearchModal, domixUser }) {
                             </span>
                             <button 
                                 type='submit'
-                                disabled={loading}
+                                disabled={loading || !validInput}
                                 className='submitBtn btn'
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="currentColor" className="icon icon-tabler icons-tabler-filled icon-tabler-arrow-badge-right">

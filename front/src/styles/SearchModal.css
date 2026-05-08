@@ -152,6 +152,7 @@
 .playerInput::placeholder{
     color: var(--placeholder);
     user-select: none;
+    font-weight: 450;
 }
 
 .playerInput:disabled{
@@ -183,6 +184,7 @@
     opacity: 0.55;
     cursor: pointer;
     opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
 .submitBtn svg{
