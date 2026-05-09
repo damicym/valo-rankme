@@ -28,7 +28,7 @@ function NavBar({ selectedSection, setSelectedSection, setShowSearchModal, domix
     return (
         <>
             { showMsg &&
-                <div className='headerMsg' style={{ animation: isMsgExiting ? 'slideUp 0.2s ease' : 'slideDown 0.5s ease' }}>
+                <div className='headerMsg' style={{ animation: isMsgExiting ? 'slideUp 0.2s ease' : 'none' }}>
                     <span>¿Con ganas de encontrar o compartir consejos y lineups? Visitá <a href="https://damicym.github.io/clutchboard/" target="_blank">ClutchBoard</a></span>
                     <button 
                         className='closeMsgBtn' 
