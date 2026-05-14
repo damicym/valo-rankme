@@ -24,7 +24,10 @@ function MatchList({ matches, selectedMode, selectedModeName, selectedSeason, se
                 <Fragment key={`${day}-${index}`}>
                     <div className="matchDay">
                         <div className='side left'>
-                            <p className='date'>{day}</p>
+                            <div className='date'>
+                                <p>{day}</p>
+                                <div className='pill'>{perf.matches_played}</div>
+                            </div>
                         </div>
                         <p className="resultField">
                             <span
@@ -32,7 +35,7 @@ function MatchList({ matches, selectedMode, selectedModeName, selectedSeason, se
                             >
                                 {perf.wins} W
                             </span>
-                            <span style={{textAlign: 'center', width: '18px'}}> // </span>
+                            <span style={{textAlign: 'center', width: '18px'}}> - </span>
                             <span
                                 style={{color: 'var(--red)'}}
                             >
@@ -43,7 +46,7 @@ function MatchList({ matches, selectedMode, selectedModeName, selectedSeason, se
                             <section className='pillContainer'></section>
                             <div className="matchField statField kdField">
                                 <span className="kda">{perf.kills} <span style={{ opacity: 0.6 }}>/{' '}</span> {perf.deaths} <span style={{ opacity: 0.6 }}>/{' '}</span> {perf.assists}</span>
-                                <p style={{ color: 'var(--text)' }}>{perf.avg_kd}</p>
+                                <p style={{ color: 'var(--text)' }}>{perf.avg_kd} K/D</p>
                             </div>
                             { perf.avg_ddr !== null &&
                                 <div className="matchField statField">

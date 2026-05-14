@@ -1,64 +1,41 @@
 import '../styles/NavBar.css'
 import { SECTIONS } from '../config'
-import { useEffect, useRef, useState } from 'react'
+import { useState, useRef } from 'react'
+import NavLink from './NavLink'
 
 function NavBar({ selectedSection, setSelectedSection, setShowSearchModal, domixUser }) { 
-    const [showMsg, setShowMsg] = useState(true)
+    const [showMsg, setShowMsg] = useState(localStorage.getItem('hideHeaderMsg') !== 'true')
     const [isMsgExiting, setIsMsgExiting] = useState(false)
-    const [showLoveTooltip, setShowLoveTooltip] = useState(false)
-    const [isLoveTooltipExiting, setIsLoveTooltipExiting] = useState(false)
-    const loveTooltipHideTimeoutRef = useRef(null)
-    const loveTooltipUnmountTimeoutRef = useRef(null)
+    const loveNavLinkRef = useRef(null)
+    const loveTimeoutRef = useRef(null)
 
-    useEffect(() => {
-        return () => {
-            if (loveTooltipHideTimeoutRef.current) clearTimeout(loveTooltipHideTimeoutRef.current)
-            if (loveTooltipUnmountTimeoutRef.current) clearTimeout(loveTooltipUnmountTimeoutRef.current)
+    const handleLove = () => {
+        const loveEl = loveNavLinkRef.current
+        if (loveEl) {
+            loveEl.classList.remove('showingLove')
+            void loveEl.offsetWidth
+            loveEl.classList.add('showingLove')
         }
-    }, [])
-
-    const love = () => {
-        setShowLoveTooltip(true)
-        setIsLoveTooltipExiting(false)
-
-        if (loveTooltipHideTimeoutRef.current) clearTimeout(loveTooltipHideTimeoutRef.current)
-        if (loveTooltipUnmountTimeoutRef.current) clearTimeout(loveTooltipUnmountTimeoutRef.current)
-
-        loveTooltipHideTimeoutRef.current = setTimeout(() => {
-            setIsLoveTooltipExiting(true)
-
-            loveTooltipUnmountTimeoutRef.current = setTimeout(() => {
-                setShowLoveTooltip(false)
-                setIsLoveTooltipExiting(false)
-                loveTooltipUnmountTimeoutRef.current = null
-            }, 160)
-        }, 1000)
-    }
-
-    const handleLoveClick = () => {
-        if (isLoveTooltipExiting || showLoveTooltip) {
-            if (loveTooltipHideTimeoutRef.current) clearTimeout(loveTooltipHideTimeoutRef.current)
-            if (loveTooltipUnmountTimeoutRef.current) clearTimeout(loveTooltipUnmountTimeoutRef.current)
-            setIsLoveTooltipExiting(false)
-            setShowLoveTooltip(false)
-            setTimeout(() => {
-                love()
-            }, 40)
-        } else {
-            love()
-        }
+        
+        clearTimeout(loveTimeoutRef.current)
+        loveTimeoutRef.current = setTimeout(() => {
+            if (loveEl) {
+                loveEl.classList.remove('showingLove')
+            }
+        }, 600)
     }
 
     return (
         <>
             { showMsg &&
-                <div className='headerMsg' style={{ animation: isMsgExiting ? 'slideUp 0.2s ease' : 'slideDown 0.5s ease' }}>
+                <div className='headerMsg' style={{ animation: isMsgExiting ? 'slideUp 0.2s ease' : 'none' }}>
                     <span>¿Con ganas de encontrar o compartir consejos y lineups? Visitá <a href="https://damicym.github.io/clutchboard/" target="_blank">ClutchBoard</a></span>
                     <button 
                         className='closeMsgBtn' 
                         onClick={() => {
                             setIsMsgExiting(true)
                             setTimeout(() => {
+                                localStorage.setItem('hideHeaderMsg', 'true')
                                 setShowMsg(false)
                                 setIsMsgExiting(false)
                             }, 150)
@@ -87,36 +64,26 @@ function NavBar({ selectedSection, setSelectedSection, setShowSearchModal, domix
                     </div>
                 </div>
                 <section className='navRightSide'>
-                    <div className='loveBtnWrap'>
-                        { showLoveTooltip &&
-                            <div className={isLoveTooltipExiting ? 'loveTooltip loveTooltip--exit' : 'loveTooltip'} role='tooltip'>
-                                Con mucho amor, por <span style={{color: 'var(--yellow)', fontWeight: '650'}}>{domixUser}</span>
-                            </div>
-                        }
-                        <button className='showMsgBtn' onClick={handleLoveClick} type='button' aria-label='Mostrar mensaje de amor'>
-                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-heart">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
-                            </svg>
-                        </button>
-                    </div>
-                    <a className='showMsgBtn' href='https://github.com/damicym/skirmish-ranks' target="_blank">
-                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-brand-github">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
-                            </svg>
-                    </a>
+                    <NavLink 
+                        ref={loveNavLinkRef}
+                        onClick={() => handleLove()}
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-heart"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /></svg>}
+                        msg={<span>Con mucho amor, por <span style={{color: 'var(--yellow)', fontWeight: 650}}>{domixUser || "domix#640"}</span></span>}
+                        tooltipStyle={{"--tooltipBg": "var(--red)", filter: "drop-shadow(0 0px 1px var(--red))"}}
+                    />
+                    <NavLink 
+                        href="https://github.com/damicym/skirmish-ranks"
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-brand-github"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg>}
+                        msg="Visitá el repositorio en Github"
+                        tooltipStyle={{"--tooltipBg": "var(--border)", filter: "none"}}
+                    />
                     { !showMsg &&
-                        <button 
-                            className='showMsgBtn' 
-                            onClick={() => setShowMsg(prev => !prev)}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-eye">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                                <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
-                            </svg>
-                        </button>
+                        <NavLink 
+                            href="https://damicym.github.io/clutchboard/"
+                            icon={<img src="/clutchboard-logo.svg" alt="" aria-hidden="true" />}
+                            msg="¡Visitá ClutchBoard!"
+                            tooltipStyle={{"--tooltipBg": "#BD632F", filter: "none"}}
+                        />
                     }
                 </section>
             </nav>

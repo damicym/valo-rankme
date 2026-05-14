@@ -13,35 +13,33 @@
     inset: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap;
-    padding: 40px;
+    overflow: hidden;
     pointer-events: none;
     z-index: 0;
+}
+
+.ranksScroll {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    animation: scrollRight 45s linear infinite;
+    will-change: transform;
 }
 
 .bgRankIcon {
     width: 110px;
     opacity: 0.06;
-    filter: grayscale(0.3);
-    animation: floatIcon 6s ease-in-out infinite;
-    will-change: transform;
+    filter: grayscale(0.5);
+    transform: translateY(0);
+    flex-shrink: 0;
     contain: layout style paint;
+    transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+
 }
 
-.bgRankIcon:nth-child(2) { animation-delay: 0.7s; }
-.bgRankIcon:nth-child(3) { animation-delay: 1.4s; }
-.bgRankIcon:nth-child(4) { animation-delay: 2.1s; }
-.bgRankIcon:nth-child(5) { animation-delay: 2.8s; }
-.bgRankIcon:nth-child(6) { animation-delay: 3.5s; }
-.bgRankIcon:nth-child(7) { animation-delay: 4.2s; }
-.bgRankIcon:nth-child(8) { animation-delay: 4.9s; }
-.bgRankIcon:nth-child(9) { animation-delay: 5.6s; }
-
-@keyframes floatIcon {
-    0%, 100% { transform: translateY(0px); }
-    50%      { transform: translateY(-12px); }
+@keyframes scrollRight {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-50% - 30px)); }
 }
 
 .content {

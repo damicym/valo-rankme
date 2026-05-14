@@ -143,7 +143,14 @@ export async function getHDEVMatches(puuid, matchesToFetch = 10, startIndex = 0,
                     'Authorization': config.HENRIKDEV_ACCESS_TOKEN
                 }
             })
-            const data = await response.json()
+            const responseText = await response.text()
+            let data = null
+            try {
+                data = responseText ? JSON.parse(responseText) : null
+            } catch (parseError) {
+                const preview = responseText.slice(0, 200).replace(/\s+/g, ' ').trim()
+                throw new Error(`Non-JSON response ${response.status}: ${preview || parseError.message}`)
+            }
             if (!response.ok) {
                 if (data.errors && data.errors.length > 0) {
                     throw new Error(`HTTP error ${response.status}, ${JSON.stringify(data.errors)}`)
@@ -158,11 +165,11 @@ export async function getHDEVMatches(puuid, matchesToFetch = 10, startIndex = 0,
             startIndex += size
         } catch(err){
             console.log('Error fetching matches from HenrikDev: ' + err)
-            return null
+            break
         }
     }
     const sortedResult = result.sort((a, b) => new Date(getStartedAt(b)) - new Date(getStartedAt(a)))
-    return sortedResult
+    return sortedResult || []
 }
 
 export async function getActByDate(date) {

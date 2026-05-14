@@ -99,7 +99,7 @@ async function pollPlayer(player, targetAct) {
 
 async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
     const matchesToFetch = 10
-    const maxExtraFetches = 2
+    const maxExtraFetches = 7
     let startIndex = initialMatches.length
     let areMoreMatches = false
     let matches = [...initialMatches]
@@ -112,7 +112,7 @@ async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
         
         const apiMatches = await getHDEVMatches(puuid, matchesToFetch, startIndex)
         if (!Array.isArray(apiMatches) || apiMatches.length === 0) {
-            console.log(`[${getShortId(puuid)}] !apiMatches at processNewMatches`)
+            console.log(`[${getShortId(puuid)}] !apiMatches at getNewMatches`)
             break
         }
         matches.push(...apiMatches)

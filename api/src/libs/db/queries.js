@@ -381,7 +381,7 @@ export async function getPlayerMatches(puuid) {
 export async function saveNewModesToDB(newModes) {
     const { data, error } = await supabase
         .from("modes")
-        .insert(newModes.map(m => ({ 
+        .upsert(newModes.map(m => ({ 
             id: m.id, 
             name: m?.name || getPosibleModeName(m.id), 
             ...(m?.min_rr !== undefined ? { min_rr: m.min_rr } : {}),
@@ -390,9 +390,9 @@ export async function saveNewModesToDB(newModes) {
             ...(m?.max_acs !== undefined ? { max_acs: m.max_acs } : {}),
             ...(m?.rounds_to_win !== undefined ? { rounds_to_win: m.rounds_to_win } : {}),
             ...(m?.is_rankable !== undefined ? { is_rankable: m.is_rankable } : {}),
-        })))
+        })), { onConflict: "id", ignoreDuplicates: true })
     if (error) {
-        console.log(`Error inserting new modes into database: ${error.message}`)
+        console.log(`Error upserting new modes into database: ${error.message}`)
     }
 }
 

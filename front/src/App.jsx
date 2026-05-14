@@ -83,13 +83,16 @@ function App() {
     }, [showSearchModal])
 
     const isUserFormat = (str) => {
+        if (!str || typeof str !== 'string' || str.length < 3) return false
         const regex = /^[^#]+#[^#]+$/
         return regex.test(str)
     }
 
     const handleSearch = async (formData) => {
         let p1 = formData.get('playerInput')
-        if (!p1) return
+        if (!p1){
+            return 'Es necesario ingresar un jugador'
+        }
         if (!isUserFormat(p1)) {
             return 'El formato debe ser nombre#tag'
         }
@@ -181,7 +184,7 @@ function App() {
                 />
             </div>
             { showSearchModal &&
-                <SearchModal domixUser={domixUser} loading={playersLoading} handleSearch={handleSearch} setShowSearchModal={setShowSearchModal} />
+                <SearchModal domixUser={domixUser} loading={playersLoading} handleSearch={handleSearch} isUserFormat={isUserFormat} setShowSearchModal={setShowSearchModal} />
             }
         </>
     )

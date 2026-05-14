@@ -22,30 +22,33 @@
     white-space: nowrap;
 }
 
-.perfEl h1, .perfEl h2{
+.perfEl span, .perfEl p{
     margin: 0;
     width: 100%;
     color: var(--text);
 }
 
-.perfEl h1{
-    opacity: 0.7;
+.perfEl span{
+    opacity: 0.6;
     font-size: 1rem;
+    font-weight: 300;
+    letter-spacing: 0.75px;
 }
 
-.perfEl h2{
+.perfEl p{
     font-size: 1.15rem;
+    font-weight: 550;
 }
 
 .perfEl .agentIcon{
-    width: 35px;
+    height: 35px;
     margin-left: 0;
     margin-right: auto;
     filter: none;
 }
 
 .mainEl{
-    background-color: var(--borderT);
+    background-color: #33415c1e;
     border-radius: 14px;
     padding: 10px 14px;
 }

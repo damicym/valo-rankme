@@ -1,13 +1,19 @@
 import ranks from '../data/ranks.json'
 
+const rankTiers = [1,4,7,10,13,16,19,22,24]
+
 function HomeSection({ setShowSearchModal }) {
     return (
         <div className='home'>
             <div className='ranksBg' aria-hidden='true'>
-                {[1,4,7,10,13,16,19,22,24].map(tier => {
-                    const rank = ranks.find(r => r.tier == tier)
-                    return rank ? <img key={tier} src={rank.icon} alt='' className='bgRankIcon' loading='lazy' decoding='async' /> : null
-                })}
+                <div className='ranksScroll'>
+                    {[...Array(6)].map((_, index) => (
+                        rankTiers.map(tier => {
+                            const rank = ranks.find(r => r.tier == tier)
+                            return rank ? <img key={`${index}-${tier}`} src={rank.icon} alt='' className='bgRankIcon' loading='lazy' decoding='async' /> : null
+                        })
+                    ))}
+                </div>
             </div>
             <div className='content'>
                 <div className='badge'>VALORANT RANKME</div>
@@ -17,7 +23,7 @@ function HomeSection({ setShowSearchModal }) {
                     <span className='light'>no competitivo</span>
                 </h1>
                 <p className='subtitle'>
-                    Buscá cualquier jugador y explorá su historial de partidas, estadísticas, y rangos para los modos en los que Valorant no te da un rango.
+                    Buscá cualquier jugador y explorá su historial de partidas, estadísticas y <span style={{ textDecoration: 'underline' }}>rangos para todos los modos</span>.
                 </p>
                 <section className='btnList'>
                     <div className='btnContainer'>

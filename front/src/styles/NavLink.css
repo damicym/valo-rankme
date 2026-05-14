@@ -1,0 +1,94 @@
+.navLinkContainer{
+    position: relative;
+    display: flex;
+    align-items: center;
+    user-select: none;
+}
+
+.navLink{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Lexend", sans-serif;
+    cursor: pointer;
+
+    border: 2px solid var(--border);
+    color: var(--border);
+    background-color: var(--borderT);
+    padding: 6px;
+    border-radius: 8px;
+    width: 50px;
+    transition: 0.15s ease;
+    opacity: 0.85;
+    filter: none;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.navLink:hover{
+    filter: brightness(1.15);
+    opacity: 1;
+}
+
+.navLink:active{
+    filter: brightness(0.85);
+    opacity: 1;
+}
+
+.navLinkContainer .navLinkTooltip{
+    position: absolute;
+    right: calc(100% + 10px);
+    background-color: var(--tooltipBg);
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 7px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    z-index: 999;
+    pointer-events: none;
+
+    opacity: 0;
+    transform: translateX(4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.navLinkContainer .navLinkTooltip::after{
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: calc(100% - 6px);
+    width: 10px;
+    height: 10px;
+    background-color: var(--tooltipBg);
+    transform: translateY(-50%) rotate(45deg);
+    border-radius: 2px;
+}
+
+.navLinkContainer:hover .navLinkTooltip{
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.showingLove{
+    animation: love 0.4s ease-out;
+}
+
+@keyframes love {
+    from {
+        color: var(--red);
+        filter: drop-shadow(0 0px 1px var(--red));
+        border-color: var(--red);
+    }
+    to {
+        color: var(--border);
+        filter: none;
+        border-color: var(--border);
+    }
+}
+
+.navLink.loveBtn:active{
+    color: var(--red);
+    filter: drop-shadow(0 0px 1px var(--red));
+    border-color: var(--red);
+}
