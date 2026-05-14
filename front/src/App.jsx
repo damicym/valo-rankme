@@ -184,7 +184,7 @@ function App() {
                 />
             </div>
             { showSearchModal &&
-                <SearchModal loading={playersLoading} handleSearch={handleSearch} isUserFormat={isUserFormat} setShowSearchModal={setShowSearchModal} />
+                <SearchModal domixUser={domixUser} loading={playersLoading} handleSearch={handleSearch} isUserFormat={isUserFormat} setShowSearchModal={setShowSearchModal} />
             }
         </>
     )

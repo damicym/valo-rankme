@@ -21,7 +21,7 @@ const shuffleArr = (arr) => {
     return res
 }
 
-function SearchModal({ handleSearch, loading, setShowSearchModal, isUserFormat }) { 
+function SearchModal({ handleSearch, loading, setShowSearchModal, isUserFormat, domixUser }) { 
     const [loadingMsg, setLoadingMsg] = useState(null)
     const loadingMsgRef = useRef(null)
     const msgs = useRef(shuffleArr(msgDefList))
@@ -136,7 +136,7 @@ function SearchModal({ handleSearch, loading, setShowSearchModal, isUserFormat }
                                 autoComplete='on' 
                                 maxLength={100} 
                                 type="text" 
-                                placeholder='nombre#tag'
+                                placeholder={domixUser ? `Ej.: ${domixUser}` : "nombre#tag"}
                                 onChange={evalValidity}
                             />
                             <span className='bottomMsg'>
