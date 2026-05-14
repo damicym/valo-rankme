@@ -1,6 +1,6 @@
 import '../styles/NavBar.css'
 import { SECTIONS } from '../config'
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import NavLink from './NavLink'
 
 function NavBar({ selectedSection, setSelectedSection, setShowSearchModal, domixUser }) { 
@@ -8,6 +8,11 @@ function NavBar({ selectedSection, setSelectedSection, setShowSearchModal, domix
     const [isMsgExiting, setIsMsgExiting] = useState(false)
     const loveNavLinkRef = useRef(null)
     const loveTimeoutRef = useRef(null)
+
+    useEffect(() => {
+        const preloadLogo = new Image()
+        preloadLogo.src = '/clutchboard-logo.svg'
+    }, [])
 
     const handleLove = () => {
         const loveEl = loveNavLinkRef.current
