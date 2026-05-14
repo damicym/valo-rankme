@@ -38,11 +38,11 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                 clearLoadingResTimers()
                 hideLoadingResTimeout.current = setTimeout(() => {
                     setShowLoadingRes(false)
-                }, 3600)
+                }, 2200)
                 clearLoadingResTimeout.current = setTimeout(() => {
                     setLoadingRes(null)
                     clearLoadingResTimeout.current = null
-                }, 4000)
+                }, 2600)
             }
         } finally {
             setLoading(false)
@@ -151,7 +151,7 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                                 style={{ 
                                     backgroundColor: 'var(--borderT2)', 
                                     borderRadius: '6px',
-                                    animation: 'loadingResProgress 3.4s linear forwards'
+                                    animation: 'loadingResProgress 2s linear forwards'
                                 }}
                             ></div>
                     }
@@ -185,6 +185,8 @@ function PlayerStatus({ lastUpdated, nextUpdate, serverOnline, reloadData }) {
                             </span>
                         </>
                     }
+                    <div className='line'></div>
+                    <span style={{ color: 'var(--yellow)' }}>Working on support for all gamemodes</span>
                 </div>
             </div>
         </div>
