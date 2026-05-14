@@ -77,7 +77,7 @@
 .navRightSide{
     display: flex;
     justify-content: flex-end;
-    align-items: center;
+    align-items: stretch;
     gap: 20px;
     flex: 1;
 }
