@@ -24,18 +24,31 @@ export async function pollAllPlayers() {
     const syncPlayers = async () => {
         const players = await getPlayers({ readyOnly: true })
         if (!players || players.length === 0) {
-            console.log("[INFO] No players found in database to poll.")
+            console.log("[ERROR] No players found in database to poll")
         } else {
-            for (const player of players) {
-                if (activePlayerPolls.has(player.puuid)) continue
+            const usingPlayers = players.filter(p => !activePlayerPolls.has(p.puuid))
+            if (usingPlayers.length === 0) {
+                console.log("[INFO] No new players to poll")
+            } else {
+                console.log(`[INFO] Found ${usingPlayers.length} players to poll`)
+            }
+            
+            for (const [i, p] of usingPlayers.entries()) {
+                if (activePlayerPolls.has(p.puuid)) continue
 
-                activePlayerPolls.add(player.puuid)
-                console.log(`[${getShortId(player.puuid)}] Starting polling loop for new player`)
-                void pollPlayer(player, targetAct)
+                activePlayerPolls.add(p.puuid)
+
+                console.log(`[${getShortId(p.puuid)}] Starting polling loop for new player`)
+                void pollPlayer(p, targetAct)
+
+                if (i < usingPlayers.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, PLAYER_SYNC_INTERVAL / usingPlayers.length))
+                }
             }
         }
 
         if (config.POLLING) {
+            console.log(`[INFO] Next player sync at ${new Date(Date.now() + PLAYER_SYNC_INTERVAL).toLocaleTimeString()}`)
             setTimeout(syncPlayers, PLAYER_SYNC_INTERVAL)
         }
     }
@@ -99,7 +112,7 @@ async function pollPlayer(player, targetAct) {
 
 async function getNewMatches(puuid, lastStoredMatchId, initialMatches) {
     const matchesToFetch = 10
-    const maxExtraFetches = 7
+    const maxExtraFetches = 2
     let startIndex = initialMatches.length
     let areMoreMatches = false
     let matches = [...initialMatches]
