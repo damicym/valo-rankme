@@ -27,29 +27,34 @@ export async function pollAllPlayers() {
     let targetAct = await getActByDate(new Date())
 
     const syncPlayers = async () => {
-        const players = await getPlayers({ readyOnly: true })
-        if (!players || players.length === 0) {
-            console.log("[ERROR] No players found in database to poll")
-        } else {
-            const usingPlayers = players.filter(p => !activePlayerPolls.has(p.puuid))
-            if (usingPlayers.length === 0) {
-                console.log("[INFO] No new players to poll")
+        try {
+            const players = await getPlayers({ readyOnly: true })
+            if (!players || players.length === 0) {
+                console.log("[ERROR] No players found in database to poll")
             } else {
-                console.log(`[INFO] Found ${usingPlayers.length} players to poll`)
-            }
-            
-            for (const [i, p] of usingPlayers.entries()) {
-                if (activePlayerPolls.has(p.puuid)) continue
+                const usingPlayers = players.filter(p => !activePlayerPolls.has(p.puuid))
+                if (usingPlayers.length === 0) {
+                    console.log("[INFO] No new players to poll")
+                } else {
+                    console.log(`[INFO] Found ${usingPlayers.length} players to poll`)
+                }
+                
+                for (const [i, p] of usingPlayers.entries()) {
+                    if (activePlayerPolls.has(p.puuid)) continue
 
-                activePlayerPolls.add(p.puuid)
+                    activePlayerPolls.add(p.puuid)
 
-                console.log(`[${getShortId(p.puuid)}] Starting polling loop for new player`)
-                void pollPlayer(p, targetAct)
+                    console.log(`[${getShortId(p.puuid)}] Starting polling loop for new player`)
+                    void pollPlayer(p, targetAct)
 
-                if (i < usingPlayers.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, config.PLAYER_SYNC_INTERVAL / usingPlayers.length))
+                    if (i < usingPlayers.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, config.PLAYER_SYNC_INTERVAL / usingPlayers.length))
+                    }
                 }
             }
+        } catch (error) {
+            console.error(`[ERROR] syncPlayers failed: ${error.message}`)
+            console.error(error)
         }
 
         if (config.POLLING) {
@@ -67,49 +72,57 @@ async function pollPlayer(player, targetAct) {
     let currentLastStoredMatchId = player.last_match_id
 
     const poll = async () => {
-        const initialMatches = await getHDEVMatches(player.puuid, 2, 0)
-        const lastMatch = initialMatches[0]
-        if (!initialMatches || initialMatches.length === 0) {
-            console.log(`[${getShortId(player.puuid)}] No initial matches found`)
-            return null
-        }
-        
-        await updatePlayerDisplay(player.puuid)
-
-        if (currentLastStoredMatchId !== getMatchId(lastMatch)) {
-            console.log(`[${getShortId(player.puuid)}] Got last match: ${getShortId(getMatchId(lastMatch))}`)
-
-            // Si es de un acto nuevo, camio el targetAct, lo agrego a la base de datos
-            const matchAct = await getActByDate(new Date(getStartedAt(lastMatch)))
-            const atcsCompare = compareActsByDate(matchAct, targetAct)
-            if (atcsCompare > 0) {
-                console.log(`[${getShortId(player.puuid)}] New act detected: ${matchAct.title} (${getShortId(matchAct.id)}), valid from ${matchAct.startTime.toLocaleDateString()} to ${matchAct.endTime.toLocaleDateString()}`)
-                await insertNewAct(matchAct, player.puuid)
-                targetAct = matchAct
-            }
-
-            // Por ahora RIOT no devuelve a HernikDevAPI partidas en curso. Por si en un futuro cambia, lo logueo para darme cuenta
-            isInGame = lastMatch && !lastMatch.metadata.is_completed
-            if (isInGame){
-                console.log(`[IN-GAME] Player ${getShortId(player.puuid)}, match ${getShortId(getMatchId(lastMatch))}, started at ${new Date(getStartedAt(lastMatch)).toLocaleTimeString()}`)
+        try {
+            const initialMatches = await getHDEVMatches(player.puuid, 2, 0)
+            const lastMatch = initialMatches[0]
+            if (!initialMatches || initialMatches.length === 0) {
+                console.log(`[${getShortId(player.puuid)}] No initial matches found`)
+                return null
             }
             
-            // Si la última partida jugada es nueva y útil (no custom), proceso...
-            if (isUsefulMatch(lastMatch, currentLastStoredMatchId)) {
-                const newestStoredMatchId = await getNewMatches(player.puuid, currentLastStoredMatchId, initialMatches)
-                if (newestStoredMatchId) {
-                    currentLastStoredMatchId = newestStoredMatchId
-                }
-            } else{
-                console.log(`[${getShortId(player.puuid)}] Last match (${getShortId(getMatchId(lastMatch))}) is useless (custom/ongoing). Current last stored match id: ${getShortId(currentLastStoredMatchId)}`)
-            }
-        } else {
-            console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
-        }
+            await updatePlayerDisplay(player.puuid)
 
-        await updatePlayerUpdate(player.puuid, new Date(), new Date(Date.now() + config.POLLING_INTERVAL))
-        console.log(`[${getShortId(player.puuid)}] Next poll at ${fmtTime(new Date(Date.now() + config.POLLING_INTERVAL))} ---------------------------------`)
-        setTimeout(poll, config.POLLING_INTERVAL) 
+            if (currentLastStoredMatchId !== getMatchId(lastMatch)) {
+                console.log(`[${getShortId(player.puuid)}] Got last match: ${getShortId(getMatchId(lastMatch))}`)
+
+                // Si es de un acto nuevo, camio el targetAct, lo agrego a la base de datos
+                const matchAct = await getActByDate(new Date(getStartedAt(lastMatch)))
+                const atcsCompare = compareActsByDate(matchAct, targetAct)
+                if (atcsCompare > 0) {
+                    console.log(`[${getShortId(player.puuid)}] New act detected: ${matchAct.title} (${getShortId(matchAct.id)}), valid from ${matchAct.startTime.toLocaleDateString()} to ${matchAct.endTime.toLocaleDateString()}`)
+                    await insertNewAct(matchAct, player.puuid)
+                    targetAct = matchAct
+                }
+
+                // Por ahora RIOT no devuelve a HernikDevAPI partidas en curso. Por si en un futuro cambia, lo logueo para darme cuenta
+                isInGame = lastMatch && !lastMatch.metadata.is_completed
+                if (isInGame){
+                    console.log(`[IN-GAME] Player ${getShortId(player.puuid)}, match ${getShortId(getMatchId(lastMatch))}, started at ${new Date(getStartedAt(lastMatch)).toLocaleTimeString()}`)
+                }
+                
+                // Si la última partida jugada es nueva y útil (no custom), proceso...
+                if (isUsefulMatch(lastMatch, currentLastStoredMatchId)) {
+                    const newestStoredMatchId = await getNewMatches(player.puuid, currentLastStoredMatchId, initialMatches)
+                    if (newestStoredMatchId) {
+                        currentLastStoredMatchId = newestStoredMatchId
+                    }
+                } else{
+                    console.log(`[${getShortId(player.puuid)}] Last match (${getShortId(getMatchId(lastMatch))}) is useless (custom/ongoing). Current last stored match id: ${getShortId(currentLastStoredMatchId)}`)
+                }
+            } else {
+                console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
+            }
+
+            await updatePlayerUpdate(player.puuid, new Date(), new Date(Date.now() + config.POLLING_INTERVAL))
+            console.log(`[${getShortId(player.puuid)}] Next poll at ${fmtTime(new Date(Date.now() + config.POLLING_INTERVAL))} ---------------------------------`)
+        } catch (error) {
+            console.error(`[ERROR] Poll failed for player ${getShortId(player.puuid)}: ${error.message}`)
+            console.error(error)
+        }
+        
+        if (config.POLLING) {
+            setTimeout(poll, config.POLLING_INTERVAL)
+        }
     }
     
     await poll()
