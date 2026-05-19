@@ -1,4 +1,5 @@
 import supabase from './supabase.js'
+import { config } from '../../../config.js'
 import { playerLog, getMatchId, getStartedAt, getShortId, getMatchMode, getMatchModeId, getUniqueMatchesById, getMatchActId, getMatchMap, getPosibleModeName } from '../helpers.js'
 import { getPlayerMatchInfo, getMatchRR, getPlayerRank } from '../match_parser.js'
 import { getHDEVPlayerDisplay, getHDEVPlayerPuuid } from '../api_requests.js'
@@ -64,11 +65,35 @@ function toIsoTimestamp(value, fallback = null) {
     return fallback
 }
 
+function getLastDivision(str){
+    if (!str || typeof str !== 'string') return null
+    const parts = str.split("/")
+    return parts.length > 0 ? parts[parts.length - 1] : null
+}
+
 function compactIsoForLog(isoString) {
     const date = new Date(isoString)
     if (Number.isNaN(date.getTime())) return isoString
-    // MM-DD HH:mmZ para logs más cortos y fáciles de leer
-    return `${date.toISOString().slice(5, 16).replace('T', ' ')}Z`
+
+    // Mostrar hora local (configurable via LOG_TIMEZONE) y UTC para evitar confusiones
+    const tz = config.LOG_TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    if (tz === 'UTC') {
+        return `${date.toISOString().slice(5, 16).replace('T', ' ')}Z`
+    }
+    try {
+        const local = new Intl.DateTimeFormat('es-ES', {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: tz
+        }).format(date).replace(',', '')
+        const utc = `${date.toISOString().slice(5, 16).replace('T', ' ')}Z`
+        return local
+    } catch (e) {
+        return `${date.toISOString().slice(5, 16).replace('T', ' ')}Z`
+    }
 }
 
 export async function updatePlayerUpdate(puuid, lastPolledAt, nextPollAt = null) {
