@@ -52,7 +52,7 @@ export async function pollAllPlayers() {
             }
         }
 
-            if (config.POLLING) {
+        if (config.POLLING) {
             console.log(`[INFO] Next player sync at ${fmtTime(new Date(Date.now() + config.PLAYER_SYNC_INTERVAL))}`)
             setTimeout(syncPlayers, config.PLAYER_SYNC_INTERVAL)
         }
