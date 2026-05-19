@@ -13,9 +13,14 @@ import {
 import { getHDEVMatches, getActByDate } from './libs/api_requests.js'
 import { getDBModes } from './libs/db/queries.js'
 
-const POLLING_INTERVAL = 3 * 60 * 1000
-const PLAYER_SYNC_INTERVAL = 3 * 60 * 1000
 const activePlayerPolls = new Set()
+
+// Timezone-aware formatters using configured timezone
+const _LOG_TZ = config.LOG_TIMEZONE || 'UTC'
+const _timeFormatter = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: _LOG_TZ })
+const _dateFormatter = new Intl.DateTimeFormat('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: _LOG_TZ })
+const fmtTime = d => _timeFormatter.format(d)
+const fmtDate = d => _dateFormatter.format(d)
 
 export async function pollAllPlayers() {
     if (!config.POLLING) return
@@ -42,14 +47,14 @@ export async function pollAllPlayers() {
                 void pollPlayer(p, targetAct)
 
                 if (i < usingPlayers.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, PLAYER_SYNC_INTERVAL / usingPlayers.length))
+                    await new Promise(resolve => setTimeout(resolve, config.PLAYER_SYNC_INTERVAL / usingPlayers.length))
                 }
             }
         }
 
-        if (config.POLLING) {
-            console.log(`[INFO] Next player sync at ${new Date(Date.now() + PLAYER_SYNC_INTERVAL).toLocaleTimeString()}`)
-            setTimeout(syncPlayers, PLAYER_SYNC_INTERVAL)
+            if (config.POLLING) {
+            console.log(`[INFO] Next player sync at ${fmtTime(new Date(Date.now() + config.PLAYER_SYNC_INTERVAL))}`)
+            setTimeout(syncPlayers, config.PLAYER_SYNC_INTERVAL)
         }
     }
 
@@ -102,9 +107,9 @@ async function pollPlayer(player, targetAct) {
             console.log(`[${getShortId(player.puuid)}] No new match. Last match id: ${getShortId(currentLastStoredMatchId)}`)
         }
 
-        await updatePlayerUpdate(player.puuid, new Date(), new Date(Date.now() + POLLING_INTERVAL))
-        console.log(`[${getShortId(player.puuid)}] Next poll at ${new Date(Date.now() + POLLING_INTERVAL).toLocaleTimeString()} ---------------------------------`)
-        setTimeout(poll, POLLING_INTERVAL) 
+        await updatePlayerUpdate(player.puuid, new Date(), new Date(Date.now() + config.POLLING_INTERVAL))
+        console.log(`[${getShortId(player.puuid)}] Next poll at ${fmtTime(new Date(Date.now() + config.POLLING_INTERVAL))} ---------------------------------`)
+        setTimeout(poll, config.POLLING_INTERVAL) 
     }
     
     await poll()
